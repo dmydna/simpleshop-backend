@@ -44,7 +44,7 @@ root `\api`:
 
 #### Diagrama ER.
 
-![](.\ER_graph.png)
+![](ER_graph.png)
 
 
 <details>
