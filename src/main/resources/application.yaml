@@ -4,30 +4,26 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/techlabdb
-    username: root
-    password: 1234
-
-#  datasource:
-#    driver-class-name: ${DB_DRIVER}
-#    url: ${DB_URL}
-#    username: ${DB_USERNAME}
-#    password: ${DB_PASSWORD}
+    # Formato: ${VARIABLE:VALOR_POR_DEFECTO}
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/${DB_NAME:techlabdb}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:1234}
 
   sql:
     init:
       mode: always
       data-locations: classpath:products.sql, classpath:clients.sql
 
-  h2:
-    console:
-      enabled: true           # Habilita la consola web de H2
-      path: /h2-console      # Ruta para acceder a la consola (http://localhost:8080/h2-console)
   jpa:
     defer-datasource-initialization: true
     hibernate:
-       ddl-auto: update
+      ddl-auto: update
     properties:
-       hibernate:
-       format_sql: true
-       show-sql: true
+      hibernate:
+        format_sql: true
+        show-sql: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
