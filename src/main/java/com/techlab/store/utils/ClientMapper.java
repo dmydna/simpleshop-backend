@@ -33,7 +33,7 @@ public interface ClientMapper {
     Client toEntity(ClientDTO dto);
 
     @Mapping(target = "product.id", source = "product.id")
-    @Mapping(target = "product.name", source = "product.name")
+    @Mapping(target = "product.title", source = "product.title")
     @Mapping(target = "product.price", source = "product.price")
     OrderDetailDTO OrderDetailToDto(OrderDetail detail);
 

@@ -14,18 +14,13 @@ import java.util.Set;
 public class Client {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
     private Long id;
-    @Setter @Getter
     private String name;
-    @Setter @Getter
     private String email;
-    @Setter @Getter
     private Boolean deleted;
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("client")
-    @Getter @Setter
     private Set<Order> orders = new HashSet<>();
 
 }

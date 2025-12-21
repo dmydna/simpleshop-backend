@@ -2,9 +2,7 @@ package com.techlab.store.service;
 
 
 import com.techlab.store.dto.OrderDTO;
-import com.techlab.store.dto.OrderDetailDTO;
 import com.techlab.store.dto.OrderFullDTO;
-import com.techlab.store.dto.OrderSimpleDTO;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderDetail;
@@ -13,7 +11,6 @@ import com.techlab.store.repository.ClientRepository;
 import com.techlab.store.repository.OrderRepository;
 import com.techlab.store.repository.ProductRepository;
 
-import com.techlab.store.utils.ClientMapper;
 import com.techlab.store.utils.OrderMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +63,7 @@ public class OrderService {
                   .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
           if (p.getStock() < detail.getQuantity()) {
-              throw new RuntimeException("Stock insuficiente para el producto: " + p.getName());
+              throw new RuntimeException("Stock insuficiente para el producto: " + p.getTitle());
           }
           // actualiza stock de producto
           p.setStock(p.getStock() - detail.getQuantity());
@@ -189,7 +186,7 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Producto con ID " + productId + " no encontrado."));
 
         if (product.getStock() + stockAdjustment < 0) {
-            throw new RuntimeException("Stock insuficiente para el producto: " + product.getName());
+            throw new RuntimeException("Stock insuficiente para el producto: " + product.getTitle());
         }
 
         product.setStock(product.getStock() + stockAdjustment);

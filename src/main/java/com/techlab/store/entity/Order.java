@@ -35,5 +35,4 @@ public class Order {
     @JsonIgnoreProperties("order")
     private Set<OrderDetail> details = new HashSet<>();
 
-
 }

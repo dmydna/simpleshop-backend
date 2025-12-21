@@ -16,7 +16,7 @@ public class OrderDetailDTO {
     @Data
     public static class ProductDetail{
         Long id;
-        String name;
+        String title;
         Integer stock;
         Double price;
     }
