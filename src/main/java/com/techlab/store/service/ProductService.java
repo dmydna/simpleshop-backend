@@ -5,8 +5,10 @@ import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.utils.StringUtils;
 import java.util.List;
 import java.util.Optional;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
@@ -42,11 +44,11 @@ public class ProductService {
 
   public List<Product> findAllProducts(String name, String category){
     if (!name.isEmpty() && !category.isEmpty()){
-      return this.productRepository.findByNameContainingIgnoreCaseAndCategoryContainingIgnoreCase(name, category);
+      return this.productRepository.findByTitleContainingIgnoreCaseAndCategoryContainingIgnoreCase(name, category);
     }
 
     if (!name.isEmpty()){
-      return this.productRepository.findByNameContainingIgnoreCase(name);
+      return this.productRepository.findByTitleContainingIgnoreCase(name);
     }
 
     if (!category.isEmpty()){
@@ -59,9 +61,9 @@ public class ProductService {
   public Product editProductById(Long id, Product dataToEdit){
     Product product = this.getProductById(id);
 
-    if (!stringUtils.isEmpty(dataToEdit.getName())){
-        System.out.printf("Editando el nombre del producto: viejo:%s - nuevo:%s", product.getName(), dataToEdit.getName());
-      product.setName(dataToEdit.getName());
+    if (!stringUtils.isEmpty(dataToEdit.getTitle())){
+        System.out.printf("Editando el nombre del producto: viejo:%s - nuevo:%s", product.getTitle(), dataToEdit.getTitle());
+      product.setTitle(dataToEdit.getTitle());
     }
 
     return this.productRepository.save(product);
@@ -75,5 +77,15 @@ public class ProductService {
     this.productRepository.save(product);
 
     return product;
+  }
+
+  @Transactional
+  public List<Product> saveAll(List<Product> products) {
+    for (Product product : products) {
+      if (product.getReviews() != null) {
+        product.getReviews().forEach(review -> review.setProduct(product));
+      }
+    }
+    return productRepository.saveAll(products);
   }
 }

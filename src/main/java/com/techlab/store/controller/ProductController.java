@@ -3,6 +3,8 @@ import com.techlab.store.entity.Product;
 import com.techlab.store.service.ProductService;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,6 +20,13 @@ public class ProductController {
   @PostMapping
   public Product createProduct(@RequestBody Product product){
     return this.productService.createProduct(product);
+  }
+
+  @PostMapping("/bulk")
+  public ResponseEntity<List<Product>> createProducts(@RequestBody List<Product> products) {
+    // El service debe usar saveAll()
+    List<Product> savedProducts = productService.saveAll(products);
+    return ResponseEntity.status(HttpStatus.CREATED).body(savedProducts);
   }
 
   @GetMapping("/{id}")
