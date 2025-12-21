@@ -12,7 +12,7 @@ spring:
   sql:
     init:
       mode: always
-      data-locations: classpath:products.sql, classpath:clients.sql
+      #data-locations: classpath:products.sql, classpath:clients.sql
 
   jpa:
     defer-datasource-initialization: true
