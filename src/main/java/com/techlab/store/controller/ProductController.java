@@ -25,6 +25,7 @@ public class ProductController {
   @PostMapping("/bulk")
   public ResponseEntity<List<Product>> createProducts(@RequestBody List<Product> products) {
     // El service debe usar saveAll()
+    products.forEach(product -> product.setId(null));
     List<Product> savedProducts = productService.saveAll(products);
     return ResponseEntity.status(HttpStatus.CREATED).body(savedProducts);
   }

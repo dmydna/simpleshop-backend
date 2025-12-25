@@ -65,7 +65,10 @@ public class ProductService {
         System.out.printf("Editando el nombre del producto: viejo:%s - nuevo:%s", product.getTitle(), dataToEdit.getTitle());
       product.setTitle(dataToEdit.getTitle());
     }
-
+    if (!stringUtils.isEmpty(dataToEdit.getBrand())) product.setBrand(dataToEdit.getBrand());
+    if (!stringUtils.isEmpty(dataToEdit.getDescription())) product.setDescription(dataToEdit.getDescription());
+    if (!stringUtils.isEmpty(dataToEdit.getCategory())) product.setCategory(dataToEdit.getCategory());
+    product.setStock(dataToEdit.getStock());
     return this.productRepository.save(product);
   }
 

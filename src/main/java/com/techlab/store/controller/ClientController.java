@@ -17,7 +17,7 @@ public class ClientController {
 
     @PostMapping
     public ClientFullDTO createCliente(@RequestBody ClientFullDTO cliente) {
-        return clientService.save(cliente);
+        return clientService.createCliente(cliente);
     }
 
     @GetMapping

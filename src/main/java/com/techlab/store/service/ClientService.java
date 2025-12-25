@@ -25,6 +25,13 @@ public class ClientService {
         this.stringUtils = stringUtils;
     }
 
+    public ClientFullDTO createCliente(ClientFullDTO dto){
+       Client newClient = clientMapper.toEntity(dto);
+       Client savedClient  = this.clientRepository.save(newClient);
+       return clientMapper.toFullDto(savedClient);
+    }
+
+
     public ClientFullDTO save(ClientDTO dto) {
         if (!dto.getEmail().contains("@")) {
             throw new RuntimeException("Formato de email no valido: ");

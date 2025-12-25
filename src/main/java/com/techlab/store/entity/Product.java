@@ -23,34 +23,39 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Getter
     private Long id;
-    private String title;
-    @Column(length = 1000)
-    private String description;
-    private Double price;
-    private String category;
-    private Integer stock;
-    private Boolean deleted;
-    private LocalDate deletedDate;
-    private Double discountPercentage;
-    private Double rating;
-    @ElementCollection
-    private List<String> tags;
-    private String brand;
     private String sku;
+    private String brand;
     private Integer weight;
     @Embedded
     private ProductDimensions dimensions;
-    private String warrantyInformation;
-    private String shippingInformation;
-    private String availabilityStatus;
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private Set<Review> reviews = new HashSet<>();
-    private String returnPolicy;
-    private Integer minimumOrderQuantity;
+    private Integer stock;
+    private String category;
+    @ElementCollection
+    private List<String> tags;
     @Embedded
     private ProductMeta meta;
-    @ElementCollection
-    private List<String> images;
-    private String thumbnail;
+    boolean deleted;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    private List<Listing> listings;
+
+//    private String title;
+//    @Column(length = 1000)
+//    private String description;
+//    private Double price;
+//    private Boolean deleted;
+//    private LocalDate deletedDate;
+//    private Double discountPercentage;
+//    private Double rating;
+//    private String warrantyInformation;
+//    private String shippingInformation;
+//    private String availabilityStatus;
+//    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+//    @JsonManagedReference
+//    private Set<Review> reviews = new HashSet<>();
+//    private String returnPolicy;
+//    private Integer minimumOrderQuantity;
+//    @ElementCollection
+//    private List<String> images;
+//    private String thumbnail;
 }
