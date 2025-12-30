@@ -1,5 +1,7 @@
 package com.techlab.store.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.techlab.store.model.ProductDimensions;
 import com.techlab.store.model.ProductMeta;
@@ -37,7 +39,9 @@ public class Product {
     private ProductMeta meta;
     boolean deleted;
 
+//    @JsonIgnoreProperties("product")
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Listing> listings;
 
 //    private String title;

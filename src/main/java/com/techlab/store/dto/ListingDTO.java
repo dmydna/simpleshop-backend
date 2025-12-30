@@ -41,6 +41,7 @@ public class ListingDTO {
 
     // product
     private Long product_id;
+    private String product_name;
     private String sku;
     private String brand;
     private Integer weight;

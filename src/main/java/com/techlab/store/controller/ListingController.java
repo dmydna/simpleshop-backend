@@ -20,8 +20,8 @@ public class ListingController {
     }
 
     @PostMapping
-    public ListingDTO createListing(@RequestBody ListingDTO listing, Long id){
-        return this.listingService.createListing(listing, id);
+    public ListingDTO createListing(@RequestBody ListingDTO listing){
+        return this.listingService.createListing(listing);
     }
 
 

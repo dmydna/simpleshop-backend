@@ -1,5 +1,6 @@
 package com.techlab.store.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -29,7 +30,7 @@ public class Listing {
     private String warrantyInformation;
     private String shippingInformation;
     private String availabilityStatus;
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private Set<Review> reviews = new HashSet<>();
     private String returnPolicy;
@@ -39,6 +40,7 @@ public class Listing {
     private String thumbnail;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
+    @JsonIgnoreProperties("listings")
     private Product product;
 }
 

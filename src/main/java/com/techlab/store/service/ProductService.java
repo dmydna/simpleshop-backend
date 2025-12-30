@@ -44,11 +44,11 @@ public class ProductService {
 
   public List<Product> findAllProducts(String name, String category){
     if (!name.isEmpty() && !category.isEmpty()){
-      return this.productRepository.findByTitleContainingIgnoreCaseAndCategoryContainingIgnoreCase(name, category);
+      return this.productRepository.findByNameContainingIgnoreCaseAndCategoryContainingIgnoreCase(name, category);
     }
 
     if (!name.isEmpty()){
-      return this.productRepository.findByTitleContainingIgnoreCase(name);
+      return this.productRepository.findByNameContainingIgnoreCase(name);
     }
 
     if (!category.isEmpty()){

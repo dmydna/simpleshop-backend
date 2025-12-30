@@ -29,7 +29,7 @@ public class Review {
     private String reviewerEmail;
 
     @ManyToOne
-    @JoinColumn(name = "post_id")
+    @JoinColumn(name = "listing_id")
     @JsonBackReference
     private Listing listing;
 }

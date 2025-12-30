@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -34,68 +35,43 @@ public class ListingService {
         this.productRepository = productRepository;
     }
 
-    public ListingDTO createFastListing(ListingDTO dto) {
-        log.info("Publicacion ingresada: {}", dto);
-
-        Product newProduct = new Product();
-        newProduct.setSku(dto.getSku());
-        newProduct.setBrand(dto.getBrand());
-        newProduct.setWeight(dto.getWeight());
-        newProduct.setDimensions(dto.getDimensions());
-        newProduct.setStock(dto.getStock());
-        newProduct.setCategory(dto.getCategory());
-        newProduct.setTags(dto.getTags());
-        newProduct.setMeta(dto.getMeta());
-
-        productRepository.save(newProduct);
-
-        Listing newListing = this.listingMapper.toEntity(dto);
-
-        Set<Review> reviews = new HashSet<>();
-        Set<Review> reviewsNode = dto.getReviews();
-        for (Review rNode : reviewsNode) {
-            Review review = new Review();
-            review.setRating(rNode.getRating());
-            review.setComment(rNode.getComment());
-            review.setReviewerName(rNode.getReviewerName());
-            review.setListing(newListing); // Vincular review a la publicación
-            reviews.add(review);
-        }
-
-        newListing.setReviews(reviews);
-        Listing savedListing  = this.listingRepository.save(newListing);
-        return listingMapper.toDto(savedListing);
+    public Review ReviewFromDto(Review rNode, Listing parent) {
+        Review r = new Review();
+        r.setRating(rNode.getRating());
+        r.setComment(rNode.getComment());
+        r.setReviewerName(rNode.getReviewerName());
+        r.setListing(parent);
+        return r;
     }
 
-    public ListingDTO createListing(ListingDTO dto, Long productId){
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("No encontrado"));
-
-        dto.setProduct_id(product.getId());
-        dto.setSku(product.getSku());
-        dto.setBrand(product.getBrand());
-        dto.setWeight(product.getWeight());
-        dto.setDimensions(product.getDimensions());
-        dto.setStock(product.getStock());
-        dto.setCategory(product.getCategory());
-        dto.setTags(product.getTags());
-        dto.setMeta(product.getMeta());
-
+    @Transactional
+    public ListingDTO createListing(ListingDTO dto){
+        Product product;
+        if (dto.getProduct_id() != null) {
+            // Intentamos buscarlo si el DTO trae ID
+            product = productRepository.findById(dto.getProduct_id())
+                    .orElseGet(() -> createNewProductFromDto(dto));
+        } else {
+            // Si no trae ID, creamos uno nuevo directamente
+            product = createNewProductFromDto(dto);
+        }
+        product = productRepository.saveAndFlush(product);
+        // 2. Mapear el Listing a partir del DTO
         Listing newListing = this.listingMapper.toEntity(dto);
 
-        Set<Review> reviews = new HashSet<>();
-        Set<Review> reviewsNode = dto.getReviews();
-        for (Review rNode : reviewsNode) {
-            Review review = new Review();
-            review.setRating(rNode.getRating());
-            review.setComment(rNode.getComment());
-            review.setReviewerName(rNode.getReviewerName());
-            review.setListing(newListing); // Vincular review a la publicación
-            reviews.add(review);
+        // Vinculación vital: asignar el producto (ya persistido o recuperado) al listing
+        newListing.setProduct(product);
+
+        // 3. Procesar las Reviews (Relación bidireccional)
+        if (dto.getReviews() != null) {
+            Set<Review> reviews = dto.getReviews().stream()
+                    .map(rNode -> ReviewFromDto(rNode, newListing))
+                    .collect(Collectors.toSet());
+            newListing.setReviews(reviews);
         }
 
-        newListing.setReviews(reviews);
-        Listing savedListing  = this.listingRepository.save(newListing);
+        // 4. Guardar y retornar
+        Listing savedListing = this.listingRepository.save(newListing);
         return listingMapper.toDto(savedListing);
     }
 
@@ -153,16 +129,68 @@ public class ListingService {
     }
 
     @Transactional
-    public List<ListingDTO> saveAll(List<ListingDTO> listings) {
-        for (ListingDTO listing : listings) {
-            if (listing.getReviews() != null) {
-                listing.getReviews().forEach(review ->
-                        review.setListing(this.listingMapper.toEntity(listing)));
-            }
-        }
+    public List<ListingDTO> saveAll(List<ListingDTO> dtos) {
+        log.info("Iniciando persistencia masiva de {} elementos", dtos.size());
 
-        List<Listing> entityList = this.listingMapper.toEntityList(listings);
-        List<Listing> saveListings = listingRepository.saveAll(entityList);
-        return  this.listingMapper.toDtoList(saveListings);
+        // 1. Convertimos los DTOs a Entidades preparadas
+        List<Listing> listingsToSave = dtos.stream().map(dto -> {
+
+            // Creamos el Producto (Hijo)
+            Product product = createNewProductFromDto(dto);
+            // Es vital guardar el producto primero si no usas CascadeType.PERSIST
+            product = productRepository.save(product);
+            // Mapeamos el Listing (Padre)
+            Listing listing = this.listingMapper.toEntity(dto);
+            listing.setProduct(product); // Establecemos la relación
+
+            // Manejamos las Reviews si existen
+            if (dto.getReviews() != null && !dto.getReviews().isEmpty()) {
+                Listing finalListing = listing;
+                Set<Review> reviews = dto.getReviews().stream()
+                        .map(rNode -> ReviewFromDto(rNode, finalListing))
+                        .collect(Collectors.toSet());
+                listing.setReviews(reviews);
+            }
+            return listing;
+        }).collect(Collectors.toList());
+
+        // 2. Guardamos todos los Listings de una vez
+        List<Listing> savedListings = listingRepository.saveAll(listingsToSave);
+
+        // 3. Retornamos la lista convertida a DTO para el Frontend
+        return savedListings.stream()
+                .map(listingMapper::toDto)
+                .collect(Collectors.toList());
     }
+
+    public Product createNewProductFromDto(ListingDTO dto){
+        Product product = new Product();
+        if(null == dto.getProduct_name()){
+            product.setName(dto.getTitle());
+        }else {
+            product.setName(dto.getProduct_name());
+        }
+        product.setSku(dto.getSku());
+        product.setBrand(dto.getBrand());
+        product.setWeight(dto.getWeight());
+        product.setDimensions(dto.getDimensions());
+        product.setStock(dto.getStock());
+        product.setCategory(dto.getCategory());
+        product.setTags(dto.getTags());
+        product.setMeta(dto.getMeta());
+        return product;
+    }
+//    @Transactional
+//    public List<ListingDTO> saveAll(List<ListingDTO> listings) {
+//        for (ListingDTO listing : listings) {
+//            if (listing.getReviews() != null) {
+//                listing.getReviews().forEach(review ->
+//                        review.setListing(this.listingMapper.toEntity(listing)));
+//            }
+//        }
+//
+//        List<Listing> entityList = this.listingMapper.toEntityList(listings);
+//        List<Listing> saveListings = listingRepository.saveAll(entityList);
+//        return  this.listingMapper.toDtoList(saveListings);
+//    }
 }
