@@ -29,6 +29,10 @@ public interface OrderMapper {
     void updateOrderFromDto(OrderSimpleDTO dto, @MappingTarget Order entity);
 
     Order toEntity(OrderFullDTO dto);
+    @Mapping(target = "client", ignore = true)
     Order toEntity(OrderSimpleDTO dto);
+
+
+
     List<OrderFullDTO> toFullDtoList(List<Order> orders);
 }

@@ -1,8 +1,8 @@
 package com.techlab.store.service;
 
 
-import com.techlab.store.dto.OrderDTO;
 import com.techlab.store.dto.OrderFullDTO;
+import com.techlab.store.dto.ProductDTO;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderDetail;
@@ -63,7 +63,7 @@ public class OrderService {
                   .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
           if (p.getStock() < detail.getQuantity()) {
-              throw new RuntimeException("Stock insuficiente para el producto: " + p.getTitle());
+              throw new RuntimeException("Stock insuficiente para el producto: " + p.getName());
           }
           // actualiza stock de producto
           p.setStock(p.getStock() - detail.getQuantity());
@@ -186,7 +186,7 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Producto con ID " + productId + " no encontrado."));
 
         if (product.getStock() + stockAdjustment < 0) {
-            throw new RuntimeException("Stock insuficiente para el producto: " + product.getTitle());
+            throw new RuntimeException("Stock insuficiente para el producto: " + product.getName());
         }
 
         product.setStock(product.getStock() + stockAdjustment);

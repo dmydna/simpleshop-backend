@@ -61,12 +61,12 @@ public class ProductService {
   public Product editProductById(Long id, Product dataToEdit){
     Product product = this.getProductById(id);
 
-    if (!stringUtils.isEmpty(dataToEdit.getTitle())){
-        System.out.printf("Editando el nombre del producto: viejo:%s - nuevo:%s", product.getTitle(), dataToEdit.getTitle());
-      product.setTitle(dataToEdit.getTitle());
+    if (!stringUtils.isEmpty(dataToEdit.getName())){
+        System.out.printf("Editando el nombre del producto: viejo:%s - nuevo:%s", product.getName(), dataToEdit.getName());
+      product.setName(dataToEdit.getName());
     }
     if (!stringUtils.isEmpty(dataToEdit.getBrand())) product.setBrand(dataToEdit.getBrand());
-    if (!stringUtils.isEmpty(dataToEdit.getDescription())) product.setDescription(dataToEdit.getDescription());
+    //if (!stringUtils.isEmpty(dataToEdit.getDescription())) product.setDescription(dataToEdit.getDescription());
     if (!stringUtils.isEmpty(dataToEdit.getCategory())) product.setCategory(dataToEdit.getCategory());
     product.setStock(dataToEdit.getStock());
     return this.productRepository.save(product);
@@ -84,11 +84,11 @@ public class ProductService {
 
   @Transactional
   public List<Product> saveAll(List<Product> products) {
-    for (Product product : products) {
-      if (product.getReviews() != null) {
-        product.getReviews().forEach(review -> review.setProduct(product));
-      }
-    }
+//    for (Product product : products) {
+//      if (product.getReviews() != null) {
+//        product.getReviews().forEach(review -> review.setProduct(product));
+//      }
+//    }
     return productRepository.saveAll(products);
   }
 }

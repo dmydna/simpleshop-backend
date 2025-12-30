@@ -23,6 +23,7 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Getter
     private Long id;
+    private String name;
     private String sku;
     private String brand;
     private Integer weight;

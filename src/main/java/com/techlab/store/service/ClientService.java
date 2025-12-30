@@ -43,7 +43,7 @@ public class ClientService {
     }
 
 
-    public List<Client> findById(Long id) {
+    public List<Client> findById() {
         return this.clientRepository.findAll();
     }
 

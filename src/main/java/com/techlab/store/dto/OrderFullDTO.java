@@ -1,14 +1,18 @@
 package com.techlab.store.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.techlab.store.entity.Order;
+import com.techlab.store.dto.*;
+import lombok.*;
 
-@Getter
+import java.util.Set;
+
 @Setter
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderFullDTO extends OrderDTO{
+public class OrderFullDTO{
+    Long id;
+    Order.OrderState state;
+    Set<OrderDetailDTO> details;
     ClientDTO client;
 }

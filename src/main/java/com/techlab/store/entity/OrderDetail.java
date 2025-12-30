@@ -15,6 +15,9 @@ public class OrderDetail {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
+    private Long listingId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     @JsonIgnoreProperties("details")
@@ -25,5 +28,6 @@ public class OrderDetail {
     @JsonIgnoreProperties("orderDetails")
     private Product product;
     private int quantity;
+    private double priceAtPurchase; // guarda el precio actual del producto
 
 }
