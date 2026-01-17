@@ -15,7 +15,6 @@ public class OrderDetail {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
     private Long listingId;
 
     @ManyToOne(fetch = FetchType.LAZY)

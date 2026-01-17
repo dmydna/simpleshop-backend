@@ -32,10 +32,7 @@ public interface ClientMapper {
     @Mapping(target = "deleted", ignore = true)
     Client toEntity(ClientDTO dto);
 
-    @Mapping(target = "productId", source = "product.id")
-    @Mapping(target = "stock", source = "product.stock")
-    @Mapping(target = "name", source = "product.name")
-    OrderDetailDTO OrderDetailToDto(OrderDetail detail);
+
 
     // Para editar un cliente existente
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

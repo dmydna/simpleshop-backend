@@ -60,7 +60,7 @@ public class OrderService {
           detail.setOrder(newOrder);
 
           Product p = productRepository.findById(detail.getProduct().getId())
-                  .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                  .orElseThrow(() -> new RuntimeException("Producto no encontrado "));
 
           if (p.getStock() < detail.getQuantity()) {
               throw new RuntimeException("Stock insuficiente para el producto: " + p.getName());

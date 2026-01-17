@@ -12,6 +12,7 @@ import java.util.List;
 public interface ListingMapper {
 
     @Mapping(source = "product.id", target = "product_id")
+    @Mapping(source = "product.name", target= "product_name")
     @Mapping(source = "product.sku", target = "sku")
     @Mapping(source = "product.stock", target = "stock")
     @Mapping(source = "product.brand", target = "brand")

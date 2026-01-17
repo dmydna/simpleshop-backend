@@ -26,6 +26,7 @@ public class Product {
     @Getter
     private Long id;
     private String name;
+    @Column(unique = true, nullable = false)
     private String sku;
     private String brand;
     private Integer weight;

@@ -1,4 +1,13 @@
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+  
 spring:
+  mvc:
+    static-path-pattern: "/uploads/**"
+  web:
+    resources:
+      static-locations: "file:/app/uploads/"
+
   application:
     name: store
 
@@ -27,3 +36,5 @@ spring:
     console:
       enabled: true
       path: /h2-console
+
+spring.main.allow-bean-definition-overriding: true

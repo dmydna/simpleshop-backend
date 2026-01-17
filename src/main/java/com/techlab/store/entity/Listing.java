@@ -1,15 +1,30 @@
 package com.techlab.store.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.techlab.store.enums.Visibility;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import lombok.Getter;
+import lombok.Setter;
+
 
 @Entity
 @Getter
@@ -25,6 +40,8 @@ public class Listing {
     private Double price;
     private Boolean deleted;
     private LocalDate deletedDate;
+    @Enumerated(EnumType.STRING)
+    private Visibility visibility = Visibility.PUBLIC;
     private Double discountPercentage;
     private Double rating;
     private String warrantyInformation;
@@ -38,9 +55,11 @@ public class Listing {
     @ElementCollection
     private List<String> images;
     private String thumbnail;
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     @JsonIgnoreProperties("listings")
     private Product product;
+    @Column(unique = true, nullable = false, updatable = false)
+    private String hash;
 }
 

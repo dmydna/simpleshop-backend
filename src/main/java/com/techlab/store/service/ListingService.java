@@ -1,22 +1,28 @@
 package com.techlab.store.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.techlab.store.dto.ListingDTO;
-import com.techlab.store.entity.Client;
-import com.techlab.store.entity.Listing;
-import com.techlab.store.entity.Product;
-import com.techlab.store.entity.Review;
-import com.techlab.store.repository.ListingRepository;
-import com.techlab.store.repository.ProductRepository;
-import com.techlab.store.utils.ListingMapper;
-import com.techlab.store.utils.StringUtils;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import com.techlab.store.dto.ListingDTO;
+import com.techlab.store.entity.Listing;
+import com.techlab.store.entity.Product;
+import com.techlab.store.entity.Review;
+import com.techlab.store.enums.Visibility;
+import com.techlab.store.repository.ListingRepository;
+import com.techlab.store.repository.ProductRepository;
+import com.techlab.store.utils.HashUtil;
+import com.techlab.store.utils.ListingMapper;
+import com.techlab.store.utils.StringUtils;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -25,6 +31,8 @@ public class ListingService {
     private final ListingRepository listingRepository;
     private final StringUtils stringUtils;
     private final ProductRepository productRepository;
+    @Autowired
+    private FileStorageService fileStorageService;
 
     @Autowired
     private ListingMapper listingMapper;
@@ -35,60 +43,52 @@ public class ListingService {
         this.productRepository = productRepository;
     }
 
-    public Review ReviewFromDto(Review rNode, Listing parent) {
-        Review r = new Review();
-        r.setRating(rNode.getRating());
-        r.setComment(rNode.getComment());
-        r.setReviewerName(rNode.getReviewerName());
-        r.setListing(parent);
-        return r;
-    }
+
 
     @Transactional
-    public ListingDTO createListing(ListingDTO dto){
-        Product product;
-        if (dto.getProduct_id() != null) {
-            // Intentamos buscarlo si el DTO trae ID
-            product = productRepository.findById(dto.getProduct_id())
-                    .orElseGet(() -> createNewProductFromDto(dto));
-        } else {
-            // Si no trae ID, creamos uno nuevo directamente
-            product = createNewProductFromDto(dto);
-        }
-        product = productRepository.saveAndFlush(product);
-        // 2. Mapear el Listing a partir del DTO
-        Listing newListing = this.listingMapper.toEntity(dto);
+    public ListingDTO createListing(ListingDTO dto, MultipartFile file) {
+        // 1. Obtener o crear el producto (Auxiliar)
+        Product product = getOrCreateProduct(dto);
 
-        // Vinculación vital: asignar el producto (ya persistido o recuperado) al listing
+        // 2. Mapear DTO a Entidad base
+        Listing newListing = listingMapper.toEntity(dto);
         newListing.setProduct(product);
 
-        // 3. Procesar las Reviews (Relación bidireccional)
-        if (dto.getReviews() != null) {
-            Set<Review> reviews = dto.getReviews().stream()
-                    .map(rNode -> ReviewFromDto(rNode, newListing))
-                    .collect(Collectors.toSet());
-            newListing.setReviews(reviews);
+        // 3. Procesar Reviews si existen (Auxiliar)
+        processReviews(dto, newListing);
+
+        newListing.setHash(HashUtil.generateShortHash());
+        newListing.setVisibility(Visibility.PUBLIC);
+
+        // 4. Guardar primero para obtener el ID (necesario para el nombre del archivo)
+        newListing = listingRepository.saveAndFlush(newListing);
+
+        // 5. Procesar imagen si el archivo no está vacío (Auxiliar)
+        if (file != null && !file.isEmpty()) {
+            handleImageUpload(newListing, file);
         }
 
-        // 4. Guardar y retornar
-        Listing savedListing = this.listingRepository.save(newListing);
-        return listingMapper.toDto(savedListing);
+        return listingMapper.toDto(newListing);
     }
+
 
 
     public ListingDTO getListingById(Long id){
-        Listing listing = this.listingRepository.findById(id)
+        Listing listing = this.listingRepository.findActiveById(id)
                 .orElseThrow(() -> new RuntimeException("No encontrado"));
+        if (listing.getDeletedDate() != null) {
+            throw new RuntimeException("El recurso ha sido eliminado");
+        }
         return this.listingMapper.toDto(listing);
     }
 
     public List<ListingDTO> findAllListing(){
-        List<Listing> listings = this.listingRepository.findAll();
+        List<Listing> listings = this.listingRepository.findAllByDeletedDateIsNull();
         return this.listingMapper.toDtoList(listings);
     }
 
     public ListingDTO editListingById(Long id, Listing dataToEdit) {
-        Listing listing = this.listingRepository.findById(id)
+        Listing listing = this.listingRepository.findActiveById(id)
                 .orElseThrow(() -> new RuntimeException("No encontrado"));
 
         if (!stringUtils.isEmpty(dataToEdit.getTitle())){
@@ -106,24 +106,33 @@ public class ListingService {
         listing.setWarrantyInformation(dataToEdit.getWarrantyInformation());
         listing.setShippingInformation(dataToEdit.getShippingInformation());
         listing.setAvailabilityStatus(dataToEdit.getAvailabilityStatus());
-        listing.setReviews(dataToEdit.getReviews());
         listing.setReturnPolicy(dataToEdit.getReturnPolicy());
         listing.setMinimumOrderQuantity(dataToEdit.getMinimumOrderQuantity());
-        listing.setImages(dataToEdit.getImages());
-        listing.setThumbnail(dataToEdit.getThumbnail());
+        
+        if(null != dataToEdit.getImages()) 
+            listing.setImages(dataToEdit.getImages());
+        if(null != dataToEdit.getThumbnail())
+            listing.setThumbnail(dataToEdit.getThumbnail());
 
         Listing saveListing = this.listingRepository.save(listing);
         return this.listingMapper.toDto(saveListing);
     }
 
 
+    public ListingDTO changeVisibility(Long id, Visibility visibility){
+        Listing listing = this.listingRepository.findActiveById(id)
+        .orElseThrow(() -> new RuntimeException("No encontrado"));
+        listing.setVisibility(visibility);
+        return this.listingMapper.toDto(listing);
+    }
 
     public ListingDTO deleteListingById(Long id) {
-        Listing listing = this.listingRepository.findById(id)
+        Listing listing = this.listingRepository.findActiveById(id)
                 .orElseThrow(() -> new RuntimeException("No encontrado"));
 
         //this.productRepository.delete(post);
         listing.setDeleted(true);
+        listing.setDeletedDate(LocalDate.now());
         Listing saveListing = this.listingRepository.save(listing);
         return this.listingMapper.toDto(saveListing);
     }
@@ -150,6 +159,8 @@ public class ListingService {
                         .map(rNode -> ReviewFromDto(rNode, finalListing))
                         .collect(Collectors.toSet());
                 listing.setReviews(reviews);
+                listing.setHash(HashUtil.generateShortHash());
+                listing.setVisibility(Visibility.PUBLIC);
             }
             return listing;
         }).collect(Collectors.toList());
@@ -162,6 +173,20 @@ public class ListingService {
                 .map(listingMapper::toDto)
                 .collect(Collectors.toList());
     }
+
+
+    @Transactional
+    public void updateImageUrl(Long id, String imageUrl) {
+    // 1. Buscamos el producto o lanzamos error si no existe
+        Listing listing = listingRepository.findActiveById(id)
+            .orElseThrow(() -> new RuntimeException("Publicacion no encontrada con id: " + id));
+        // 2. Actualizamos el campo de la URL   
+        List<String> images = listing.getImages();
+        images.add(imageUrl);
+        listingRepository.save(listing);
+    }
+
+// --- MÉTODOS AUXILIARES PRIVADOS ---
 
     public Product createNewProductFromDto(ListingDTO dto){
         Product product = new Product();
@@ -180,17 +205,48 @@ public class ListingService {
         product.setMeta(dto.getMeta());
         return product;
     }
-//    @Transactional
-//    public List<ListingDTO> saveAll(List<ListingDTO> listings) {
-//        for (ListingDTO listing : listings) {
-//            if (listing.getReviews() != null) {
-//                listing.getReviews().forEach(review ->
-//                        review.setListing(this.listingMapper.toEntity(listing)));
-//            }
-//        }
-//
-//        List<Listing> entityList = this.listingMapper.toEntityList(listings);
-//        List<Listing> saveListings = listingRepository.saveAll(entityList);
-//        return  this.listingMapper.toDtoList(saveListings);
-//    }
+
+    private Product getOrCreateProduct(ListingDTO dto) {
+        if (dto.getProduct_id() != null) {
+            return productRepository.findById(dto.getProduct_id())
+                    .orElseGet(() -> createNewProductFromDto(dto));
+        }
+        return createNewProductFromDto(dto);
+    }
+
+    private void processReviews(ListingDTO dto, Listing listing) {
+        if (dto.getReviews() != null && !dto.getReviews().isEmpty()) {
+            Set<Review> reviews = dto.getReviews().stream()
+                    .map(rNode -> ReviewFromDto(rNode, listing))
+                    .collect(Collectors.toSet());
+            listing.setReviews(reviews);
+        }
+    }
+
+    private void handleImageUpload(Listing listing, MultipartFile file) {
+        // Guardamos el archivo físicamente
+        String finalUrl = fileStorageService.storeFile(file, listing.getId());
+        // Actualizamos la entidad (ya está en contexto de persistencia por el @Transactional)
+        List<String> images;
+        if(listing.getImages() != null){
+            images = listing.getImages();
+        }else{
+            images = new ArrayList<>();
+        }
+        images.add(finalUrl);
+        listing.setImages(images);
+
+        //Agrega thumbnail si no tiene.
+        if(listing.getThumbnail() == null) 
+            listing.setThumbnail(finalUrl);
+    }
+
+    public Review ReviewFromDto(Review rNode, Listing parent) {
+        Review r = new Review();
+        r.setRating(rNode.getRating());
+        r.setComment(rNode.getComment());
+        r.setReviewerName(rNode.getReviewerName());
+        r.setListing(parent);
+        return r;
+    }
 }

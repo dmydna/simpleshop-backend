@@ -1,5 +1,6 @@
 package com.techlab.store.entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.util.HashSet;
@@ -15,7 +16,13 @@ import lombok.ToString;
 public class Order {
 
     public enum OrderState {
-        PROCESANDO, COMPLETO, CANCELADO, EN_ENVIO
+        PROCESANDO, COMPLETO, CANCELADO, EN_ENVIO;
+
+        @JsonCreator
+        public static OrderState fromString(String value) {
+            if (value == null || value.trim().isEmpty()) return PROCESANDO; // Valor por defecto
+            return OrderState.valueOf(value.toUpperCase());
+        }
     }
 
     @Id
