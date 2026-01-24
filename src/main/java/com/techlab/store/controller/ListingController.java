@@ -5,9 +5,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -66,12 +72,37 @@ public class ListingController {
         return this.listingService.getListingById(id);
     }
 
-    @GetMapping
+
+    @GetMapping("/hash/{hash}")
+    public ResponseEntity<Map<String, Object>> getByHash(@PathVariable String hash) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("listing", listingService.findByHash(hash));
+        return ResponseEntity.ok(response);
+    }
+
+
+    @GetMapping("/all")
     public List<ListingDTO> getAllPost(
             @RequestParam(required = false, defaultValue = "") String name,
             @RequestParam(required = false, defaultValue = "") String category){
         return this.listingService.findAllListing();
     }
+
+
+    @GetMapping
+    public ResponseEntity<Page<ListingDTO>> getAll(
+        @RequestParam(required = false) String title,
+        @RequestParam(required = false) List<String> categories,
+        @RequestParam(required = false) List<String> tags,
+        @RequestParam(required = false) Double minPrice,
+        @RequestParam(required = false) Double maxPrice,
+        @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        // El Service decide si usa filtros o si devuelve todo
+        return ResponseEntity.ok(listingService.search(title, categories, tags, minPrice, maxPrice, pageable));
+    }
+
+
 
     @PutMapping("/{id}")
     public ListingDTO editPostById(@PathVariable Long id, @RequestBody Listing dataToEdit){

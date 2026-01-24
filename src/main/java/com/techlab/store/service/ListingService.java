@@ -1,5 +1,6 @@
 package com.techlab.store.service;
 
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,6 +8,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +24,10 @@ import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.utils.HashUtil;
 import com.techlab.store.utils.ListingMapper;
 import com.techlab.store.utils.StringUtils;
+
+import org.springframework.data.jpa.domain.Specification;
+
+import com.techlab.store.specification.ListingSpecifications;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,20 +56,15 @@ public class ListingService {
     public ListingDTO createListing(ListingDTO dto, MultipartFile file) {
         // 1. Obtener o crear el producto (Auxiliar)
         Product product = getOrCreateProduct(dto);
-
         // 2. Mapear DTO a Entidad base
         Listing newListing = listingMapper.toEntity(dto);
         newListing.setProduct(product);
-
         // 3. Procesar Reviews si existen (Auxiliar)
-        processReviews(dto, newListing);
-
+        processReviews(dto, newListing); 
         newListing.setHash(HashUtil.generateShortHash());
         newListing.setVisibility(Visibility.PUBLIC);
-
         // 4. Guardar primero para obtener el ID (necesario para el nombre del archivo)
         newListing = listingRepository.saveAndFlush(newListing);
-
         // 5. Procesar imagen si el archivo no está vacío (Auxiliar)
         if (file != null && !file.isEmpty()) {
             handleImageUpload(newListing, file);
@@ -82,10 +84,50 @@ public class ListingService {
         return this.listingMapper.toDto(listing);
     }
 
+    public ListingDTO findByHash(String hash){
+        Listing listing = this.listingRepository.findActiveByHash(hash)
+                .orElseThrow(() -> new RuntimeException("No encontrado"));
+        if (listing.getDeletedDate() != null) {
+            throw new RuntimeException("El recurso ha sido eliminado");
+        }
+        return this.listingMapper.toDto(listing);
+    }
+    
+
     public List<ListingDTO> findAllListing(){
         List<Listing> listings = this.listingRepository.findAllByDeletedDateIsNull();
         return this.listingMapper.toDtoList(listings);
     }
+
+
+    public Page<Listing> findAllPage(Pageable pageable){
+        return this.listingRepository.findAllByDeletedDateIsNull(pageable);
+    }
+
+
+
+    public Page<ListingDTO> search(String title, List<String> categories, List<String> tags, Double min, Double max, Pageable pageable) {
+        Specification<Listing> spec = Specification.where((root, query, cb) -> cb.isNull(root.get("deletedDate")));
+    
+        if (categories != null && !categories.isEmpty()) {
+            spec = spec.and(ListingSpecifications.hasCategories(categories));
+        }
+
+        if (title != null && !title.isEmpty()) {
+            spec = spec.and(ListingSpecifications.hasTitle(title));
+        }
+        
+        if (tags != null && !tags.isEmpty()) {
+            spec = spec.and(ListingSpecifications.hasTags(tags));
+        }
+    
+        spec = spec.and(ListingSpecifications.priceInRange(min, max));
+        Page<Listing> listingsPage = listingRepository.findAll(spec, pageable);
+
+        // 3. Convertir a Page de DTOs usando tu mapper
+        return listingsPage.map(listing -> this.listingMapper.toDto(listing));
+    }
+
 
     public ListingDTO editListingById(Long id, Listing dataToEdit) {
         Listing listing = this.listingRepository.findActiveById(id)
@@ -140,10 +182,8 @@ public class ListingService {
     @Transactional
     public List<ListingDTO> saveAll(List<ListingDTO> dtos) {
         log.info("Iniciando persistencia masiva de {} elementos", dtos.size());
-
         // 1. Convertimos los DTOs a Entidades preparadas
         List<Listing> listingsToSave = dtos.stream().map(dto -> {
-
             // Creamos el Producto (Hijo)
             Product product = createNewProductFromDto(dto);
             // Es vital guardar el producto primero si no usas CascadeType.PERSIST
@@ -151,7 +191,6 @@ public class ListingService {
             // Mapeamos el Listing (Padre)
             Listing listing = this.listingMapper.toEntity(dto);
             listing.setProduct(product); // Establecemos la relación
-
             // Manejamos las Reviews si existen
             if (dto.getReviews() != null && !dto.getReviews().isEmpty()) {
                 Listing finalListing = listing;
