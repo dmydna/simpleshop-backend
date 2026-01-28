@@ -25,7 +25,7 @@ public class UserService {
         return this.UserRepository.save(user);
     }
 
-    public User getUserById(Long id){
+    public User getById(Long id){
         Optional<User> userOptional = this.UserRepository.findById(id);
 
         if (userOptional.isEmpty()){

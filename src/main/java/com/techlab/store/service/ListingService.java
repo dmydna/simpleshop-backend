@@ -7,6 +7,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +36,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import com.techlab.store.specification.ListingSpecifications;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -53,7 +61,7 @@ public class ListingService {
 
 
     @Transactional
-    public ListingDTO createListing(ListingDTO dto, MultipartFile file) {
+    public ListingDTO create(ListingDTO dto, MultipartFile[] files) {
         // 1. Obtener o crear el producto (Auxiliar)
         Product product = getOrCreateProduct(dto);
         // 2. Mapear DTO a Entidad base
@@ -66,16 +74,17 @@ public class ListingService {
         // 4. Guardar primero para obtener el ID (necesario para el nombre del archivo)
         newListing = listingRepository.saveAndFlush(newListing);
         // 5. Procesar imagen si el archivo no está vacío (Auxiliar)
-        if (file != null && !file.isEmpty()) {
-            handleImageUpload(newListing, file);
+        for (MultipartFile file : files) {
+            if (!file.isEmpty()) {
+                handleImageUpload(newListing, file);
+            }
         }
-
         return listingMapper.toDto(newListing);
     }
 
 
-
-    public ListingDTO getListingById(Long id){
+    // -- GET BY ID
+    public ListingDTO getById(Long id){
         Listing listing = this.listingRepository.findActiveById(id)
                 .orElseThrow(() -> new RuntimeException("No encontrado"));
         if (listing.getDeletedDate() != null) {
@@ -84,7 +93,8 @@ public class ListingService {
         return this.listingMapper.toDto(listing);
     }
 
-    public ListingDTO findByHash(String hash){
+    // -- GET BY HASH
+    public ListingDTO getByHash(String hash){
         Listing listing = this.listingRepository.findActiveByHash(hash)
                 .orElseThrow(() -> new RuntimeException("No encontrado"));
         if (listing.getDeletedDate() != null) {
@@ -92,19 +102,11 @@ public class ListingService {
         }
         return this.listingMapper.toDto(listing);
     }
-    
-
-    public List<ListingDTO> findAllListing(){
-        List<Listing> listings = this.listingRepository.findAllByDeletedDateIsNull();
-        return this.listingMapper.toDtoList(listings);
-    }
 
 
     public Page<Listing> findAllPage(Pageable pageable){
         return this.listingRepository.findAllByDeletedDateIsNull(pageable);
     }
-
-
 
     public Page<ListingDTO> search(String title, List<String> categories, List<String> tags, Double min, Double max, Pageable pageable) {
         Specification<Listing> spec = Specification.where((root, query, cb) -> cb.isNull(root.get("deletedDate")));
@@ -123,13 +125,12 @@ public class ListingService {
     
         spec = spec.and(ListingSpecifications.priceInRange(min, max));
         Page<Listing> listingsPage = listingRepository.findAll(spec, pageable);
-
         // 3. Convertir a Page de DTOs usando tu mapper
         return listingsPage.map(listing -> this.listingMapper.toDto(listing));
     }
 
 
-    public ListingDTO editListingById(Long id, Listing dataToEdit) {
+    public ListingDTO updateById(Long id, Listing dataToEdit) {
         Listing listing = this.listingRepository.findActiveById(id)
                 .orElseThrow(() -> new RuntimeException("No encontrado"));
 
@@ -137,8 +138,10 @@ public class ListingService {
             System.out.printf("Editando el nombre del producto: viejo:%s - nuevo:%s", listing.getTitle(), dataToEdit.getTitle());
             listing.setTitle(dataToEdit.getTitle());
         }
+
         if (!stringUtils.isEmpty(dataToEdit.getDescription()))
             listing.setDescription(dataToEdit.getDescription());
+
         if (null != dataToEdit.getDeleted())
             listing.setDeleted(dataToEdit.getDeleted());
 
@@ -153,6 +156,7 @@ public class ListingService {
         
         if(null != dataToEdit.getImages()) 
             listing.setImages(dataToEdit.getImages());
+
         if(null != dataToEdit.getThumbnail())
             listing.setThumbnail(dataToEdit.getThumbnail());
 
@@ -168,11 +172,12 @@ public class ListingService {
         return this.listingMapper.toDto(listing);
     }
 
-    public ListingDTO deleteListingById(Long id) {
+    public ListingDTO deleteById(Long id) {
         Listing listing = this.listingRepository.findActiveById(id)
                 .orElseThrow(() -> new RuntimeException("No encontrado"));
-
         //this.productRepository.delete(post);
+        // Borrar Imagenes del Storage
+        listing.getImages().forEach(fileStorageService::deleteFile);
         listing.setDeleted(true);
         listing.setDeletedDate(LocalDate.now());
         Listing saveListing = this.listingRepository.save(listing);
@@ -203,27 +208,14 @@ public class ListingService {
             }
             return listing;
         }).collect(Collectors.toList());
-
         // 2. Guardamos todos los Listings de una vez
         List<Listing> savedListings = listingRepository.saveAll(listingsToSave);
-
         // 3. Retornamos la lista convertida a DTO para el Frontend
         return savedListings.stream()
                 .map(listingMapper::toDto)
                 .collect(Collectors.toList());
     }
 
-
-    @Transactional
-    public void updateImageUrl(Long id, String imageUrl) {
-    // 1. Buscamos el producto o lanzamos error si no existe
-        Listing listing = listingRepository.findActiveById(id)
-            .orElseThrow(() -> new RuntimeException("Publicacion no encontrada con id: " + id));
-        // 2. Actualizamos el campo de la URL   
-        List<String> images = listing.getImages();
-        images.add(imageUrl);
-        listingRepository.save(listing);
-    }
 
 // --- MÉTODOS AUXILIARES PRIVADOS ---
 
@@ -245,9 +237,27 @@ public class ListingService {
         return product;
     }
 
+    @Transactional
+    public void removeImageFromListing(Long listingId, String imageUrl) {
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new RuntimeException("Listing no encontrado"));
+        // 1. Eliminar la URL de la lista en la base de datos
+        boolean removed = listing.getImages().remove(imageUrl);
+        if (removed) {
+            // 2. Si se quitó de la DB con éxito, procedemos a borrar el archivo físico
+            fileStorageService.deleteFile(imageUrl);
+            listingRepository.save(listing);
+        }
+    }
+
+
     private Product getOrCreateProduct(ListingDTO dto) {
         if (dto.getProduct_id() != null) {
             return productRepository.findById(dto.getProduct_id())
+                    .orElseGet(() -> createNewProductFromDto(dto));
+        }
+        if (dto.getSku() != null) {
+            return productRepository.findBySku(dto.getSku())
                     .orElseGet(() -> createNewProductFromDto(dto));
         }
         return createNewProductFromDto(dto);
@@ -262,22 +272,41 @@ public class ListingService {
         }
     }
 
-    private void handleImageUpload(Listing listing, MultipartFile file) {
-        // Guardamos el archivo físicamente
-        String finalUrl = fileStorageService.storeFile(file, listing.getId());
-        // Actualizamos la entidad (ya está en contexto de persistencia por el @Transactional)
-        List<String> images;
-        if(listing.getImages() != null){
-            images = listing.getImages();
-        }else{
-            images = new ArrayList<>();
-        }
-        images.add(finalUrl);
-        listing.setImages(images);
+    @Transactional
+    public String uploadImage(Long id, MultipartFile file) {
+        if (file.isEmpty()) throw new IllegalArgumentException("El archivo está vacío");
 
-        //Agrega thumbnail si no tiene.
-        if(listing.getThumbnail() == null) 
+        Listing listing = listingRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Listing no encontrado"));
+
+        return handleImageUpload(listing, file);
+    }
+
+    @Transactional
+    public List<String> uploadImages(Long id, MultipartFile[] files) {
+        if (files == null || files.length == 0) throw new IllegalArgumentException("No hay archivos");
+
+        Listing listing = listingRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Listing no encontrado"));
+
+        List<String> urls = new ArrayList<>();
+        for (MultipartFile file : files) {
+            if (!file.isEmpty()) {
+                urls.add(handleImageUpload(listing, file));
+            }
+        }
+        return urls;
+    }
+
+    private String handleImageUpload(Listing listing, MultipartFile file) {
+        String finalUrl = fileStorageService.storeFile(file, listing.getId());
+        listing.getImages().add(finalUrl);
+
+        if (listing.getThumbnail() == null || listing.getThumbnail().isEmpty()) {
             listing.setThumbnail(finalUrl);
+        }
+        listingRepository.save(listing);
+        return finalUrl;
     }
 
     public Review ReviewFromDto(Review rNode, Listing parent) {
@@ -288,4 +317,6 @@ public class ListingService {
         r.setListing(parent);
         return r;
     }
+
+    
 }

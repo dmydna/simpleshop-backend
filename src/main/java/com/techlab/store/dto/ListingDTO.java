@@ -1,6 +1,7 @@
 package com.techlab.store.dto;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,7 +42,7 @@ public class ListingDTO {
     private String returnPolicy;
     private Integer minimumOrderQuantity;
     @ElementCollection
-    private List<String> images;
+    private List<String> images = new ArrayList<>();
     private String thumbnail;
     private String hash;
 

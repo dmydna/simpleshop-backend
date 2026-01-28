@@ -45,23 +45,5 @@ public class Product {
     @JsonIgnore
     private List<Listing> listings;
 
-//    private String title;
-//    @Column(length = 1000)
-//    private String description;
-//    private Double price;
-//    private Boolean deleted;
-//    private LocalDate deletedDate;
-//    private Double discountPercentage;
-//    private Double rating;
-//    private String warrantyInformation;
-//    private String shippingInformation;
-//    private String availabilityStatus;
-//    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-//    @JsonManagedReference
-//    private Set<Review> reviews = new HashSet<>();
-//    private String returnPolicy;
-//    private Integer minimumOrderQuantity;
-//    @ElementCollection
-//    private List<String> images;
-//    private String thumbnail;
+
 }

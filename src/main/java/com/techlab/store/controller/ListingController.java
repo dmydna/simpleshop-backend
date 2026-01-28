@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,12 +50,13 @@ public class ListingController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ListingDTO> createListing(
+    public ResponseEntity<ListingDTO> create(
         @RequestPart("listing") ListingDTO listingDTO,
-        @RequestPart(value = "file", required = false) MultipartFile file
+        @RequestPart(value = "files", required = false) MultipartFile[] files
     ) {
-        ListingDTO savedListing = listingService.createListing(listingDTO, file);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedListing);
+        ListingDTO savedListing = listingService.create(listingDTO, files);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(savedListing);
     }
 
 
@@ -68,24 +70,16 @@ public class ListingController {
     }
 
     @GetMapping("/{id}")
-    public ListingDTO getPostById(@PathVariable Long id){
-        return this.listingService.getListingById(id);
+    public ListingDTO getById(@PathVariable Long id){
+        return this.listingService.getById(id);
     }
 
 
     @GetMapping("/hash/{hash}")
     public ResponseEntity<Map<String, Object>> getByHash(@PathVariable String hash) {
         Map<String, Object> response = new HashMap<>();
-        response.put("listing", listingService.findByHash(hash));
+        response.put("listing", listingService.getByHash(hash));
         return ResponseEntity.ok(response);
-    }
-
-
-    @GetMapping("/all")
-    public List<ListingDTO> getAllPost(
-            @RequestParam(required = false, defaultValue = "") String name,
-            @RequestParam(required = false, defaultValue = "") String category){
-        return this.listingService.findAllListing();
     }
 
 
@@ -105,41 +99,48 @@ public class ListingController {
 
 
     @PutMapping("/{id}")
-    public ListingDTO editPostById(@PathVariable Long id, @RequestBody Listing dataToEdit){
-        return this.listingService.editListingById(id, dataToEdit);
+    public ListingDTO updateById(@PathVariable Long id, @RequestBody Listing dataToEdit){
+        return this.listingService.updateById(id, dataToEdit);
     }
 
     @DeleteMapping("/{id}")
-    public ListingDTO deletePostById(@PathVariable Long id){
-        return this.listingService.deleteListingById(id);
+    public ListingDTO deleteById(@PathVariable Long id){
+        return this.listingService.deleteById(id);
     }
 
 
-    @PostMapping("/{id}/upload-image")
-    public ResponseEntity<String> uploadProductImage(
-        @PathVariable Long id,
-        @RequestParam("file") MultipartFile file
-    ) {
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body("Archivo vacío");
-        }
-    
+    @PostMapping("/{id}/upload-single")
+    public ResponseEntity<?> uploadSingle(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
         try {
-            // 1. Definir la ruta de guardado (dentro del contenedor o servicio externo)
-            String fileName = "prod_" + id + "_" + file.getOriginalFilename();
-            Path path = Paths.get("/app/uploads/" + fileName);
-            
-            // 2. Guardar físicamente el archivo
-            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-            
-            // 3. Actualizar la URL en la base de datos (ejemplo)
-            String finalUrl = baseUrl + "/uploads/" + fileName;
-            listingService.updateImageUrl(id, finalUrl);
-        
-            return ResponseEntity.ok("Imagen subida con éxito: " + fileName);
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body("Error al guardar: " + e.getMessage());
+            String url = listingService.uploadImage(id, file);
+            return ResponseEntity.ok(url);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error interno: " + e.getMessage());
         }
+    }
+
+
+    @PostMapping("/{id}/upload-multiple")
+    public ResponseEntity<?> uploadMultiple(@PathVariable Long id, @RequestParam("files") MultipartFile[] files) {
+        try {
+            List<String> urls = listingService.uploadImages(id, files);
+            return ResponseEntity.ok(urls);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error al procesar lote: " + e.getMessage());
+        }
+    }
+
+
+
+    @DeleteMapping("/{id}/images")
+    public ResponseEntity<?> deleteImage(
+            @PathVariable Long id,
+            @RequestParam String imageUrl // El front envía la URL completa de la imagen a borrar
+    ) {
+        listingService.removeImageFromListing(id, imageUrl);
+        return ResponseEntity.ok("Imagen eliminada correctamente");
     }
 
     @PatchMapping("/{id}/visibility")
