@@ -8,6 +8,7 @@ import com.techlab.store.model.ProductMeta;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,8 +24,8 @@ import lombok.ToString;
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
     private Long id;
+    
     private String name;
     @Column(unique = true, nullable = false)
     private String sku;
@@ -33,12 +34,21 @@ public class Product {
     @Embedded
     private ProductDimensions dimensions;
     private Integer stock;
-    private String category;
+
+/*
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+*/
+
+    private String Category;
+
     @ElementCollection
     private List<String> tags;
     @Embedded
     private ProductMeta meta;
-    boolean deleted;
+    private Boolean deleted;
+    private LocalDate deletedDate;
 
 //    @JsonIgnoreProperties("product")
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)

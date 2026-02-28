@@ -24,31 +24,14 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
     @Query("SELECT l FROM Listing l WHERE l.hash = :hash AND l.deletedDate IS NULL")
     Optional<Listing> findActiveByHash(@Param("hash") String hash);
 
+
+
     // -- Filtrar (no eliminados) :
 
     // Por Title. (para busquedas)
     @Query("SELECT l FROM Listing l WHERE l.title LIKE %:keyword% AND l.deletedDate IS NULL")
     Page<Listing> searchByTitle(@Param("keyword") String keyword, Pageable pageable);
 
-// Borra el @Query y usa el nombre estándar de Spring Data
-    // @Query("SELECT l FROM Listing l WHERE " +
-    //    "(:categories IS NULL OR l.product.category IN :categories) AND " +
-    //    "l.deletedDate IS NULL")
-    // Page<Listing> findByCategories(@Param("categories") List<String> categories, Pageable pageable);
-
-    // @Query("SELECT l FROM Listing l WHERE " +
-    // "(:categories IS NULL OR l.product.category IN :categories) AND " +
-    // "(:tags IS NULL OR l.product.tags IN :tags) AND " +
-    // "(:minPrice IS NULL OR l.price >= :minPrice) AND " +
-    // "(:maxPrice IS NULL OR l.price <= :maxPrice) AND " +
-    // "l.deletedDate IS NULL")
-    // Page<Listing> findWithFilters(
-    //  @Param("categories") List<String> categories,
-    //  @Param("tags") List<String> tags,
-    //  @Param("minPrice") Double minPrice,
-    //  @Param("maxPrice") Double maxPrice,
-    //  Pageable pageable
-    // );
 
     List<Listing> findAllByDeletedDateIsNull();
 }

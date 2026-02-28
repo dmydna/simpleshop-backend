@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.techlab.store.service.AuthService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,17 +20,11 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.techlab.store.dto.ListingDTO;
@@ -39,15 +35,14 @@ import com.techlab.store.service.ListingService;
 
 @RestController
 @RequestMapping("/api/listing")
-
+@RequiredArgsConstructor
 public class ListingController {
     private final ListingService listingService;
+    private final AuthService authService;
+
     @Value("${app.base-url}")
     private String baseUrl;
 
-    public ListingController(ListingService listingService) {
-        this.listingService = listingService;
-    }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ListingDTO> create(
@@ -60,10 +55,10 @@ public class ListingController {
     }
 
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/bulk")
     public ResponseEntity<List<ListingDTO>> createPosts(@RequestBody List<ListingDTO> listings) {
         // El service debe usar saveAll()
-        listings.forEach(listing -> listing.setId(null));
         List<ListingDTO> savedListings = listingService.saveAll(listings);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(savedListings);
@@ -71,6 +66,7 @@ public class ListingController {
 
     @GetMapping("/{id}")
     public ListingDTO getById(@PathVariable Long id){
+        if(authService.isAdmin()) {this.listingService.getByIdAdmin(id);}
         return this.listingService.getById(id);
     }
 
@@ -90,19 +86,34 @@ public class ListingController {
         @RequestParam(required = false) List<String> tags,
         @RequestParam(required = false) Double minPrice,
         @RequestParam(required = false) Double maxPrice,
+        @RequestParam(required = false) Visibility visibility,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        // El Service decide si usa filtros o si devuelve todo
-        return ResponseEntity.ok(listingService.search(title, categories, tags, minPrice, maxPrice, pageable));
+        if (authService.isAdmin()) {
+            return ResponseEntity.ok(listingService
+                    .search(title, categories, tags, minPrice, maxPrice, visibility, pageable));
+        }
+        return ResponseEntity.ok(listingService
+                    .search(title, categories, tags, minPrice, maxPrice, Visibility.PUBLIC, pageable));
+
     }
 
 
-
-    @PutMapping("/{id}")
-    public ListingDTO updateById(@PathVariable Long id, @RequestBody Listing dataToEdit){
-        return this.listingService.updateById(id, dataToEdit);
+    @GetMapping("/admin/{id}")
+    public ListingDTO _getById(@PathVariable Long id){
+        return this.listingService.getById(id);
     }
 
+
+    @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
+    public ListingDTO updateById(
+            @PathVariable Long id,
+            @RequestPart("data") ListingDTO dataToEdit, // Cambiado de @RequestBody
+            @RequestPart(value = "files", required = false) MultipartFile[] files) {
+        return this.listingService.updateById(id, dataToEdit, files);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ListingDTO deleteById(@PathVariable Long id){
         return this.listingService.deleteById(id);
@@ -110,7 +121,8 @@ public class ListingController {
 
 
     @PostMapping("/{id}/upload-single")
-    public ResponseEntity<?> uploadSingle(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> uploadSingle(
+            @PathVariable Long id, @RequestParam("file") MultipartFile file) {
         try {
             String url = listingService.uploadImage(id, file);
             return ResponseEntity.ok(url);

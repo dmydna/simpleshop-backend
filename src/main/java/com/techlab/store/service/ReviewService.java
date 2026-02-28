@@ -8,23 +8,19 @@ import com.techlab.store.repository.ListingRepository;
 import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.repository.ReviewRepository;
 import com.techlab.store.utils.StringUtils;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
 
 @Service
+@RequiredArgsConstructor
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final ListingRepository listingRepository;
     private StringUtils stringUtils;
-
-
-    public ReviewService(ReviewRepository reviewRepository, ListingRepository listingRepository) {
-        this.reviewRepository = reviewRepository;
-        this.listingRepository = listingRepository;
-    }
 
     public void deleteById(Long id) {
     }

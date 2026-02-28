@@ -1,9 +1,6 @@
-package com.techlab.store.utils;
+package com.techlab.store.mapper;
 
-import com.techlab.store.dto.ClientDTO;
-import com.techlab.store.dto.ListingDTO;
 import com.techlab.store.dto.ProductDTO;
-import com.techlab.store.entity.Client;
 import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.Product;
 import org.mapstruct.InheritInverseConfiguration;

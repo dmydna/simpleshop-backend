@@ -19,46 +19,39 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-public class ListingDTO {
-
+public record ListingDTO (
     // Listing
-    private Long id;
-    private String title;
-    @Column(length = 1000)
-    private String description;
-    private Double price;
-    private Visibility visibility;
-    private LocalDate deletedDate;
-    private Double discountPercentage;
-    private Double rating;
-    private String warrantyInformation;
-    private String shippingInformation;
-    private String availabilityStatus;
-    private Set<Review> reviews = new HashSet<>();
-    private String returnPolicy;
-    private Integer minimumOrderQuantity;
-    @ElementCollection
-    private List<String> images = new ArrayList<>();
-    private String thumbnail;
-    private String hash;
+    Long id,
+    String title,
+    String description,
+    Double price,
+    Visibility visibility,
 
+    LocalDate deletedDate,
+    LocalDate createdDate,
+    LocalDate modifiedDate,
+
+    Double discountPercentage,
+    Double rating,
+    String warrantyInformation,
+    String shippingInformation,
+    String availabilityStatus,
+    Set<Review> reviews,
+    String returnPolicy,
+    Integer minimumOrderQuantity,
+    List<String> images,
+    String thumbnail,
+    String hash,
+    Boolean deleted,
     // product
-    private Long product_id;
-    private String product_name;
-    private String sku;
-    private String brand;
-    private Integer weight;
-    @Embedded
-    private ProductDimensions dimensions;
-    private Integer stock;
-    private String category;
-    @ElementCollection
-    private List<String> tags;
-    @Embedded
-    private ProductMeta meta;
-//    private List<Long> listings;
-}
+    Long productId,
+    String productName,
+    String sku,
+    String brand,
+    Integer weight,
+    ProductDimensions dimensions,
+    Integer stock,
+    String category,
+    List<String> tags,
+    ProductMeta meta
+){}

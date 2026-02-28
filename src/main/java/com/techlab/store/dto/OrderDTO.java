@@ -6,8 +6,7 @@ import lombok.*;
 
 import java.util.Set;
 
-@Getter
-@Setter
+@Getter @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderDTO {

@@ -1,8 +1,7 @@
-package com.techlab.store.utils;
+package com.techlab.store.mapper;
 
 import com.techlab.store.dto.OrderDetailDTO;
 import com.techlab.store.dto.OrderFullDTO;
-import com.techlab.store.dto.OrderSimpleDTO;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderDetail;
 import org.mapstruct.*;

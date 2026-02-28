@@ -1,6 +1,6 @@
 package com.techlab.store.enums;
 
 public enum Role {
-    USER,
-    ADMIN,
+    ADMIN,  // Puede hacer CRUD de todo
+    CLIENT  // Puede comprar y reseñar
 }

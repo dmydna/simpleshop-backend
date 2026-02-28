@@ -31,8 +31,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Listing {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String title;
@@ -40,7 +39,11 @@ public class Listing {
     private String description;
     private Double price;
     private Boolean deleted;
+
     private LocalDate deletedDate;
+    private LocalDate createdDate;
+    private LocalDate modifiedDate;
+
     @Enumerated(EnumType.STRING)
     private Visibility visibility = Visibility.PUBLIC;
     private Double discountPercentage;
