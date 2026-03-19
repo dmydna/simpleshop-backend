@@ -1,7 +1,6 @@
 package com.techlab.store.service;
 
 
-import com.techlab.store.dto.OrderDTO;
 import com.techlab.store.dto.OrderFullDTO;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.Order;
@@ -11,7 +10,8 @@ import com.techlab.store.repository.ClientRepository;
 import com.techlab.store.repository.OrderRepository;
 import com.techlab.store.repository.ProductRepository;
 
-import com.techlab.store.utils.OrderMapper;
+import com.techlab.store.mapper.OrderMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class OrderService {
     private final OrderRepository orderRepository;
     private final ClientRepository clientRepository;
@@ -32,23 +33,13 @@ public class OrderService {
     @Autowired
     private OrderMapper orderMapper;
 
-    @Autowired
-    public OrderService(
-            OrderRepository orderRepository,
-            ClientRepository clientRepository,
-            ProductRepository productRepository) {
-        this.orderRepository = orderRepository;
-        this.clientRepository = clientRepository;
-        this.productRepository = productRepository;
-    }
-
     @Transactional
     public OrderFullDTO createOrder(OrderFullDTO dto) {
 
-      if (dto.getClient().getId() == null) {
+      if (dto.getClient().id() == null) {
             throw new RuntimeException("El pedido debe tener un Cliente asignado.");
       }
-      Client client = clientRepository.findById(dto.getClient().getId())
+      Client client = clientRepository.findById(dto.getClient().id())
               .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
 
       Order newOrder = orderMapper.toEntity(dto);
@@ -60,10 +51,10 @@ public class OrderService {
           detail.setOrder(newOrder);
 
           Product p = productRepository.findById(detail.getProduct().getId())
-                  .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                  .orElseThrow(() -> new RuntimeException("Producto no encontrado "));
 
           if (p.getStock() < detail.getQuantity()) {
-              throw new RuntimeException("Stock insuficiente para el producto: " + p.getTitle());
+              throw new RuntimeException("Stock insuficiente para el producto: " + p.getName());
           }
           // actualiza stock de producto
           p.setStock(p.getStock() - detail.getQuantity());
@@ -75,21 +66,21 @@ public class OrderService {
 
 
     @Transactional(readOnly = true)
-    public OrderFullDTO getOrderById(Long id) {
+    public OrderFullDTO getById(Long id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
         return this.orderMapper.toFullDto(order);
     }
 
    @Transactional(readOnly = true)
-    public List<OrderFullDTO> getAllOrders() {
+    public List<OrderFullDTO> getAll() {
         List<Order> orders = orderRepository.findAll();
         return this.orderMapper.toFullDtoList(orders);
     }
 
 
     @Transactional
-    public OrderFullDTO updateOrderStatus(Long id, Order.OrderState newState) {
+    public OrderFullDTO updateStatus(Long id, Order.OrderState newState) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
         log.info("Actualizando estado de Pedido ID {} de {} a {}", id, order.getState(), newState);
@@ -106,7 +97,7 @@ public class OrderService {
         return orderMapper.toFullDto(savedOrder);
     }
 
-    public OrderFullDTO updateOrderDetail(Long id, Set<OrderDetail> details){
+    public OrderFullDTO updateDetail(Long id, Set<OrderDetail> details){
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
         order.setDetails(details);
@@ -118,7 +109,7 @@ public class OrderService {
 
 
     @Transactional
-    public OrderFullDTO editOrderById(Long id, Order dataToEdit) {
+    public OrderFullDTO updateById(Long id, Order dataToEdit) {
         Order existingOrder = orderRepository.findOneWithDetailsAndClientById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
 
@@ -186,7 +177,7 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Producto con ID " + productId + " no encontrado."));
 
         if (product.getStock() + stockAdjustment < 0) {
-            throw new RuntimeException("Stock insuficiente para el producto: " + product.getTitle());
+            throw new RuntimeException("Stock insuficiente para el producto: " + product.getName());
         }
 
         product.setStock(product.getStock() + stockAdjustment);
@@ -208,6 +199,11 @@ public class OrderService {
     public List<OrderFullDTO> getOrderByClientId(Long id) {
 //      List<Order> orders = this.orderRepository.findAllWithDetailsAndClientById(id);
         List<Order> orders = this.orderRepository.findByClientId(id);
+        return this.orderMapper.toFullDtoList(orders);
+    }
+
+    public List<OrderFullDTO> getByUser(String username) {
+        List<Order> orders  = this.orderRepository.findAllByFirstName(username);
         return this.orderMapper.toFullDtoList(orders);
     }
 }

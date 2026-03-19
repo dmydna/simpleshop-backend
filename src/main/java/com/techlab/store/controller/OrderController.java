@@ -27,7 +27,7 @@ public class OrderController {
 
     @GetMapping("/{id}")
     public OrderFullDTO getOrderById(@PathVariable Long id) {
-        return this.orderService.getOrderById(id);
+        return this.orderService.getById(id);
     }
 
     @GetMapping("/client/{id}")
@@ -37,7 +37,7 @@ public class OrderController {
 
     @GetMapping
     public List<OrderFullDTO> getAllOrders() {
-        return this.orderService.getAllOrders();
+        return this.orderService.getAll();
     }
 
 
@@ -45,6 +45,6 @@ public class OrderController {
     public OrderFullDTO updateStatus(
             @PathVariable Long id,
             @RequestParam Order.OrderState newState) {
-        return this.orderService.updateOrderStatus(id, newState);
+        return this.orderService.updateStatus(id, newState);
     }
 }

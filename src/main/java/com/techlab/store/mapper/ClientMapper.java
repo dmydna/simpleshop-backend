@@ -1,10 +1,8 @@
-package com.techlab.store.utils;
+package com.techlab.store.mapper;
 
 import com.techlab.store.dto.ClientDTO;
 import com.techlab.store.dto.ClientFullDTO;
-import com.techlab.store.dto.OrderDetailDTO;
 import com.techlab.store.entity.Client;
-import com.techlab.store.entity.OrderDetail;
 import org.mapstruct.*;
 
 import java.util.List;
@@ -18,9 +16,13 @@ public interface ClientMapper {
     ClientDTO toSimpleDto(Client entity);
 
     @Named("clientToFullDto")
+    @Mapping(source = "user.username", target = "username")
+    @Mapping(source = "user.email", target = "email")
     ClientFullDTO toFullDto(Client entity);
 
     List<ClientDTO> toDtoList(List<Client> clients);
+
+    @IterableMapping(qualifiedByName = "clientToFullDto")
     List<ClientFullDTO> toFullDtoList(List<Client> clients);
 
     // --- ENTRADA (POST/PUT)
@@ -28,14 +30,11 @@ public interface ClientMapper {
     // Se ignora orders para no romper relacion de entidad client->orders
 
     // Para crear un cliente nuevo
+    @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
     @Mapping(target = "orders", ignore = true)
+    @Mapping(target = "user", ignore = true)
     @Mapping(target = "deleted", ignore = true)
     Client toEntity(ClientDTO dto);
-
-    @Mapping(target = "product.id", source = "product.id")
-    @Mapping(target = "product.title", source = "product.title")
-    @Mapping(target = "product.price", source = "product.price")
-    OrderDetailDTO OrderDetailToDto(OrderDetail detail);
 
     // Para editar un cliente existente
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

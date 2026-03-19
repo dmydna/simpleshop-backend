@@ -36,5 +36,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "WHERE o.id = :orderId")
     Optional<Order> findOneWithDetailsAndClientById(@Param("orderId") Long orderId);
 
-
+    @Query("SELECT o FROM Order o " +
+            "JOIN FETCH o.client c " +
+            "JOIN FETCH o.details od " +
+            "JOIN FETCH od.product p " +
+            "WHERE c.firstName = :name")
+    List<Order> findAllByFirstName(@Param("name") String name);
 }

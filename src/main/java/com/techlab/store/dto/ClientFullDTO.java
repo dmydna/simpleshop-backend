@@ -6,10 +6,17 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.util.Set;
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-public class ClientFullDTO extends ClientDTO {
-    Set<OrderSimpleDTO> orders;
-}
+
+public record ClientFullDTO (
+    Long id,
+    // user
+    String username,
+    String email,
+    // client
+    String firstName,
+    String lastName,
+    String address,
+    String phone,
+    Boolean deleted,
+    Set<OrderSimpleDTO> orders
+){}

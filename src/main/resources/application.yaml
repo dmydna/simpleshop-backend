@@ -1,18 +1,26 @@
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+  
 spring:
+  mvc:
+    static-path-pattern: "/uploads/**"
+  web:
+    resources:
+      static-locations: "file:${UPLOAD_DIR:/app/uploads}/"
+
   application:
     name: store
 
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    # Formato: ${VARIABLE:VALOR_POR_DEFECTO}
-    url: jdbc:mysql://${DB_HOST:localhost}:3306/${DB_NAME:techlabdb}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:1234}
+    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+    url: ${DB_URL:jdbc:mysql://db:3306/techlabdb}
+    username: ${DB_ROOT_USER:root}
+    password: ${DB_PASSWORD:root}
 
   sql:
     init:
       mode: always
-      #data-locations: classpath:products.sql, classpath:clients.sql
+      data-locations:
 
   jpa:
     defer-datasource-initialization: true
@@ -22,8 +30,14 @@ spring:
       hibernate:
         format_sql: true
         show-sql: true
+    database-platform: ${DB_DIALECT:org.hibernate.dialect.MySQLDialect}
 
   h2:
     console:
-      enabled: true
+      enabled: false
       path: /h2-console
+
+spring.main.allow-bean-definition-overriding: true
+
+server:
+  port: 8080

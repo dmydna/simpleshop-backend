@@ -10,14 +10,10 @@ import lombok.*;
 @NoArgsConstructor
 public class OrderDetailDTO {
     private Long id;
-    private ProductDetail product;
+    private Long productId;
+    private Long listingId;
+    private String name;
+    private int stock;
     private int quantity;
-
-    @Data
-    public static class ProductDetail{
-        Long id;
-        String title;
-        Integer stock;
-        Double price;
-    }
+    private double priceAtPurchase; // precio a pagar
 }
