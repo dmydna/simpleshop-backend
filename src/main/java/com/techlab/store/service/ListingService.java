@@ -129,7 +129,7 @@ public class ListingService {
 
     public ListingDTO updateById(Long id, ListingDTO dataToEdit, MultipartFile[] files) {
         Listing listing = this.listingRepository.findActiveById(id)
-                .orElseThrow(() -> new RuntimeException("No encontrado"));
+                .orElseThrow(() -> new RuntimeException("Error al actualizar: No se encontro listing con id "+ id));
         // Importante: este mapper ignora el campo images.
         listingMapper.updateFromDto(dataToEdit, listing);
         // Importante: esta funcion requiere listing.images sin modificar.

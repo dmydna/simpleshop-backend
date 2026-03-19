@@ -43,7 +43,7 @@ public class ListingController {
     @Value("${app.base-url}")
     private String baseUrl;
 
-
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ListingDTO> create(
         @RequestPart("listing") ListingDTO listingDTO,
@@ -113,7 +113,7 @@ public class ListingController {
         return this.listingService.updateById(id, dataToEdit, files);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/{id}")
     public ListingDTO deleteById(@PathVariable Long id){
         return this.listingService.deleteById(id);

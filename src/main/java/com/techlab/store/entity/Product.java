@@ -41,7 +41,7 @@ public class Product {
     private Category category;
 */
 
-    private String Category;
+    private String category;
 
     @ElementCollection
     private List<String> tags;
