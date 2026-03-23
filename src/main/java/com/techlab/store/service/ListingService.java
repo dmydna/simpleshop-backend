@@ -90,7 +90,7 @@ public class ListingService {
     }
 
 
-    public Page<ListingDTO> search(
+    public Page<ListingDTO> filter(
             String title,
             List<String> categories,
             List<String> tags,

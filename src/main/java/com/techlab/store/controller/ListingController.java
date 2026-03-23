@@ -1,11 +1,5 @@
 package com.techlab.store.controller;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,13 +16,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.techlab.store.dto.ListingDTO;
-import com.techlab.store.entity.Listing;
 import com.techlab.store.enums.Visibility;
 import com.techlab.store.service.ListingService;
 
@@ -91,10 +82,10 @@ public class ListingController {
     ) {
         if (authService.isAdmin()) {
             return ResponseEntity.ok(listingService
-                    .search(title, categories, tags, minPrice, maxPrice, visibility, pageable));
+                    .filter(title, categories, tags, minPrice, maxPrice, visibility, pageable));
         }
         return ResponseEntity.ok(listingService
-                    .search(title, categories, tags, minPrice, maxPrice, Visibility.PUBLIC, pageable));
+                    .filter(title, categories, tags, minPrice, maxPrice, Visibility.PUBLIC, pageable));
 
     }
 

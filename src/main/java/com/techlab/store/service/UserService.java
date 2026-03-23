@@ -104,21 +104,7 @@ public class UserService {
     public UserDTO updateById(Long id, UserDTO dataToEdit) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("No encontrado"));
-
-        if (!stringUtils.isEmpty(dataToEdit.username())){
-            user.setUsername(dataToEdit.username());
-        }
-        if (null != dataToEdit.deleted()){
-            user.setDeleted(dataToEdit.deleted());
-        }
-        if (!stringUtils.isEmpty(dataToEdit.image())){
-            user.setImage(dataToEdit.image());
-        }
-
-        if (!stringUtils.isEmpty(dataToEdit.password())){
-            user.setImage(dataToEdit.image());
-        }
-
+        userMapper.updateFromDto(dataToEdit, user);
         User savedUser = userRepository.save(user);
         return userMapper.toDto(savedUser);
     }

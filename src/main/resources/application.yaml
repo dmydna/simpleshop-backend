@@ -1,6 +1,9 @@
 app:
   base-url: ${APP_BASE_URL:http://localhost:8080}
-  
+  admin:
+    username: ${APP_ADMIN_USERNAME:admin}
+    password: ${APP_ADMIN_PASSWORD:admin1234}
+
 spring:
   mvc:
     static-path-pattern: "/uploads/**"
