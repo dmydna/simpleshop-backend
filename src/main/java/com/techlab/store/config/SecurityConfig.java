@@ -41,6 +41,7 @@ public class SecurityConfig {
                         // Públicos
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/api/image/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/listing/**").permitAll()
 
                         // Protegidos (Usamos el texto EXACTO que sale en tu log: ADMIN)
