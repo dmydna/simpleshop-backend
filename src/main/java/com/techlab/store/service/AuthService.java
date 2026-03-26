@@ -14,6 +14,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -73,4 +79,16 @@ public class AuthService {
     public boolean isAdmin() {
         return isRole("ADMIN");
     }
+
+    @Transactional
+    public List<User> saveAll(List<RegisterRequest> listRequests) {
+        List<User> savedUsers = new ArrayList<>();
+        for (RegisterRequest request : listRequests) {
+            User savedUser = userService.create(request);
+            clientService.create(request, savedUser);
+            savedUsers.add(savedUser);
+        }
+        return savedUsers;
+    }
+
 }

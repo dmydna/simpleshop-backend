@@ -3,6 +3,7 @@ package com.techlab.store.utils;
 public record RegisterRequest(
         String username,
         String password,
+        String image,
         String email,
         String firstName,
         String lastName,
