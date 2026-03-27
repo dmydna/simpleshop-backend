@@ -20,6 +20,7 @@ public interface ListingMapper {
     @Mapping(source = "product.sku", target= "sku")
     @Mapping(source = "product.stock", target= "stock")
     @Mapping(source = "product.category", target= "category")
+    @Mapping(source = "product.tags", target= "tags")
         // @Mapping(source = "product", target = ".") // <-- con "." se sobrescribe el listing.id -> product.id
     ListingDTO toDto(Listing listing);
 
