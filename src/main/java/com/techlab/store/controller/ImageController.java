@@ -4,12 +4,12 @@ package com.techlab.store.controller;
 import com.techlab.store.service.ImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController
@@ -27,23 +27,33 @@ public class ImageController {
     private static final long MAX_AREA = MAX_WIDTH * MAX_HEIGHT; // Límite de área total (evita 4000x4000 combinados si es muy pesado)
 
 
-    @GetMapping(value = "/{width}x{height}", produces = MediaType.IMAGE_PNG_VALUE)
+    @GetMapping(value = "/{width}x{height}", produces = "image/svg+xml")
     public @ResponseBody byte[] generatePlaceholder(
             @PathVariable @Min(1) @Max(4000) int width,
             @PathVariable @Min(1) @Max(4000) int height,
             @RequestParam(defaultValue = "cccccc") String background, // Ahora es Param
             @RequestParam(defaultValue = "000000") String textColor,  // También lo pasamos a Param
-            @RequestParam(defaultValue = "16") String fontSize,
-            @RequestParam(defaultValue = "plain") String fontWeight,
-            @RequestParam(defaultValue = "SansSerif") String fontFamily,
-            @RequestParam(required = false) String text){
+            @RequestParam(defaultValue = "30%") String fontSize,
+            @RequestParam(defaultValue = "thin") String fontWeight,
+            @RequestParam(required = false) String text,
+            @RequestParam(required = false) String icon
+            ){
 
         if ((long) width * height > MAX_AREA) {
             throw new IllegalArgumentException("Image too large");
         }
-
         String finalLabel = (text != null && !text.isBlank()) ? text : width + "x" + height;
-
-        return imageService.createImage(width, height, background, textColor, fontSize, finalLabel, fontFamily, fontWeight);
+        return imageService
+                .generateImage(
+                        width,
+                        height,
+                        background,
+                        textColor,
+                        fontSize,
+                        finalLabel,
+                        fontWeight,
+                        icon
+                );
     }
+
 }
