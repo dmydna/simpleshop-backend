@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.techlab.store.repository.ClientRepository;
 import com.techlab.store.entity.Client;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,9 +22,7 @@ public class ClientService {
     @Autowired
     private final ClientRepository clientRepository;
     private final StringUtils stringUtils;
-
-    @Autowired
-    private ClientMapper clientMapper;
+    private final ClientMapper clientMapper;
 
     public ClientFullDTO create(ClientDTO dto){
        Client newClient = clientMapper.toEntity(dto);
@@ -106,4 +105,5 @@ public class ClientService {
                 .orElse(null);
         return client;
     }
+
 }

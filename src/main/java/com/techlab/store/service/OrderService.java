@@ -1,7 +1,10 @@
 package com.techlab.store.service;
 
 
+import com.techlab.store.dto.BuyRequest;
+import com.techlab.store.dto.OrderDetailDTO;
 import com.techlab.store.dto.OrderFullDTO;
+import com.techlab.store.dto.OrderResponse;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderDetail;
@@ -11,12 +14,14 @@ import com.techlab.store.repository.OrderRepository;
 import com.techlab.store.repository.ProductRepository;
 
 import com.techlab.store.mapper.OrderMapper;
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,43 +31,47 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class OrderService {
+
     private final OrderRepository orderRepository;
     private final ClientRepository clientRepository;
     private final ProductRepository productRepository;
+    private final PaymentService paymentService;
+    private final InventoryService inventoryService;
 
     @Autowired
     private OrderMapper orderMapper;
 
     @Transactional
-    public OrderFullDTO createOrder(OrderFullDTO dto) {
+    public OrderFullDTO createOrder(OrderFullDTO dto, Long clientId) {
 
-      if (dto.getClient().id() == null) {
-            throw new RuntimeException("El pedido debe tener un Cliente asignado.");
-      }
-      Client client = clientRepository.findById(dto.getClient().id())
-              .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
 
-      Order newOrder = orderMapper.toEntity(dto);
-      newOrder.setClient(client);
-      newOrder.setState(Order.OrderState.PROCESANDO);
+        Set<OrderDetail> failed = new HashSet<>();
 
-      for (OrderDetail detail : newOrder.getDetails()) {
-          // establece relacion order<->orderDetail
-          detail.setOrder(newOrder);
+        Order newOrder = orderMapper.toEntity(dto);
+        newOrder.setClient(client);
+        newOrder.setState(Order.OrderState.SIN_PAGAR);
+        newOrder.setTotalAmount(dto.getTotalAmount());
+        newOrder.setCreatedAt(java.time.LocalDateTime.now());
 
-          Product p = productRepository.findById(detail.getProduct().getId())
-                  .orElseThrow(() -> new RuntimeException("Producto no encontrado "));
-
-          if (p.getStock() < detail.getQuantity()) {
-              throw new RuntimeException("Stock insuficiente para el producto: " + p.getName());
-          }
-          // actualiza stock de producto
-          p.setStock(p.getStock() - detail.getQuantity());
-          // productRepository.save(p); @transaccional lo actualiza?
-      }
-      Order savedOrder = orderRepository.save(newOrder);
-      return orderMapper.toFullDto(savedOrder);
+        for (OrderDetail detail : newOrder.getDetails()) {
+            detail.setOrder(newOrder);  // establece relacion order<->orderDetail
+            if(inventoryService.decreaseStock(
+                    detail.getProduct().getId(),
+                    detail.getQuantity()
+            )) failed.add(detail) ;
+        }
+        if(failed.isEmpty()){
+            newOrder.setFailedDetails(failed);
+        }
+        Order savedOrder = orderRepository.save(newOrder);
+        return orderMapper.toFullDto(savedOrder);
     }
+
+
+
+
 
 
     @Transactional(readOnly = true)
@@ -72,7 +81,7 @@ public class OrderService {
         return this.orderMapper.toFullDto(order);
     }
 
-   @Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public List<OrderFullDTO> getAll() {
         List<Order> orders = orderRepository.findAll();
         return this.orderMapper.toFullDtoList(orders);
@@ -195,6 +204,23 @@ public class OrderService {
             productRepository.save(product);
         }
     }
+
+    public void restoreStockForCanceledOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrado."));
+
+        Set<OrderDetail> details = order.getDetails();
+
+        for (OrderDetail deletedDetail : details) {
+            Product product = productRepository.findById(deletedDetail.getProduct().getId())
+                    .orElseThrow(() -> new RuntimeException("Producto no encontrado."));
+
+            // restaura el stock completo del ítem eliminado
+            product.setStock(product.getStock() + deletedDetail.getQuantity());
+            productRepository.save(product);
+        }
+    }
+
 
     public List<OrderFullDTO> getOrderByClientId(Long id) {
 //      List<Order> orders = this.orderRepository.findAllWithDetailsAndClientById(id);

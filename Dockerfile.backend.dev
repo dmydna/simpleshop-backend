@@ -1,0 +1,21 @@
+ARG PORT_BACKEND
+
+# Imagen final (Alpine + binario nativo)
+FROM alpine:latest
+
+WORKDIR /app
+
+# Instala solo lo necesario
+RUN apk add --no-cache ca-certificates tzdata
+
+# Copia el binario ya compilado
+COPY target/store-native /app/store-native
+
+# Permisos
+RUN chmod +x /app/store-native
+
+# Puerto
+EXPOSE ${PORT_BACKEND}
+
+# Ejecuta el binario nativo
+CMD ["/app/store-native"]

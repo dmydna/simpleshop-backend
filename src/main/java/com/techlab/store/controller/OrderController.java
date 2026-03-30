@@ -1,28 +1,39 @@
 package com.techlab.store.controller;
 
+import com.techlab.store.dto.BuyRequest;
 import com.techlab.store.dto.OrderFullDTO;
+import com.techlab.store.dto.OrderResponse;
 import com.techlab.store.entity.Order;
+import com.techlab.store.service.BuyService;
 import com.techlab.store.service.OrderService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/orders") // Endpoint base
+@RequiredArgsConstructor
+@RequestMapping("/api/orders")// Endpoint base
 public class OrderController {
 
-    private final OrderService orderService;
-
     @Autowired
-    public OrderController(OrderService orderService) {
-        this.orderService = orderService;
-    }
+    private final OrderService orderService;
+    private final BuyService buyService;
 
     @PostMapping
-    public OrderFullDTO createOrder(@RequestBody OrderFullDTO order) {
-        return this.orderService.createOrder(order);
+    public ResponseEntity<?> createOrder(
+            @Valid @RequestBody OrderFullDTO dto,
+            @RequestParam Long clientId) {
+        OrderFullDTO savedOrder = buyService.SavedOrder(dto, clientId);
+        return ResponseEntity.ok(new OrderResponse(
+                savedOrder.getId(),
+                savedOrder.getFailedDetails()
+        ));
     }
+
 
 
     @GetMapping("/{id}")

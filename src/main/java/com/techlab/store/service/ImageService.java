@@ -28,7 +28,7 @@ public class ImageService {
 
 
     public byte[] generateImage( int width, int height, String background, String textColor,
-        String fontSize, String finalLabel, String fontWeight, String icon) {
+                                 String fontSize, String finalLabel, String fontWeight, String icon) {
 
         boolean isIconFont = icon != null && !icon.isBlank();
         // Si es icono, el contenido del text es el unicode del icono
@@ -113,56 +113,38 @@ public class ImageService {
     }
 
 
-  private String parseIconUnicode(String icon) {
-    if (icon == null || icon.isBlank()) {
-        return icon;
-    }
-
-    // Si viene como U+F4E1 o u+f4e1
-    if (icon.startsWith("U+") || icon.startsWith("u+")) {
-        try {
-            int codePoint = Integer.parseInt(icon.substring(2), 16);
-            return new String(Character.toChars(codePoint));
-        } catch (NumberFormatException e) {
-            return icon; // Devuelve original si falla
-        }
-    }
-
-    // Si viene como F4E1 (solo el código hexadecimal)
-    if (icon.matches("^[0-9A-Fa-f]{3,6}$")) {
-        try {
-            int codePoint = Integer.parseInt(icon, 16);
-            return new String(Character.toChars(codePoint));
-        } catch (NumberFormatException e) {
+    private String parseIconUnicode(String icon) {
+        if (icon == null || icon.isBlank()) {
             return icon;
         }
-    }
 
-    // Si viene como &#xF4E1; dejarlo como está
-    if (icon.startsWith("&#x")) {
+        // Si viene como U+F4E1 o u+f4e1
+        if (icon.startsWith("U+") || icon.startsWith("u+")) {
+            try {
+                int codePoint = Integer.parseInt(icon.substring(2), 16);
+                return new String(Character.toChars(codePoint));
+            } catch (NumberFormatException e) {
+                return icon; // Devuelve original si falla
+            }
+        }
+
+        // Si viene como F4E1 (solo el código hexadecimal)
+        if (icon.matches("^[0-9A-Fa-f]{3,6}$")) {
+            try {
+                int codePoint = Integer.parseInt(icon, 16);
+                return new String(Character.toChars(codePoint));
+            } catch (NumberFormatException e) {
+                return icon;
+            }
+        }
+
+        // Si viene como &#xF4E1; dejarlo como está
+        if (icon.startsWith("&#x")) {
+            return icon;
+        }
+
+        // Si es un carácter directo, devolverlo tal cual
         return icon;
     }
 
-    // Si es un carácter directo, devolverlo tal cual
-    return icon;
-}
-
-
-//
-//    public byte[] convertSvgToPng(byte[] svgBytes, int width, int height) {
-//        try {
-//            PNGTranscoder transcoder = new PNGTranscoder();
-//            transcoder.addTranscodingHint(PNGTranscoder.KEY_WIDTH, (float) width);
-//            transcoder.addTranscodingHint(PNGTranscoder.KEY_HEIGHT, (float) height);
-//
-//            TranscoderInput input = new TranscoderInput(new ByteArrayInputStream(svgBytes));
-//            ByteArrayOutputStream output = new ByteArrayOutputStream();
-//            TranscoderOutput transcoderOutput = new TranscoderOutput(output);
-//
-//            transcoder.transcode(input, transcoderOutput);
-//            return output.toByteArray();
-//        } catch (TranscoderException e) {
-//            throw new RuntimeException("Error convirtiendo SVG a PNG", e);
-//        }
-//    }
 }
