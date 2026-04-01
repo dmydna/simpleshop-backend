@@ -45,10 +45,13 @@ public class Order {
     @JoinColumn(name = "clientId")
     @JsonIgnoreProperties("orders")
     private Client client;
-  
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("order")
     private Set<OrderDetail> details = new HashSet<>();
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "order_id")
     private Set<OrderDetail> failedDetails = new HashSet<>();
 
     public BigDecimal totalAmount;

@@ -1,39 +1,37 @@
 package com.techlab.store.controller;
 
-import com.techlab.store.dto.BuyRequest;
-import com.techlab.store.dto.OrderDetailDTO;
-import com.techlab.store.dto.OrderFullDTO;
+import org.springframework.security.core.Authentication;
+
+
+import com.techlab.store.dto.ClientDTO;
 import com.techlab.store.service.BuyService;
-import com.techlab.store.service.OrderService;
 import com.techlab.store.service.PaymentConfirmRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Set;
+import com.techlab.store.service.ProfileService;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/buy")
 public class BuyController {
 
-    @Autowired
     private final BuyService buyService;
-    private final OrderService orderService;
-
-
+    private final ProfileService profileService;
 
     @PostMapping
     public ResponseEntity<?> buy(
-            @Valid @RequestBody PaymentConfirmRequest request,
-            @RequestParam Long clientId) {
+            Authentication authentication,
+            @Valid @RequestBody PaymentConfirmRequest request) {
         // request contiene: { orderId, paymentToken }
+
+        ClientDTO client = profileService.getMyClient(authentication);
         boolean success = buyService.confirmPayment(
                 request.orderId(),
                 request.paymentToken(),
-                clientId);
+                client.id());
         return ResponseEntity.ok(success ? "Payment confirmed" : "Payment failed");
     }
 

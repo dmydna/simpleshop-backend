@@ -1,10 +1,9 @@
 package com.techlab.store.service;
 
+import org.springframework.scheduling.annotation.Scheduled;
+import java.time.LocalDateTime;
 
-import com.techlab.store.dto.BuyRequest;
-import com.techlab.store.dto.OrderDetailDTO;
 import com.techlab.store.dto.OrderFullDTO;
-import com.techlab.store.dto.OrderResponse;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderDetail;
@@ -14,7 +13,6 @@ import com.techlab.store.repository.OrderRepository;
 import com.techlab.store.repository.ProductRepository;
 
 import com.techlab.store.mapper.OrderMapper;
-import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -232,4 +230,17 @@ public class OrderService {
         List<Order> orders  = this.orderRepository.findAllByFirstName(username);
         return this.orderMapper.toFullDtoList(orders);
     }
+
+
+    @Scheduled(fixedRate = 300000) // cada 5 minutos
+public void cleanupPendingOrders() {
+    LocalDateTime cutoff = LocalDateTime.now().minusMinutes(15);
+    List<Order> oldOrders = orderRepository.findByStateAndCreatedAtBefore("SIN_PAGAR", cutoff);
+    
+    for (Order order : oldOrders) {
+        order.setState(Order.OrderState.CANCELADO);
+        restoreStockForCanceledOrder(order.getId());
+        orderRepository.save(order);
+    }
+}
 }

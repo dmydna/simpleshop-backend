@@ -1,21 +1,21 @@
 package com.techlab.store.service;
 
 
-import com.techlab.store.dto.*;
-import com.techlab.store.entity.Client;
-import com.techlab.store.entity.Order;
-import com.techlab.store.entity.Product;
-import com.techlab.store.repository.OrderRepository;
-import com.techlab.store.repository.ProductRepository;
-import jakarta.validation.ValidationException;
-import lombok.RequiredArgsConstructor;
+import java.math.BigDecimal;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.util.Optional;
-import java.util.Set;
+import com.techlab.store.dto.OrderFullDTO;
+import com.techlab.store.entity.Order;
+import com.techlab.store.repository.OrderRepository;
+import com.techlab.store.repository.ProductRepository;
+import com.techlab.store.dto.PaymentRequest;
+
+
+import jakarta.validation.ValidationException;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +28,7 @@ public class BuyService {
     private final PaymentService paymentService;
     private final ClientService clientService; // Asumiendo que existe
     private final OrderService orderService;
+    private final PaymentGatewayService paymentGateWayService;
 
 
     @Transactional
@@ -45,6 +46,7 @@ public class BuyService {
         return false;
     }
 
+
     // Se reserva una orden de compra sin pagar
     // se devuelve objeto para pasarela de pago
     public OrderFullDTO SavedOrder(OrderFullDTO dto, Long clientId){
@@ -56,6 +58,7 @@ public class BuyService {
         // Aquí iría la lógica real de integración con pasarelas
         // Recibo un token y lo confirma.
         // Por ahora, simulamos éxito si el monto es positivo
+        paymentGateWayService.validateToken(token);
         return true;
     }
 

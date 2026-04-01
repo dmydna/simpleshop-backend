@@ -11,8 +11,7 @@ import lombok.ToString;
 @Setter
 @ToString
 public class OrderDetail {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private Long listingId;
@@ -26,6 +25,7 @@ public class OrderDetail {
     @JoinColumn(name = "product_id")
     @JsonIgnoreProperties("orderDetails")
     private Product product;
+
     private int quantity;
     private double priceAtPurchase; // guarda el precio actual del producto
 

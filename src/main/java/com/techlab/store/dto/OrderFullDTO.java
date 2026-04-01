@@ -21,7 +21,4 @@ public class OrderFullDTO{
     ClientDTO client; // Deprecado
     Integer totalQuantity;
     BigDecimal totalAmount;
-    @NotNull(message = "Payment token is required")
-    String paymentToken;  // ← Token generado por Stripe/PayPal
-
 }

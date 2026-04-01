@@ -58,6 +58,7 @@ public class UserService {
         }
         User user = new User();
         user.setUsername(request.username());
+        user.setEmail(request.email());
         user.setImage(request.image());
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setRole(Role.CLIENT); // Por defecto, todos los registros son Clientes
