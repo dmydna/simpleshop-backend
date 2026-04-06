@@ -1,16 +1,25 @@
 package com.techlab.store.entity;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.*;
-
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -24,11 +33,11 @@ public class Order {
 
 
     public enum OrderState {
-        PROCESANDO, COMPLETO, CANCELADO, EN_ENVIO, SIN_PAGAR, PAGADO;
+        PENDING, COMPLETED, CANCELLED, PAID;
 
         @JsonCreator
         public static OrderState fromString(String value) {
-            if (value == null || value.trim().isEmpty()) return PROCESANDO; // Valor por defecto
+            if (value == null || value.trim().isEmpty()) return PENDING; // Valor por defecto
             return OrderState.valueOf(value.toUpperCase());
         }
     }

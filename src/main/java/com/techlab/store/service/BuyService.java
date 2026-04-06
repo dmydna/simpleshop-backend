@@ -2,6 +2,7 @@ package com.techlab.store.service;
 
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,8 +12,6 @@ import com.techlab.store.dto.OrderFullDTO;
 import com.techlab.store.entity.Order;
 import com.techlab.store.repository.OrderRepository;
 import com.techlab.store.repository.ProductRepository;
-import com.techlab.store.dto.PaymentRequest;
-
 
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -32,25 +31,34 @@ public class BuyService {
 
 
     @Transactional
-    public boolean confirmPayment(Long orderId, String paymentToken, Long clientId) {
+    public boolean confirmPayment(Long orderId, String paymentToken, String userEmail) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrado"));
         // Checkeamos token de pasarela valido.
-
+        System.out.println("\n confirmPayment -> Token "+ paymentToken + "\n");
         if (!processPayment(paymentToken)) {
-            order.setState(Order.OrderState.CANCELADO);
-            orderService.restoreStockForCanceledOrder(orderId);
+            order.setState(Order.OrderState.CANCELLED);
+//            orderService.deleteOrderAndRestoreStock(orderId);
             throw new ValidationException("Payment failed");
         }
-        order.setState(Order.OrderState.PAGADO);
-        return false;
+        order.setState(Order.OrderState.PAID);
+        orderRepository.save(order);
+        return true;
     }
+
 
 
     // Se reserva una orden de compra sin pagar
     // se devuelve objeto para pasarela de pago
-    public OrderFullDTO SavedOrder(OrderFullDTO dto, Long clientId){
-        return orderService.createOrder(dto, clientId);
+    public OrderFullDTO savedOrder(OrderFullDTO dto, Long clientId){
+        // Eliminamos ordenes inpagas;
+        List<Order> listOrders = orderRepository.findAllByState(Order.OrderState.PENDING);
+        for(Order order : listOrders){
+            orderService
+               .deleteOrderAndRestoreStock(order.getId());
+        }
+        return orderService
+                 .createOrder(dto, clientId);
     }
 
     // Simulación de pago (en producción usar Stripe, PayPal, etc.)
@@ -58,8 +66,7 @@ public class BuyService {
         // Aquí iría la lógica real de integración con pasarelas
         // Recibo un token y lo confirma.
         // Por ahora, simulamos éxito si el monto es positivo
-        paymentGateWayService.validateToken(token);
-        return true;
+        return paymentGateWayService.validateToken(token);
     }
 
     public boolean refundPayment(BigDecimal amount) {

@@ -264,7 +264,7 @@ public class ListingService {
     }
 
 
-    private Listing createListingFromDto(ListingDTO dto){
+    public Listing createListingFromDto(ListingDTO dto){
         Listing listing = listingMapper.toEntity(dto);
         Optional<Product> existingProduct = productRepository.findBySku(dto.sku());
 

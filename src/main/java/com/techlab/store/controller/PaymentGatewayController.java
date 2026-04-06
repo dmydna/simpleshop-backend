@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.techlab.store.service.PaymentGatewayService;
 
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/toy-gateway")
@@ -23,7 +25,7 @@ public class PaymentGatewayController {
     @PostMapping("/initiate")
     public ResponseEntity<String> initiatePayment(@RequestBody PaymentRequest request) {
         try {
-            String token = paymentGatewayService.generateToken(request.getOrderId(), request.getClientId());
+            String token = paymentGatewayService.generateToken(request.getOrderId(), request.getUserEmail());
             return ResponseEntity.ok(token);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error: " + e.getMessage());
@@ -31,9 +33,9 @@ public class PaymentGatewayController {
     }
 
     @PostMapping("/validate")
-    public ResponseEntity<String> validateToken(@RequestBody TokenRequest tokenRequest) {
+    public ResponseEntity<?> validateToken(@RequestBody TokenRequest tokenRequest) {
         try {
-            String result = paymentGatewayService.validateToken(tokenRequest.getToken());
+            Boolean result = paymentGatewayService.validateToken(tokenRequest.getToken());
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Error: " + e.getMessage());

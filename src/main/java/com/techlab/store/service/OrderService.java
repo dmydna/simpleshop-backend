@@ -1,29 +1,27 @@
 package com.techlab.store.service;
 
-import org.springframework.scheduling.annotation.Scheduled;
-import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.techlab.store.dto.OrderFullDTO;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderDetail;
 import com.techlab.store.entity.Product;
+import com.techlab.store.mapper.OrderMapper;
 import com.techlab.store.repository.ClientRepository;
 import com.techlab.store.repository.OrderRepository;
 import com.techlab.store.repository.ProductRepository;
 
-import com.techlab.store.mapper.OrderMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -49,7 +47,7 @@ public class OrderService {
 
         Order newOrder = orderMapper.toEntity(dto);
         newOrder.setClient(client);
-        newOrder.setState(Order.OrderState.SIN_PAGAR);
+        newOrder.setState(Order.OrderState.PENDING);
         newOrder.setTotalAmount(dto.getTotalAmount());
         newOrder.setCreatedAt(java.time.LocalDateTime.now());
 
@@ -92,7 +90,7 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
         log.info("Actualizando estado de Pedido ID {} de {} a {}", id, order.getState(), newState);
 
-        if (newState == Order.OrderState.CANCELADO) {
+        if (newState == Order.OrderState.CANCELLED) {
             log.warn("Pedido cancelado: Reponiendo stock.");
             for(OrderDetail detail : order.getDetails()){
                 Product p = detail.getProduct();
@@ -165,8 +163,7 @@ public class OrderService {
 
 
     private void validateOrderStateForEdit(Order order) {
-        if (order.getState() == Order.OrderState.COMPLETO ||
-                order.getState() == Order.OrderState.EN_ENVIO) {
+        if (order.getState() == Order.OrderState.COMPLETED) {
             throw new RuntimeException("No se pueden editar los detalles de una orden en estado COMPLETO o EN_ENVIO.");
         }
     }
@@ -203,7 +200,7 @@ public class OrderService {
         }
     }
 
-    public void restoreStockForCanceledOrder(Long orderId) {
+    public void deleteOrderAndRestoreStock(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrado."));
 
@@ -217,7 +214,10 @@ public class OrderService {
             product.setStock(product.getStock() + deletedDetail.getQuantity());
             productRepository.save(product);
         }
+        orderRepository.delete(order);
     }
+
+
 
 
     public List<OrderFullDTO> getOrderByClientId(Long id) {
@@ -231,16 +231,15 @@ public class OrderService {
         return this.orderMapper.toFullDtoList(orders);
     }
 
+    public boolean cancelOrderById(Long orderId){
+        Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new RuntimeException("Orden de comprar no encontrado."));
 
-    @Scheduled(fixedRate = 300000) // cada 5 minutos
-public void cleanupPendingOrders() {
-    LocalDateTime cutoff = LocalDateTime.now().minusMinutes(15);
-    List<Order> oldOrders = orderRepository.findByStateAndCreatedAtBefore("SIN_PAGAR", cutoff);
-    
-    for (Order order : oldOrders) {
-        order.setState(Order.OrderState.CANCELADO);
-        restoreStockForCanceledOrder(order.getId());
-        orderRepository.save(order);
+        if(!order.getState().equals(Order.OrderState.PENDING)) {
+          return false;
+        }
+        deleteOrderAndRestoreStock(order.getId());
+        return true;
     }
-}
+
 }

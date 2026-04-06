@@ -7,12 +7,19 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.techlab.store.dto.ClientDTO;
 import com.techlab.store.dto.UserDTO;
+import com.techlab.store.dto.OrderFullDTO;
 import com.techlab.store.dto.ProfileDTO;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.User;
 import com.techlab.store.mapper.ProfileMapper;
 import com.techlab.store.mapper.UserMapper;
 import com.techlab.store.mapper.ClientMapper;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +31,7 @@ public class ProfileService {
 
     private final ProfileMapper profileMapper;
     private final UserService userService;
+    private final OrderService orderService;
     private final ClientService clientService;
     private final FileStorageService fileStorageService;
     private final ClientMapper clientMapper;
@@ -88,6 +96,15 @@ public class ProfileService {
         user.setImage(finalUrl);
         return finalUrl;
     }
+
+
+    public List<OrderFullDTO> getOrderList(Authentication authentication){
+        User user = userService.findEntityByUsername(authentication.getName());
+        List<OrderFullDTO> orders = orderService.getOrderByClientId(user.getId());
+        return orders;
+    }
+
+
 
 
 }

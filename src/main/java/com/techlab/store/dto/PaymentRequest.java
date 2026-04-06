@@ -6,7 +6,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PaymentRequest {
-    private String orderId;
-    private String clientId;
+    private Long orderId;
+    private String userEmail;
 }
 

@@ -29,6 +29,13 @@ public class ProfileController {
         );
     }
 
+   @GetMapping("/orders")
+    public ResponseEntity<?> getMyOrders(Authentication authentication) {
+        return ResponseEntity.ok(
+                profileService.getOrderList(authentication)
+        );
+    }
+
 
     @PutMapping("/update")
     public ResponseEntity<ProfileDTO> updateMyProfile(

@@ -4,6 +4,6 @@ import java.math.BigDecimal;
 import java.util.Set;
 
 public record OrderResponse(
-        Long OrderId,
+        Long orderId,
         Set<OrderDetailDTO> failed
 ) { }

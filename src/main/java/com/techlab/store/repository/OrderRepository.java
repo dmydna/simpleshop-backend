@@ -44,5 +44,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "WHERE c.firstName = :name")
     List<Order> findAllByFirstName(@Param("name") String name);
 
+    List<Order> findAllByState(Order.OrderState state);
+
     List<Order> findByStateAndCreatedAtBefore(String state, LocalDateTime createdAt);
 }

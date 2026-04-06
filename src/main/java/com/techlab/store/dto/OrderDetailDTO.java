@@ -1,8 +1,9 @@
 package com.techlab.store.dto;
 
-import com.techlab.store.entity.Order;
-import com.techlab.store.entity.Product;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter

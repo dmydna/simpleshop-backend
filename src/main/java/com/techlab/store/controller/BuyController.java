@@ -3,7 +3,8 @@ package com.techlab.store.controller;
 import org.springframework.security.core.Authentication;
 
 
-import com.techlab.store.dto.ClientDTO;
+import com.techlab.store.dto.UserDTO;
+import com.techlab.store.entity.User;
 import com.techlab.store.service.BuyService;
 import com.techlab.store.service.PaymentConfirmRequest;
 import jakarta.validation.Valid;
@@ -24,16 +25,15 @@ public class BuyController {
     @PostMapping
     public ResponseEntity<?> buy(
             Authentication authentication,
-            @Valid @RequestBody PaymentConfirmRequest request) {
+            @RequestBody PaymentConfirmRequest request) {
         // request contiene: { orderId, paymentToken }
+        
+        System.out.println("\n buyController -> request "+ request + "\n");
 
-        ClientDTO client = profileService.getMyClient(authentication);
-        boolean success = buyService.confirmPayment(
-                request.orderId(),
-                request.paymentToken(),
-                client.id());
-        return ResponseEntity.ok(success ? "Payment confirmed" : "Payment failed");
+        UserDTO user = profileService.getMyUser(authentication);
+        boolean success = buyService
+            .confirmPayment(request.orderId(), request.paymentToken(), user.email());
+        if (success) return ResponseEntity.ok().build(); // 200 OK 
+        return ResponseEntity.badRequest().build(); // 400 Bad Request
     }
-
-
 }
