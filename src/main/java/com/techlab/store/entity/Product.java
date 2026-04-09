@@ -22,10 +22,11 @@ import lombok.ToString;
 @Setter
 @ToString
 public class Product {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     private String name;
     @Column(unique = true, nullable = false)
     private String sku;
@@ -35,12 +36,11 @@ public class Product {
     private ProductDimensions dimensions;
     private Integer stock;
 
-/*
+    /*
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
-*/
-
+     */
     private String category;
 
     @ElementCollection
@@ -55,5 +55,8 @@ public class Product {
     @JsonIgnore
     private List<Listing> listings;
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<PendingReview> pendingReviews = new ArrayList<>();
 
 }

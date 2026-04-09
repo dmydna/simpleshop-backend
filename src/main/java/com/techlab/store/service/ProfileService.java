@@ -15,6 +15,11 @@ import com.techlab.store.mapper.ProfileMapper;
 import com.techlab.store.mapper.UserMapper;
 import com.techlab.store.mapper.ClientMapper;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +41,7 @@ public class ProfileService {
     private final FileStorageService fileStorageService;
     private final ClientMapper clientMapper;
     private final UserMapper userMapper;
+    private final AuthService authService;
 
     public ProfileDTO getProfile(Authentication authentication) {
 
@@ -96,14 +102,6 @@ public class ProfileService {
         user.setImage(finalUrl);
         return finalUrl;
     }
-
-
-    public List<OrderFullDTO> getOrderList(Authentication authentication){
-        User user = userService.findEntityByUsername(authentication.getName());
-        List<OrderFullDTO> orders = orderService.getOrderByClientId(user.getId());
-        return orders;
-    }
-
 
 
 

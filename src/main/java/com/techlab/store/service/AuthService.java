@@ -2,6 +2,7 @@ package com.techlab.store.service;
 
 import com.techlab.store.utils.AuthResponse;
 import com.techlab.store.utils.LoginRequest;
+import com.techlab.store.entity.User;
 import com.techlab.store.utils.RegisterRequest;
 import com.techlab.store.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -78,6 +81,11 @@ public class AuthService {
 
     public boolean isAdmin() {
         return isRole("ADMIN");
+    }
+
+    public User getUser(){
+        Authentication auth = getAuthentication();
+        return userService.findEntityByUsername(auth.getName());
     }
 
     @Transactional

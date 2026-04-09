@@ -3,12 +3,24 @@ package com.techlab.store.controller;
 import com.techlab.store.dto.ProfileDTO;
 import com.techlab.store.enums.Role;
 import com.techlab.store.service.ProfileService;
+import com.techlab.store.service.AuthService;
+import com.techlab.store.service.OrderService;
+
+import com.techlab.store.dto.OrderFullDTO;
+import com.techlab.store.entity.Order;
+import com.techlab.store.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+
+
 
 @RestController
 @RequestMapping("/api/profile")
@@ -16,6 +28,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProfileController {
 
     private final ProfileService profileService;
+    private final AuthService authService;
+    private final OrderService orderService;
 
     @GetMapping("/my")
     public ResponseEntity<ProfileDTO> getMyProfile(Authentication authentication) {
@@ -30,10 +44,20 @@ public class ProfileController {
     }
 
    @GetMapping("/orders")
-    public ResponseEntity<?> getMyOrders(Authentication authentication) {
-        return ResponseEntity.ok(
-                profileService.getOrderList(authentication)
-        );
+    public ResponseEntity<Page<OrderFullDTO>> getAll(
+        @RequestParam(required = false) Long userId,
+        @RequestParam(required = false) Order.OrderState status,
+        @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+     System.out.println("\n -- entra al filtro de ordernes [controller] -- \n");
+        if (authService.isAdmin()) {
+            return ResponseEntity.ok(orderService
+                    .filter(userId, status, pageable));
+        }
+        User user = authService.getUser();
+        return ResponseEntity.ok(orderService
+                    .filter(user.getId(), status, pageable));
+
     }
 
 
