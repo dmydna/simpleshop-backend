@@ -9,7 +9,9 @@ import com.techlab.store.service.OrderService;
 import com.techlab.store.dto.OrderFullDTO;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.User;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -19,6 +21,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+
+import com.techlab.store.dto.PendingReviewDTO;
+import com.techlab.store.entity.PendingReview;
+import com.techlab.store.service.PendingReviewService;
 
 
 
@@ -30,6 +36,7 @@ public class ProfileController {
     private final ProfileService profileService;
     private final AuthService authService;
     private final OrderService orderService;
+    private final PendingReviewService pendingReviewService;
 
     @GetMapping("/my")
     public ResponseEntity<ProfileDTO> getMyProfile(Authentication authentication) {
@@ -43,8 +50,9 @@ public class ProfileController {
         );
     }
 
+    //Nota: se coloca el endpoint para el usuario pueda ver sus ordenes, aunque  orders tiene un controller especifico.
    @GetMapping("/orders")
-    public ResponseEntity<Page<OrderFullDTO>> getAll(
+    public ResponseEntity<Page<OrderFullDTO>> getMyOrders(
         @RequestParam(required = false) Long userId,
         @RequestParam(required = false) Order.OrderState status,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
@@ -59,6 +67,8 @@ public class ProfileController {
                     .filter(user.getId(), status, pageable));
 
     }
+
+
 
 
     @PutMapping("/update")

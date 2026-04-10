@@ -11,5 +11,5 @@ public record ReviewDTO(
         LocalDateTime date,
         String reviewerName,
         String reviewerEmail,
-        Long listingId
+        Long productId
 ) { }

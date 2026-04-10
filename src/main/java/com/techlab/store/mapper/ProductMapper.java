@@ -14,7 +14,7 @@ public interface ProductMapper{
     @Mapping(source = "product.brand", target = "brand")
     @Mapping(source = "product.stock", target = "stock" )
     @Mapping(source = "id", target="listingId" )
-    ProductDTO toDto(Listing listing );
+    ProductDTO toDto(Listing listing);
     @InheritInverseConfiguration
     Product toEntity(ProductDTO dto);
 }

@@ -16,17 +16,22 @@ public class PendingReview {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId; // ID del comprador (para saber quién puede crear la review)
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user; // ID del comprador (para saber quién puede crear la review)
 
     @ManyToOne
-    @JoinColumn(name = "listing_id", nullable = false)
+    @JoinColumn(name = "product_id", nullable = false)
     @JsonBackReference
-    private Listing listing; // Relación con la publicación (no con el producto)
+    private Product product; // Relación con la publicación (no con el producto)
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "reviewed", nullable = false)
     private boolean reviewed = false; // Indica si ya se creó la review
+
+    @ManyToOne
+    @JoinColumn(name = "listing_id", nullable = false)
+    private Listing listing; 
 }

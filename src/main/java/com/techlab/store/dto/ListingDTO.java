@@ -36,7 +36,7 @@ public record ListingDTO (
     String warrantyInformation,
     String shippingInformation,
     String availabilityStatus,
-    Set<Review> reviews,
+    List<ReviewDTO> reviews,
     String returnPolicy,
     Integer minimumOrderQuantity,
     List<String> images,

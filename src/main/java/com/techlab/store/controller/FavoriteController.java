@@ -24,25 +24,26 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/favorite")
+@RequestMapping("/api/profile/favorite")
 public class FavoriteController {
 
     private final FavoriteService favoriteService;
     private final AuthService authService;
 
 
-    @PostMapping
-    public ResponseEntity<?> create(@PathVariable Long listingId, @RequestBody Favorite favorite) {
+    @PostMapping("/{listingId}")
+    public ResponseEntity<?> create(@PathVariable Long listingId) {
         User user = authService.getUser();
-        return ResponseEntity.ok(favoriteService.create(listingId, user.getId()));
+        return ResponseEntity
+           .ok(favoriteService.create(listingId, user.getId()));
     }
 
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    @DeleteMapping("/{listingId}")
+    public ResponseEntity<?> delete(@PathVariable Long listingId) {
         User user = authService.getUser();
         boolean isAdmin = authService.isAdmin();
-        favoriteService.delete(id, user.getId(), isAdmin);
+        favoriteService.delete(listingId, user.getId(), isAdmin);
         return ResponseEntity.ok().build();
     }
 

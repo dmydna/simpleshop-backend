@@ -10,8 +10,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.techlab.store.dto.OrderFullDTO;
 import com.techlab.store.entity.Order;
+import com.techlab.store.entity.Review;
 import com.techlab.store.repository.OrderRepository;
 import com.techlab.store.repository.ProductRepository;
+import com.techlab.store.repository.ReviewRepository;
+import com.techlab.store.repository.PendingReviewRepository;
 
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +31,14 @@ public class BuyService {
     private final ClientService clientService; // Asumiendo que existe
     private final OrderService orderService;
     private final PaymentGatewayService paymentGateWayService;
-
+    private final PendingReviewRepository pendingReviewRepositiry;
+    private final PendingReviewService pendingReviewService;
 
     @Transactional
     public boolean confirmPayment(Long orderId, String paymentToken, String userEmail) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrado"));
+        
         // Checkeamos token de pasarela valido.
         System.out.println("\n confirmPayment -> Token "+ paymentToken + "\n");
         if (!processPayment(paymentToken)) {
@@ -41,6 +46,17 @@ public class BuyService {
 //            orderService.deleteOrderAndRestoreStock(orderId);
             throw new ValidationException("Payment failed");
         }
+
+        // agregamos pending reviews para cada producto comprado
+        order.getDetails().forEach(item -> {
+            pendingReviewService
+              .create(
+                item.getProduct().getId(), 
+                order.getClient().getUser().getId(), 
+                item.getListingId()
+            );
+        });
+
         order.setState(Order.OrderState.PAID);
         orderRepository.save(order);
         return true;

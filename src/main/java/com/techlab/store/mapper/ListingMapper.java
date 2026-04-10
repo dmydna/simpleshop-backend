@@ -12,8 +12,6 @@ import java.util.List;
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ListingMapper {
 
-
-
     @Mapping(source = "product.id", target = "productId")
     @Mapping(source = "product.name", target= "productName")
     @Mapping(source = "product.brand", target= "brand")
@@ -21,8 +19,15 @@ public interface ListingMapper {
     @Mapping(source = "product.stock", target= "stock")
     @Mapping(source = "product.category", target= "category")
     @Mapping(source = "product.tags", target= "tags")
-        // @Mapping(source = "product", target = ".") // <-- con "." se sobrescribe el listing.id -> product.id
+    @Mapping(source = "product.rating", target= "rating")
+    @Mapping(source = "product.reviews", target= "reviews")
     ListingDTO toDto(Listing listing);
+
+
+
+    @Mapping(target = "productId", source = "product.id")
+    ReviewDTO ReviewToDto(Review entity); 
+
 
     @InheritInverseConfiguration
     @Mapping(source = "dto", target = "product")
@@ -37,15 +42,15 @@ public interface ListingMapper {
     @Mapping(target = "productName", source = "name")
     ListingDTO productToDto(Product product);
 
-    @Mapping(target = "listing", ignore = true) // Lo asignamos manualmente en el AfterMapping
-    Review toReviewEntity(ReviewDTO reviewDto, @Context Listing parent);
+    @Mapping(target = "product", ignore = true) // Lo asignamos manualmente en el AfterMapping
+    Review toReviewEntity(ReviewDTO reviewDto, @Context Product parent);
 
     @AfterMapping
     default void linkReviewToParent(
             ReviewDTO reviewDto,
             @MappingTarget Review review,
-            @Context Listing parent) {
-        review.setListing(parent);
+            @Context Product parent) {
+        review.setProduct(parent);
     }
 
     @Mapping(target = "id", ignore = true)
@@ -54,4 +59,5 @@ public interface ListingMapper {
 
     List<ListingDTO> toDtoList(List<Listing> listings);
     List<Listing> toEntityList(List<ListingDTO> listings);
+    List<ReviewDTO> reviewsToDtoList(List<Review> entities); 
 }

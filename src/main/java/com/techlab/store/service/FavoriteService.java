@@ -18,6 +18,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 import com.techlab.store.dto.ListingShortDTO;
 
@@ -32,6 +34,11 @@ public class FavoriteService {
 
 
     public Favorite create(Long listingId, Long userId) {
+
+         // Si ya existe, lo retorna directamente
+        Optional<Favorite> existing = favoriteRepository.findByListingId(listingId, userId);
+        if (existing.isPresent()) {return existing.get();}
+
         Listing listing = listingRepository.findById(listingId)
                 .orElseThrow(() -> new RuntimeException("Listing no encontrado"));
 
@@ -47,8 +54,8 @@ public class FavoriteService {
     }
 
 
-    public void delete(Long id, Long userId, boolean isAdmin) {
-        Favorite favorite = favoriteRepository.findById(id)
+    public void delete(Long listingId, Long userId, boolean isAdmin) {
+        Favorite favorite = favoriteRepository.findByListingId(listingId, userId)
                 .orElseThrow(() -> new RuntimeException("Favorite no encontrado"));
 
         // Si no es admin, verificar que pertenece al usuario
@@ -60,8 +67,7 @@ public class FavoriteService {
     }
 
     public Page<ListingShortDTO> filter(Long userId, Long id, Pageable pageable) {
-
-        // Specification<Favorite> spec = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+        // TODO hay que cambiar el spec por algo mas simple, no es necesario usar spec para esto, con un query method en el repo alcanza
         Specification<Favorite> spec = Specification
                 .where(FavoriteSpecifications.hasUserId(userId))
                 .and(FavoriteSpecifications.hasId(id));

@@ -32,9 +32,9 @@ public class Favorite {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "product_id")
+    @JoinColumn(name = "listing_id")
     @JsonBackReference
-    private Product product; // opcional
+    private Listing listing; // opcional
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();

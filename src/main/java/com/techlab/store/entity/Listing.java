@@ -49,26 +49,28 @@ public class Listing {
     @Enumerated(EnumType.STRING)
     private Visibility visibility = Visibility.PUBLIC;
     private Double discountPercentage;
-    private Double rating;
     private String warrantyInformation;
     private String shippingInformation;
     private String availabilityStatus;
-    @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private Set<Review> reviews = new HashSet<>();
     private String returnPolicy;
     private Integer minimumOrderQuantity;
     @ElementCollection
     private List<String> images = new ArrayList<>();
     private String thumbnail;
+
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     @JsonIgnoreProperties("listings")
     private Product product;
+
     @Column(unique = true, nullable = false, updatable = false)
     private String hash;
 
     @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     List<Favorite> favorites = new ArrayList<>();
+
+    @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    List<PendingReview> pendingReviews = new ArrayList<>();
 }
