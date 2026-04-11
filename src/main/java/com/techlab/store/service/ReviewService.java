@@ -4,6 +4,8 @@ package com.techlab.store.service;
 import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.Product;
 import com.techlab.store.entity.Review;
+import com.techlab.store.entity.User;
+import com.techlab.store.dto.ReviewDTO;
 import com.techlab.store.repository.ListingRepository;
 import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.repository.ReviewRepository;
@@ -33,25 +35,63 @@ public class ReviewService {
     public void deleteById(Long id) {
     }
 
-    public Review addReviewToProduct(Long  productId, Review review, Long userId) {
+public ReviewDTO addReviewToProduct(ReviewDTO review, User user) {
+
+System.out.println("Entra en addReviewToProduct: ");
+
+    Product product = productRepository.findById(review.productId())
+            .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
 
-        try {
-            pendingReviewService.delete(productId, userId, false);
-        } catch (Exception e) {
-             System.out.println("Error al eliminar review pendiente: " + e.getMessage());
-        }
-
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
-
-        if (review.getDate() == null) {
-            review.setDate(LocalDateTime.now());
-        }
-
-        review.setProduct(product);
-        product.getReviews().add(review);
-
-        return this.reviewRepository.save(review);
+   System.out.println("try PendingReview con product_id " +  review.productId()  + ", and user_id " +  user.getId());
+   PendingReview pending = pendingReviewService.getPendingReview(review.productId(), user.getId());
+   if(pending.isReviewed() == true){
+      System.out.println("pendingReview vencio.");
+      return review; // no guarda
     }
+    // softdelete
+    if(pending.getUser().getId() == user.getId()){
+         System.out.println("borra pendingReview");
+         pending.setReviewed(true);
+    }else {
+        System.out.println("Intenta borrar pendingReview de otro user");
+        return review;
+     }
+
+    Review savedReview = this.reviewRepository.save(dtoToReview(review, user, product));
+    return entityToDto(savedReview);
+}
+
+
+public void deleteById(Long productId, String username){
+   Review review = reviewRepository.findByProductIdAndReviewerName(productId, username)
+         .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+   reviewRepository.delete(review);
+}
+
+public Review dtoToReview(ReviewDTO review, User user, Product product) {
+    Review entity = new Review();
+    entity.setComment(review.comment());
+    entity.setRating(review.rating());
+    entity.setDate(LocalDateTime.now());
+    entity.setReviewerEmail(user.getEmail());
+    entity.setReviewerName(user.getUsername());
+    entity.setProduct(product);
+    return entity;
+}
+
+public ReviewDTO entityToDto(Review entity) {
+    ReviewDTO dto = new ReviewDTO(
+      entity.getId(),
+      entity.getReviewerName(),
+      entity.getReviewerEmail(),
+      entity.getRating(),
+      entity.getComment(),
+      entity.getProduct().getId()
+    );
+    return dto;
+}
+
+
+
 }

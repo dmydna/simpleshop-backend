@@ -6,10 +6,9 @@ import java.time.LocalDateTime;
 
 public record ReviewDTO(
         Long id,
-        Integer rating,
-        String comment,
-        LocalDateTime date,
         String reviewerName,
         String reviewerEmail,
+        Integer rating,
+        String comment,
         Long productId
 ) { }

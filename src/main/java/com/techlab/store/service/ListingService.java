@@ -81,8 +81,18 @@ public class ListingService {
         if (listing.getDeletedDate() != null) {
             throw new RuntimeException("El recurso ha sido eliminado");
         }
+      
+        listing = limitReviews(listing, 4);
         return this.listingMapper.toDto(listing);
     }
+
+   public Listing limitReviews(Listing listing, Integer limit) {
+         listing.getProduct().getReviews().stream()
+             .sorted(Comparator.comparing(Review::getCreatedAt).reversed())
+             .limit(limit)
+             .collect(Collectors.toList());
+    return listing; // Retorna el listing modificado
+   }
 
 
     public Page<Listing> findAllPage(Pageable pageable){

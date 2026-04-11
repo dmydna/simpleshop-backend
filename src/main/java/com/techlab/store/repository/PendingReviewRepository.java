@@ -1,5 +1,6 @@
 package com.techlab.store.repository;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,7 +13,7 @@ import com.techlab.store.entity.User;
 import java.util.Optional;
 
 @Repository
-public interface PendingReviewRepository extends JpaRepository<PendingReview, Long> {
+public interface PendingReviewRepository extends JpaRepository<PendingReview, Long> ,JpaSpecificationExecutor<PendingReview>{
 
     @Query("SELECT pr FROM PendingReview pr WHERE pr.user.id = :id")
     Page<PendingReview> findAllByUserId(Long id, Pageable pageable);
@@ -29,7 +30,9 @@ public interface PendingReviewRepository extends JpaRepository<PendingReview, Lo
     @Query("SELECT pr FROM PendingReview pr WHERE pr.product.id = :productId AND pr.user.id = :userId")
     Page<PendingReview> findAllByUserIdAndProductId(@Param("userId") Long userId, @Param("productId") Long productId ,Pageable pageable);
 
+    Page<PendingReview> findByReviewed(boolean reviewed, Pageable pageable);
 
+    @Query("SELECT pr FROM PendingReview pr WHERE pr.product.id = :productId AND pr.user.id = :userId")
     Optional<PendingReview> findOneByUserIdAndProductId(@Param("userId") Long userId, @Param("productId") Long productId);
 
     @Query("SELECT CASE WHEN COUNT(pr) > 0 THEN true ELSE false END FROM PendingReview pr WHERE pr.user.id = :userId AND pr.product.id = :productId")

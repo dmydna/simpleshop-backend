@@ -1,16 +1,23 @@
 package com.techlab.store.entity;
 
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.List;
 
-import com.fasterxml.jackson.annotation.*;
 
-@Entity
-@Getter
-@Setter
+@Entity @Getter @Setter
 public class PendingReview {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

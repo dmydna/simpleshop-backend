@@ -15,12 +15,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.techlab.store.dto.ReviewDTO;
 import com.techlab.store.dto.PendingReviewDTO;
 import com.techlab.store.entity.Review;
 import com.techlab.store.entity.User;
 import com.techlab.store.service.AuthService;
 import com.techlab.store.service.PendingReviewService;
 import com.techlab.store.service.ReviewService;
+import org.springframework.web.bind.annotation.*;
+
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,21 +37,21 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     // Crear reseña asociada a un producto
-    @PostMapping // SOLO CLIENTES
-    @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<Review> create(@PathVariable Long productId, @RequestBody Review review) {
+    @PostMapping// SOLO CLIENTES
+    @PreAuthorize("hasAuthority('CLIENT')")
+    public ResponseEntity<ReviewDTO> create(@RequestBody ReviewDTO review) {
         User user = authService.getUser();
         return ResponseEntity.ok(reviewService.addReviewToProduct(
-            productId, 
             review, 
-            user.getId()
+            user
         ));
     }
 
     // Borrar reseña por su ID propio
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteById(@PathVariable Long id) {
-        reviewService.deleteById(id);
+        User user = authService.getUser();
+        reviewService.deleteById(id, user.getUsername());
         return ResponseEntity.ok().build();
     }
 
@@ -65,16 +68,19 @@ public class ReviewController {
 
     @GetMapping("/pending-review")
     public ResponseEntity<Page<PendingReviewDTO>> getPendingReviews(
+        @RequestParam(required = false) Long id,
+        @RequestParam(required = false) Long userId,
+        @RequestParam(required = false) Long productId,
+        @RequestParam(required = false) Boolean active,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         User user = authService.getUser();
-        return ResponseEntity.ok(pendingReviewService
-            .filter(
-                null,  // devuelve todas. 
-                user.getId(), 
-                authService.isAdmin(), 
-                pageable
-            ));
+        if (authService.isAdmin()) {
+            return ResponseEntity.ok(pendingReviewService
+                    .findByFilter(id, userId, productId, active ,pageable));
+        }
+         return ResponseEntity.ok(pendingReviewService
+                    .findByFilter(id, user.getId(), productId, false ,pageable));
     }
 
 }

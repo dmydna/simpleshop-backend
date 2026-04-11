@@ -17,7 +17,8 @@ import com.techlab.store.repository.ListingRepository;
 import com.techlab.store.repository.PendingReviewRepository;
 import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.repository.UserRepository;
-
+import org.springframework.data.jpa.domain.Specification;
+import com.techlab.store.specification.PendingReviewSpecifications;
 import lombok.RequiredArgsConstructor;
 
 
@@ -56,33 +57,27 @@ public class PendingReviewService {
     }
 
 
+    public Page<PendingReview> filter(
+          Long id, 
+          Long userId, 
+          Long productId, 
+          Boolean active,
+          Pageable pageable) {
 
-    // Nota: 
-    // 1. solo funciona para filtrar por por id, no ambos a la vez
-    // 2. el userId es obligatorio para asegurar que el usuario solo vea sus pending reviews, a menos que sea admin, en ese caso se ignora el userId y se muestran todos los pending reviews
-    public Page<PendingReviewDTO> filter(
-        Long id, 
-        Long userId, 
-        boolean isAdmin, 
-        Pageable pageable) {
+        Specification<PendingReview> spec = Specification
+                .where(PendingReviewSpecifications.hasActive(active))
+                .and(PendingReviewSpecifications.hasUserId(userId))
+                .and(PendingReviewSpecifications.hasProductId(productId))
+                .and(PendingReviewSpecifications.hasId(id));
 
-        if(id != null && !isAdmin){
-             // devuelve un elmento (del usuario)
-            return pendingReviewRepository
-              .findAllByIdAndUserId(id, userId, pageable)
-              .map(this::reviewToDTO);
-        } 
+        return pendingReviewRepository.findAll(spec, pageable);
+    }
 
-        if(userId != null && id == null && !isAdmin){
-             // devuelve una lista de elementos(del usuario)
-             return pendingReviewRepository
-                 .findAllByUserId(userId, pageable)
-                 .map(this::reviewToDTO);
-        }
 
-        return pendingReviewRepository.findAll(pageable)
-                .map(this::reviewToDTO);
-
+    public Page<PendingReviewDTO> findByFilter(Long id, Long userId, Long productId, Boolean active, Pageable pageable){
+          
+        return filter(id, userId, productId, active, pageable)
+            .map(pr -> reviewToDTO(pr));
     }
 
 
@@ -101,16 +96,20 @@ public class PendingReviewService {
     }
 
 
+   public PendingReview getPendingReview(Long productId, Long userId){
+        return pendingReviewRepository.findOneByUserIdAndProductId(userId, productId).orElseThrow(() -> new RuntimeException("PendingReview no encontrado"));
+   }
+
 
     public void delete(Long productId, Long userId, boolean isAdmin) {
-        PendingReview pendingReview = pendingReviewRepository.findOneByUserIdAndProductId(userId,productId).orElseThrow(() -> new RuntimeException("PendingReview no encontrado"));
+        PendingReview pendingReview = pendingReviewRepository.findOneByUserIdAndProductId(userId, productId).orElseThrow(() -> new RuntimeException("PendingReview no encontrado"));
 
         // Si no es admin, verificar que pertenece al usuario
         if (!isAdmin && !pendingReview.getUser().getId().equals(userId)) {
             throw new RuntimeException("No tienes permiso para eliminar este pending review");
         }
 
-        pendingReviewRepository.delete(pendingReview);
+        pendingReview.setReviewed(true);
     }
 
 
