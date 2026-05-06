@@ -1,4 +1,4 @@
-package com.techlab.store.utils;
+package com.techlab.store.dto;
 
 public record RegisterRequest(
         String username,

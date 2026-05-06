@@ -1,27 +1,22 @@
 package com.techlab.store.service;
 
-import com.techlab.store.entity.Listing;
-import com.techlab.store.entity.User;
-import com.techlab.store.entity.Favorite;
-import com.techlab.store.repository.ListingRepository;
-import com.techlab.store.repository.FavoriteRepository;
-import com.techlab.store.specification.FavoriteSpecifications;
-import com.techlab.store.repository.UserRepository;
-import com.techlab.store.utils.StringUtils;
-
-import lombok.RequiredArgsConstructor;
-
-import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import com.techlab.store.entity.Favorite;
+import com.techlab.store.entity.Listing;
+import com.techlab.store.entity.User;
+import com.techlab.store.repository.FavoriteRepository;
+import com.techlab.store.repository.ListingRepository;
+import com.techlab.store.repository.UserRepository;
+import com.techlab.store.specification.FavoriteSpecifications;
 
-import com.techlab.store.dto.ListingShortDTO;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -66,26 +61,14 @@ public class FavoriteService {
         favoriteRepository.delete(favorite);
     }
 
-    public Page<ListingShortDTO> filter(Long userId, Long id, Pageable pageable) {
-        // TODO hay que cambiar el spec por algo mas simple, no es necesario usar spec para esto, con un query method en el repo alcanza
+
+    public Page<Favorite> filter(Long userId, Long id, Pageable pageable) {
         Specification<Favorite> spec = Specification
                 .where(FavoriteSpecifications.hasUserId(userId))
                 .and(FavoriteSpecifications.hasId(id));
-
-        Page<Favorite> favoritePage = favoriteRepository.findAll(spec, pageable);
-        return favoritePage.map(favorite -> toListingShortDto(favorite));
+        return favoriteRepository.findAll(spec, pageable);
     }
 
-    public ListingShortDTO toListingShortDto(Favorite favorite) {
-        Listing listing = favorite.getListing();
-        return new ListingShortDTO(
-                favorite.getId(),
-                favorite.getCreatedAt(),
-                listing.getId(),
-                listing.getThumbnail(),
-                listing.getTitle(),
-                listing.getPrice()
-        );
-    }
+
 
 }

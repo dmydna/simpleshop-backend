@@ -3,14 +3,15 @@ package com.techlab.store.service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -19,19 +20,23 @@ import org.springframework.web.multipart.MultipartFile;
 import com.techlab.store.dto.ListingDTO;
 import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.Product;
-import com.techlab.store.enums.Visibility;
+import com.techlab.store.entity.Review;
+import com.techlab.store.enums.Status;
+import com.techlab.store.mapper.ListingMapper;
 import com.techlab.store.repository.ListingRepository;
 import com.techlab.store.repository.ProductRepository;
+import com.techlab.store.specification.ListingSpecifications;
 import com.techlab.store.utils.HashUtil;
-import com.techlab.store.mapper.ListingMapper;
 import com.techlab.store.utils.StringUtils;
 
-import org.springframework.data.jpa.domain.Specification;
-
-import com.techlab.store.specification.ListingSpecifications;
-
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import com.techlab.store.exceptions.CustomExceptions.*;
+
+import jakarta.persistence.metamodel.IdentifiableType;
+
 
 @Service
 @Slf4j
@@ -41,49 +46,49 @@ public class ListingService {
     private final ListingRepository listingRepository;
     private final StringUtils stringUtils;
     private final ProductRepository productRepository;
-    @Autowired
-    private FileStorageService fileStorageService;
+    private final FileStorageService fileStorageService;
+    private final ListingMapper listingMapper;
 
-    @Autowired
-    private ListingMapper listingMapper;
-
+    // -- CREATE
     @Transactional
-    public ListingDTO create(ListingDTO dto, MultipartFile[] files) {
-        Listing newListing = createListingFromDto(dto);
-        newListing = listingRepository.saveAndFlush(newListing);
+    public Listing create(Listing listing, MultipartFile[] files) {
+
+        // buscamos existencia de producto
+        Product product =  this.productRepository
+            .findBySku(listing.getProduct().getSku())
+            .orElseThrow(() -> new ProductNotFoundException());
+
+        Listing saveListing = listingRepository.saveAndFlush(listing);
         // 5. Procesar imagen si el archivo no está vacío (Auxiliar)
         for (MultipartFile file : files) {
             if (!file.isEmpty()) {
-                handleImageUpload(newListing, file);
+                handleImageUpload(saveListing, file);
             }
         }
-        return listingMapper.toDto(newListing);
+        return saveListing;
     }
-
-
 
 
     // -- GET BY ID
-    public ListingDTO getByIdAdmin(Long id){
+    public Listing getById(Long id){
         // BUSCA SIN RESTRICCIONES. (OCULTOS E ELIMINADOS)
         Listing listing = this.listingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No encontrado"));
-        if (listing.getDeletedDate() != null) {
-            throw new RuntimeException("El recurso ha sido eliminado");
+                .orElseThrow(() -> new ListingNotFoundException(id));
+        if (listing.getDeletedAt() != null) {
+            throw new ListingHasDeletedException(id);
         }
-        return this.listingMapper.toDto(listing);
+        return listing;
     }
 
     // -- GET BY HASH
-    public ListingDTO getByHash(String hash){
+    public Listing getByHash(String hash){
         Listing listing = this.listingRepository.findActiveByHash(hash)
-                .orElseThrow(() -> new RuntimeException("No encontrado"));
-        if (listing.getDeletedDate() != null) {
-            throw new RuntimeException("El recurso ha sido eliminado");
+                .orElseThrow(() -> new ListingNotFoundException());
+        if (listing.getDeletedAt() != null) {
+            throw new ListingHasDeletedException();
         }
-      
         listing = limitReviews(listing, 4);
-        return this.listingMapper.toDto(listing);
+        return listing;
     }
 
    public Listing limitReviews(Listing listing, Integer limit) {
@@ -96,129 +101,127 @@ public class ListingService {
 
 
     public Page<Listing> findAllPage(Pageable pageable){
-        return this.listingRepository.findAllByDeletedDateIsNull(pageable);
+        return this.listingRepository.findAllByDeletedAtIsNull(pageable);
     }
 
-
-    public Page<ListingDTO> filter(
+    public Page<Listing> filter(
             String title,
             List<String> categories,
             List<String> tags,
             Double min, Double max,
-            Visibility visibility,
+            Status status,
             Pageable pageable
     ) {
+        Specification<Listing> spec = Specification
+            .where(ListingSpecifications.isNotDeleted())
+            .and(ListingSpecifications.hasCategories(categories))
+            .and(ListingSpecifications.hasStatus(status))
+            .and(ListingSpecifications.hasTitle(title))
+            .and(ListingSpecifications.hasTags(tags))
+            .and(ListingSpecifications.priceInRange(min, max));
 
-        Specification<Listing> spec = ListingSpecifications.isNotDeleted();
-
-        if (!CollectionUtils.isEmpty(categories)) {
-            spec = spec.and(ListingSpecifications.hasCategories(categories));
-        }
-
-        if(visibility != null){
-            spec = spec.and(ListingSpecifications.hasVisibilty(visibility));
-        }
-
-        if (stringUtils.hasText(title)) {
-            spec = spec.and(ListingSpecifications.hasTitle(title));
-        }
-
-        if (!CollectionUtils.isEmpty(tags)) {
-            spec = spec.and(ListingSpecifications.hasTags(tags));
-        }
-
-        spec = spec.and(ListingSpecifications.priceInRange(min, max));
-        Page<Listing> listingsPage = listingRepository.findAll(spec, pageable);
-        // 3. Convertir a Page de DTOs usando tu mapper
-        return listingsPage.map(listing -> this.listingMapper.toDto(listing));
+        return listingRepository.findAll(spec, pageable);
     }
 
 
+    public Page<ListingDTO> findByFilter(
+            String title,
+            List<String> categories,
+            List<String> tags,
+            Double min, Double max,
+            Status status,
+            Pageable pageable
+    ) {
+        // 3. Convertir a Page de DTOs usando tu mapper
+        return filter(title, categories, tags, min, max, status, pageable)
+            .map(listing -> this.listingMapper.toDto(listing));
+    }
 
 
+    @Transactional
+    public Listing updateStatusById(Long id, Status status){
+        log.info("🔔 actualizando status de listing con ID {}...", id);
+        Listing listing = this.listingRepository.findById(id)
+              .orElseThrow(() -> new ListingNotFoundException(id));
 
-    public ListingDTO updateById(Long id, ListingDTO dataToEdit, MultipartFile[] files) {
-        Listing listing = this.listingRepository.findActiveById(id)
-                .orElseThrow(() -> new RuntimeException("Error al actualizar: No se encontro listing con id "+ id));
-        // Importante: este mapper ignora el campo images.
-        listingMapper.updateFromDto(dataToEdit, listing);
+        if(isDeleted(id)){ throw new ListingHasDeletedException(id) ;}
+
+        if(status.equals(Status.DELETED)){ deleteById(id); }
+
+        listing.setStatus(status);
+        return listing;
+    }
+
+
+    @Transactional
+    public Listing updateById(Long id, Listing dataToEdit, MultipartFile[] files) {
+
+        log.info("🔔 actualizando listing con ID {}...", id);
+
+        Listing listing = listingRepository.findActiveById(id)
+                .orElseThrow(() -> new ListingNotFoundException(dataToEdit.getId()));
+        
+        if(dataToEdit.getStatus() != null){ updateStatusById(id, dataToEdit.getStatus());}
         // Importante: esta funcion requiere listing.images sin modificar.
-        if(files != null && files.length != 0){
-            updateImages(id, dataToEdit.images(), files);
-        }
+        if(files != null && files.length != 0){ 
+            updateImages(id, dataToEdit.getImages(), files);}
 
-        Listing saveListing = this.listingRepository.save(listing);
-        return listingMapper.toDto(saveListing);
+        return listingMapper.updateFromEntity(dataToEdit, listing);
     }
 
 
 
     public List<String> updateImages(
-            Long id, List<String> updatedImages, MultipartFile[] files){
+            Long id, 
+            List<String> updatedImages, 
+            MultipartFile[] files){
+        log.info("🔔 actualizando imagenes de listing con ID {}...", id);
         Listing listing = this.listingRepository.findActiveById(id)
-                .orElseThrow(() -> new RuntimeException("No encontrado"));
-
-        List<String> currentImages = listingMapper.toDto(listing).images();
+                .orElseThrow(() -> new ListingNotFoundException(id));
+        List<String> currentImages = listing.getImages();
         // Busco las imágenes que ya no están en el nuevo DTO
-        List<String> deletedImages = currentImages.stream()
+        List<String> deletedImages = 
+            currentImages
+                .stream()
                 .filter(e -> !updatedImages.contains(e))
                 .collect(Collectors.toList());
 
         // Borrar las imagenes eliminadas
-        deletedImages.forEach(imageName -> removeImageFromListing(id, imageName));
+        deletedImages
+           .forEach(imageName -> removeImageFromListing(id, imageName));
         // Subo las nuevas imagenes.
-        if (files != null && files.length > 0) {
-             uploadImages(id, files);
-        }
+        if (files != null && files.length > 0) {  uploadImages(id, files); }
+
         return listing.getImages();
     }
 
-    public ListingDTO changeVisibility(Long id, Visibility visibility){
+
+    public void deleteById(Long id) {
+        log.info("🔔 eliminando listing con ID {}...", id);
         Listing listing = this.listingRepository.findActiveById(id)
-                .orElseThrow(() -> new RuntimeException("No encontrado"));
-        listing.setVisibility(visibility);
-        Listing saveListing = this.listingRepository.save(listing);
-        return this.listingMapper.toDto(saveListing);
-    }
-
-
-
-    public ListingDTO deleteById(Long id) {
-        Listing listing = this.listingRepository.findActiveById(id)
-                .orElseThrow(() -> new RuntimeException("No encontrado"));
+           .orElseThrow(() -> new ListingNotFoundException(id));
         //this.productRepository.delete(post);
         // Borrar Imagenes del Storage
         listing.getImages().forEach(fileStorageService::deleteFile);
-        listing.setDeleted(true);
-        listing.setDeletedDate(LocalDate.now());
-        Listing saveListing = this.listingRepository.save(listing);
-        return this.listingMapper.toDto(saveListing);
+        listing.setStatus(Status.DELETED);
+        listing.setDeletedAt(LocalDate.now());
+        listingRepository.save(listing);
     }
 
 
-
-    @Transactional
-    public List<ListingDTO> saveAll(List<ListingDTO> dtos) {
-        log.info("\n\n >> Iniciando persistencia masiva de {} elementos \n\n", dtos.size());
-        // 1. Convertimos los DTOs a Entidades preparadas
-        List<Listing> listingsToSave = dtos.stream().map(dto-> createListingFromDto(dto)
-        ).collect(Collectors.toList());
-        // 2. Guardamos todos los Listings de una vez
-        List<Listing> savedListings = listingRepository.saveAll(listingsToSave);
-        // 3. Retornamos la lista convertida a DTO para el Frontend
-        return savedListings.stream()
-                .map(listingMapper::toDto)
-                .collect(Collectors.toList());
+    public boolean isDeleted(Long id){
+        Listing entity = listingRepository.findById(id)
+                .orElseThrow(() -> new ListingNotFoundException(id));
+        return entity.getDeletedAt() != null;
     }
-
 
 // --- MÉTODOS AUXILIARES PRIVADOS ---
 
     @Transactional
     public void removeImageFromListing(Long listingId, String imageUrl) {
+        log.info("🔔 eliminado imagen {} de listing con ID {}...",imageUrl, listingId);
         Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new RuntimeException("Listing no encontrado"));
-        // 1. Eliminar la URL de la lista en la base de datos
+            .orElseThrow(() -> new ListingNotFoundException(listingId));
         boolean removed = listing.getImages().remove(imageUrl);
         if (removed) {
             // 2. Si se quitó de la DB con éxito, procedemos a borrar el archivo físico
@@ -230,18 +233,20 @@ public class ListingService {
 
     @Transactional
     public String uploadImage(Long id, MultipartFile file) {
-        if (file.isEmpty()) throw new IllegalArgumentException("El archivo está vacío");
+        log.info("subiendo imagen para listing...");
+        if (file.isEmpty()) throw new StorageException("❌ El archivo está vacío");
         Listing listing = listingRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Listing no encontrado"));
+            .orElseThrow(() -> new ListingNotFoundException(id));
         return handleImageUpload(listing, file);
     }
 
     @Transactional
     public List<String> uploadImages(Long id, MultipartFile[] files) {
+        log.info("subiendo imagenes para listing...");
         if (files == null || files.length == 0)
-            throw new IllegalArgumentException("No hay archivos");
+            throw new StorageException("❌ El archivo está vacío");
         Listing listing = listingRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Listing no encontrado"));
+                .orElseThrow(() -> new ListingNotFoundException(id));
         List<String> urls = new ArrayList<>();
         for (MultipartFile file : files) {
             if (!file.isEmpty()) {
@@ -262,34 +267,6 @@ public class ListingService {
         listingRepository.save(listing);
         return finalUrl;
     }
-
-
-    // BUSQUEDA SEGURA (NO MUESTRA OCULTOS Y ELIMINADOS)
-    public ListingDTO getById(Long id) {
-        Specification<Listing> spec = ListingSpecifications.isNotDeleted()
-                .and(ListingSpecifications.hasId(id));
-        Listing listing = listingRepository.findOne(spec)
-                .orElseThrow(() -> new EntityNotFoundException("Listing no encontrado"));
-        return this.listingMapper.toDto(listing);
-    }
-
-
-    public Listing createListingFromDto(ListingDTO dto){
-        Listing listing = listingMapper.toEntity(dto);
-        Optional<Product> existingProduct = productRepository.findBySku(dto.sku());
-
-        if (existingProduct.isPresent()) {
-            // Si existe, usamos el producto de la DB en lugar del que creó MapStruct
-            listing.setProduct(existingProduct.get());
-        }
-        listing.setCreatedDate(LocalDate.now());
-        listing.setHash(HashUtil.generateShortHash());
-        listing.setVisibility(Visibility.PUBLIC);
-
-        return listing;
-    }
-
-
 
 }
 

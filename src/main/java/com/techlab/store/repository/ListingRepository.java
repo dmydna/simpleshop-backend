@@ -15,13 +15,13 @@ import com.techlab.store.entity.Listing;
 
 @Repository
 public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpecificationExecutor<Listing> {
-    @Query("SELECT l FROM Listing l WHERE l.id = :id AND l.deletedDate IS NULL")
+    @Query("SELECT l FROM Listing l WHERE l.id = :id AND l.deletedAt IS NULL")
     Optional<Listing> findActiveById(@Param("id") Long id);
 
-    Page<Listing> findAllByDeletedDateIsNull(Pageable pageable);
+    Page<Listing> findAllByDeletedAtIsNull(Pageable pageable);
 
     // Filtra no eliminados.
-    @Query("SELECT l FROM Listing l WHERE l.hash = :hash AND l.deletedDate IS NULL")
+    @Query("SELECT l FROM Listing l WHERE l.hash = :hash AND l.deletedAt IS NULL")
     Optional<Listing> findActiveByHash(@Param("hash") String hash);
 
 
@@ -29,9 +29,9 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
     // -- Filtrar (no eliminados) :
 
     // Por Title. (para busquedas)
-    @Query("SELECT l FROM Listing l WHERE l.title LIKE %:keyword% AND l.deletedDate IS NULL")
+    @Query("SELECT l FROM Listing l WHERE l.title LIKE %:keyword% AND l.deletedAt IS NULL")
     Page<Listing> searchByTitle(@Param("keyword") String keyword, Pageable pageable);
 
 
-    List<Listing> findAllByDeletedDateIsNull();
+    List<Listing> findAllByDeletedAtIsNull();
 }

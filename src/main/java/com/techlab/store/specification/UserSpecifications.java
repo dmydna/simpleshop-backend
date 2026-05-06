@@ -1,19 +1,19 @@
 package com.techlab.store.specification;
 
-import com.techlab.store.entity.Listing;
+import org.springframework.data.jpa.domain.Specification;
+
 import com.techlab.store.entity.User;
 import com.techlab.store.utils.StringUtils;
+
 import jakarta.persistence.criteria.Path;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.domain.Specification;
-import java.util.List;
 
 
 public class UserSpecifications {
 
+    // TODO agregar filtros de Status (BANNED, INACTIVE ...)
 
     public static Specification<User> isNotDeleted() {
-        return (root, query, cb) -> cb.isNull(root.get("deletedDate"));
+        return (root, query, cb) -> cb.isNull(root.get("deletedAt"));
     }
     public static Specification<User> hasClientName(String clientname) {
         return (root, query, builder) -> {

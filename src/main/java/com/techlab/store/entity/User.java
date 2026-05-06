@@ -1,18 +1,15 @@
 package com.techlab.store.entity;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import com.techlab.store.enums.*;
-import jakarta.persistence.*;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.techlab.store.enums.Role;
+import com.techlab.store.enums.UserStatus;
 
-import java.time.LocalDate;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,6 +18,12 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+
 
 @Entity
 @Getter
@@ -32,6 +35,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Data
     @Column(unique = true, nullable = false)
     private String username;
     @Column(nullable = false)
@@ -39,13 +43,19 @@ public class User {
     @Column(unique = true)
     private String email;
     private String image;
-    private Boolean deleted;
-    private LocalDate deletedDate;
-
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    // client.user
+    // Status
+    @Enumerated(EnumType.STRING)
+    private UserStatus status = UserStatus.ACTIVE;
+
+    // Meta
+    private LocalDate createdAt;
+    private LocalDate updatedAt;
+    private LocalDate deletedAt;
+
+    // Relations
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
     private Client client;

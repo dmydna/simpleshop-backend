@@ -1,10 +1,7 @@
 package com.techlab.store.controller;
 
 
-import com.techlab.store.dto.ListingDTO;
-import com.techlab.store.dto.UserDTO;
-import com.techlab.store.entity.Product;
-import com.techlab.store.service.ProfileService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -12,40 +9,55 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-
-import com.techlab.store.entity.User;
-import com.techlab.store.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+import com.techlab.store.enums.UserStatus;
+
+import com.techlab.store.dto.UserDTO;
+import com.techlab.store.entity.User;
+import com.techlab.store.mapper.UserMapper;
+import com.techlab.store.service.UserService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 
+@Slf4j
+@RequiredArgsConstructor 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    @Autowired
-    private UserService userService;
-
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
+    
+    private final UserService userService;
+    private final UserMapper userMapper;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<User> create(
-        @RequestPart("user") User user,
+        @RequestPart("user") UserDTO user,
         @RequestPart(value = "file", required = false) MultipartFile file
     ) {
+
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(userService.create(user, file));
+                .body(userService.create(userMapper.toEntity(user), file));
     }
 
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getById(@PathVariable Long id) {
-        UserDTO user = userService.getById(id);
-        return ResponseEntity.ok(user);
+        User user = userService.getById(id);
+        UserDTO response = userMapper.toDto(user);
+        return ResponseEntity.ok(response);
     }
 
 
@@ -56,9 +68,12 @@ public class UserController {
             @RequestParam(required = false) String clientname,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        // El Service decide si usa filtros o si devuelve todo
-        return ResponseEntity.ok(userService.filter(username, email, clientname, pageable));
+        Page<UserDTO> response = userService
+           .filter(username, email, clientname, pageable)
+           .map(user-> userMapper.toDto(user));
+        return ResponseEntity.ok(response);
     }
+
 
 
     @PostMapping(value = "/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -77,9 +92,23 @@ public class UserController {
     }
 
 
-    @PutMapping("/update/{id}")
+    @PutMapping("/{id}/update")
     public UserDTO updateById(@PathVariable Long id, @RequestBody UserDTO dataToEdit){
-        return this.userService
-                .updateById(id, dataToEdit);
+        User user = userService
+                .updateById(id, userMapper.toEntity(dataToEdit));
+        return userMapper.toDto(user);
+        
     }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<UserDTO> updateStatus( 
+        @PathVariable Long id, 
+        @RequestParam UserStatus status) {
+        User user = userService.updateStatusById(id, status);
+        UserDTO response = userMapper.toDto(user);
+        return ResponseEntity.ok(response);
+    }
+
+
 }

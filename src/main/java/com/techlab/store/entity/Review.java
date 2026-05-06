@@ -1,6 +1,9 @@
 package com.techlab.store.entity;
 
+import java.time.LocalDate;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,15 +21,18 @@ public class Review {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Integer rating;
+    private Double rating;
 
     @Column(length = 1000)
     private String comment;
 
-    private LocalDateTime date;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    private String reviewerName;
-    private String reviewerEmail;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    @JsonBackReference
+    private User user;
 
     @ManyToOne
     @JoinColumn(name = "product_id")

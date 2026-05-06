@@ -13,7 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.techlab.store.service.ProfileService;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/buy")
@@ -28,7 +30,7 @@ public class BuyController {
             @RequestBody PaymentConfirmRequest request) {
         // request contiene: { orderId, paymentToken }
         
-        System.out.println("\n buyController -> request "+ request + "\n");
+        log.info("🔔 Se valida compra con el request {}", request);
 
         UserDTO user = profileService.getMyUser(authentication);
         boolean success = buyService

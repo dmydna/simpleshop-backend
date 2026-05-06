@@ -1,23 +1,9 @@
 package com.techlab.store.dto;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import com.techlab.store.entity.Review;
-import com.techlab.store.enums.Visibility;
+import com.techlab.store.enums.Status;
 import com.techlab.store.model.ProductDimensions;
-import com.techlab.store.model.ProductMeta;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Embedded;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 public record ListingDTO (
     // Listing
@@ -25,12 +11,6 @@ public record ListingDTO (
     String title,
     String description,
     Double price,
-    Visibility visibility,
-
-    LocalDate deletedDate,
-    LocalDate createdDate,
-    LocalDate modifiedDate,
-
     Double discountPercentage,
     Double rating,
     String warrantyInformation,
@@ -42,7 +22,7 @@ public record ListingDTO (
     List<String> images,
     String thumbnail,
     String hash,
-    Boolean deleted,
+    Status status,
     // product
     Long productId,
     String productName,
@@ -53,5 +33,5 @@ public record ListingDTO (
     Integer stock,
     String category,
     List<String> tags,
-    ProductMeta meta
+    Meta meta
 ){}

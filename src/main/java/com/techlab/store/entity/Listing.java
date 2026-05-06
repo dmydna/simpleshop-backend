@@ -2,14 +2,11 @@ package com.techlab.store.entity;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import com.techlab.store.entity.Favorite;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.techlab.store.enums.Visibility;
+import com.techlab.store.enums.Status;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -32,22 +29,19 @@ import lombok.Setter;
 @Setter
 public class Listing {
 
+    // TODO actualizar meta a LocalDataTime
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Data
     private String title;
     @Column(length = 1000)
     private String description;
     private Double price;
-    private Boolean deleted;
-
-    private LocalDate deletedDate;
-    private LocalDate createdDate;
-    private LocalDate modifiedDate;
-
-    @Enumerated(EnumType.STRING)
-    private Visibility visibility = Visibility.PUBLIC;
+    private Integer stock;
+    
     private Double discountPercentage;
     private String warrantyInformation;
     private String shippingInformation;
@@ -57,14 +51,23 @@ public class Listing {
     @ElementCollection
     private List<String> images = new ArrayList<>();
     private String thumbnail;
+    @Column(unique = true, nullable = false, updatable = false)
+    private String hash;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // Status
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.ACTIVE;
+
+    // Meta
+    private LocalDate updatedAt;
+    private LocalDate deletedAt;
+    private LocalDate createdAt = LocalDate.now();
+
+    // Relations
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     @JsonIgnoreProperties("listings")
     private Product product;
-
-    @Column(unique = true, nullable = false, updatable = false)
-    private String hash;
 
     @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference

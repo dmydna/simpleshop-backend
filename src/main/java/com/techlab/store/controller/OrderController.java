@@ -18,10 +18,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.techlab.store.dto.ClientDTO;
-import com.techlab.store.dto.OrderFullDTO;
+import com.techlab.store.dto.OrderComplete;
 import com.techlab.store.dto.OrderResponse;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.User;
+import com.techlab.store.mapper.OrderMapper;
 import com.techlab.store.service.AuthService;
 import com.techlab.store.service.BuyService;
 import com.techlab.store.service.OrderService;
@@ -38,12 +39,13 @@ public class OrderController {
     private final BuyService buyService;
     private final ProfileService profileService;
     private final AuthService authService;
+    private final OrderMapper orderMapper;
 
     @PostMapping
     public ResponseEntity<?> createOrder(
             Authentication authentication,
             @RequestParam(required = false) Long clientId,
-            @RequestBody OrderFullDTO dto
+            @RequestBody OrderComplete dto
             ) {
         Long clientID; 
 
@@ -56,17 +58,17 @@ public class OrderController {
             ClientDTO client = profileService.getMyClient(authentication);
             clientID = client.id();
         }
-        OrderFullDTO savedOrder = buyService.savedOrder(dto, clientID);
+        OrderComplete savedOrder = buyService.savedOrder(dto, clientID);
         return ResponseEntity.ok(new OrderResponse(
-                savedOrder.getId(),
-                savedOrder.getFailedDetails()
+                savedOrder.id(),
+                savedOrder.failedItems()
         ));
     }
 
 
     @GetMapping
-    public ResponseEntity<Page<OrderFullDTO>> getAll(
-        @RequestParam(required = false) Long userId,
+    public ResponseEntity<Page<OrderComplete>> getAll(
+        @RequestParam(required = false) Long userId, // userId = clientId
         @RequestParam(required = false) Order.OrderState status,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
@@ -81,32 +83,22 @@ public class OrderController {
     }
 
 
-
     @GetMapping("/{id}")
-    public OrderFullDTO getOrderById(@PathVariable Long id) {
-        return this.orderService.getById(id);
+    public ResponseEntity<OrderComplete> getOrderById(@PathVariable Long id) {
+        Order order = orderService.getById(id);
+        OrderComplete response = orderMapper.toFullDto(order);
+        return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/cancel/{id}")
+    @PutMapping("/{id}/cancel")
     public ResponseEntity<?> cancelById(@PathVariable Long id) {
         boolean success = this.orderService.cancelOrderById(id);
         if (success) return ResponseEntity.ok().build(); // 200 OK 
         return ResponseEntity.badRequest().build();
     }
 
-    @GetMapping("/client/{id}")
-    public  List<OrderFullDTO> getOrderByClientId(@PathVariable Long id){
-        return this.orderService.getOrderByClientId(id);
-    }
-
-    // @GetMapping
-    // public List<OrderFullDTO> getAllOrders() {
-    //     return this.orderService.getAll();
-    // }
-
-
     @PutMapping("/{id}/status")
-    public OrderFullDTO updateStatus(
+    public OrderComplete updateStatus(
             @PathVariable Long id,
             @RequestParam Order.OrderState newState) {
         return this.orderService.updateStatus(id, newState);

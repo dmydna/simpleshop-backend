@@ -1,31 +1,23 @@
 package com.techlab.store.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.techlab.store.exceptions.CustomExceptions.*;
 import com.techlab.store.dto.ClientDTO;
-import com.techlab.store.dto.UserDTO;
-import com.techlab.store.dto.OrderFullDTO;
 import com.techlab.store.dto.ProfileDTO;
+import com.techlab.store.dto.UserDTO;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.User;
+import com.techlab.store.mapper.ClientMapper;
 import com.techlab.store.mapper.ProfileMapper;
 import com.techlab.store.mapper.UserMapper;
-import com.techlab.store.mapper.ClientMapper;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import com.techlab.store.repository.UserRepository;
+import com.techlab.store.enums.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,16 +34,27 @@ public class ProfileService {
     private final ClientMapper clientMapper;
     private final UserMapper userMapper;
     private final AuthService authService;
+    private final UserRepository userRepository;
 
     public ProfileDTO getProfile(Authentication authentication) {
 
         log.info("Principal: " + authentication.getName());
         log.info("Authorities: " + authentication.getAuthorities());
 
-        User user = userService.findEntityByUsername(authentication.getName());
-        Client client = clientService.findEntityById(user.getId());
+        User user = userService.findByUsername(authentication.getName());
+        return profileMapper.toDto(user, user.getClient());
+    }
 
-        return profileMapper.toDto(user, client);
+    public Page<ProfileDTO> findByFilter(
+            String username,
+            String clientname,
+            String email,
+            Pageable pageable
+    ){
+
+        return userService
+           .filter(username, clientname, email, pageable)
+           .map(user -> profileMapper.toDto(user, user.getClient()));
     }
 
 
@@ -59,7 +62,7 @@ public class ProfileService {
 
         log.info("Principal: " + authentication.getName());
         log.info("Authorities: " + authentication.getAuthorities());
-        User user = userService.findEntityByUsername(authentication.getName());
+        User user = userService.findByUsername(authentication.getName());
         return userMapper.toDto(user);
     }
 
@@ -67,17 +70,15 @@ public class ProfileService {
 
         log.info("Principal: " + authentication.getName());
         log.info("Authorities: " + authentication.getAuthorities());
-        User user = userService.findEntityByUsername(authentication.getName());
+        User user = userService.findByUsername(authentication.getName());
         Client client = clientService.findEntityById(user.getId());
         return clientMapper.toSimpleDto(client);
     }
 
-
-
     @Transactional
-    public ProfileDTO updateProfile(Authentication authentication, ProfileDTO dto) {
+    public ProfileDTO updateMyProfile(Authentication authentication, ProfileDTO dto) {
 
-        User user = userService.findEntityByUsername(authentication.getName());
+        User user = userService.findByUsername(authentication.getName());
         Client client = clientService.findEntityById(user.getId());
 
         profileMapper.updateUserFromDto(user, dto);
@@ -86,14 +87,27 @@ public class ProfileService {
         return profileMapper.toDto(user, client);
     }
 
-    public void handleRemoveImage(String imageUrl){
+    @Transactional
+    public ProfileDTO updateProfile(Long id, ProfileDTO dto) {
+
+        User user = userRepository.findById(id)
+           .orElseThrow(() -> new RuntimeException("user no encontrado"));
+
+        profileMapper.updateUserFromDto(user, dto);
+        profileMapper.updateClientFromDto(user.getClient(), dto);
+
+        return profileMapper.toDto(user, user.getClient());
+    }
+
+
+    public void handleRemoveImage(String imageUrl) {
         fileStorageService.deleteFile(imageUrl);
     }
 
     @Transactional
-    public String updateProfileImage(Authentication authentication, MultipartFile file ) {
+    public String updateProfileImage(Authentication authentication, MultipartFile file) {
         String folderName = "users";
-        User user = userService.findEntityByUsername(authentication.getName());
+        User user = userService.findByUsername(authentication.getName());
         String finalUrl = fileStorageService.storeFile(file, user.getId(), folderName);
         if (user.getImage() != null && !user.getImage().isEmpty()) {
             handleRemoveImage(user.getImage());
@@ -102,7 +116,5 @@ public class ProfileService {
         user.setImage(finalUrl);
         return finalUrl;
     }
-
-
 
 }

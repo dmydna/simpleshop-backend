@@ -1,7 +1,14 @@
 package com.techlab.store.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -10,11 +17,9 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class OrderDetail {
+public class OrderItem {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private Long listingId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
@@ -22,9 +27,9 @@ public class OrderDetail {
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
+    @JoinColumn(name = "listing_id")
     @JsonIgnoreProperties("orderDetails")
-    private Product product;
+    private Listing listing;
 
     private int quantity;
     private double priceAtPurchase; // guarda el precio actual del producto

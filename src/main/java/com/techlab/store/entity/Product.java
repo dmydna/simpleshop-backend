@@ -1,20 +1,29 @@
 package com.techlab.store.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.techlab.store.model.ProductDimensions;
-import com.techlab.store.model.ProductMeta;
-import jakarta.persistence.*;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.List;
-import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.techlab.store.enums.Status;
+import com.techlab.store.model.ProductDimensions;
+import com.techlab.store.model.ProductMeta;
+
+import jakarta.persistence.EnumType;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -24,36 +33,42 @@ import lombok.ToString;
 @Setter
 @ToString
 public class Product {
+    
+    // TODO actualizar meta a LocalDataTime
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Data
     private String name;
     @Column(unique = true, nullable = false)
     private String sku;
     private String brand;
     private Integer weight;
+    private Double rating;
+    @Embedded
+    private ProductMeta meta;
     @Embedded
     private ProductDimensions dimensions;
-    private Integer stock;
+    @ElementCollection
+    private List<String> tags;
 
-    /*
+    // status
+    @Enumerated(EnumType.STRING)
+    Status status = Status.ACTIVE;
+
+    // Meta
+    private LocalDate updatedAt;
+    private LocalDate deletedAt;
+    private LocalDate createdAt = LocalDate.now();
+
+    // Relations
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
-     */
-    private String category;
 
-    @ElementCollection
-    private List<String> tags;
-    @Embedded
-    private ProductMeta meta;
-    private Boolean deleted;
-    private LocalDate deletedDate;
-
-//    @JsonIgnoreProperties("product")
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "product")
     @JsonIgnore
     private List<Listing> listings;
 
@@ -65,5 +80,4 @@ public class Product {
     @JsonManagedReference
     private List<Review> reviews = new ArrayList<>();
 
-    private Double rating;
 }

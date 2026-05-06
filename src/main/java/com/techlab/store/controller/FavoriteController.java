@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.techlab.store.dto.ListingShortDTO;
+import com.techlab.store.dto.FavoriteDTO;
 import com.techlab.store.entity.Favorite;
+import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.User;
 import com.techlab.store.service.AuthService;
 import com.techlab.store.service.FavoriteService;
@@ -30,14 +30,12 @@ public class FavoriteController {
     private final FavoriteService favoriteService;
     private final AuthService authService;
 
-
     @PostMapping("/{listingId}")
     public ResponseEntity<?> create(@PathVariable Long listingId) {
         User user = authService.getUser();
         return ResponseEntity
-           .ok(favoriteService.create(listingId, user.getId()));
+                .ok(favoriteService.create(listingId, user.getId()));
     }
-
 
     @DeleteMapping("/{listingId}")
     public ResponseEntity<?> delete(@PathVariable Long listingId) {
@@ -47,18 +45,32 @@ public class FavoriteController {
         return ResponseEntity.ok().build();
     }
 
-
     @GetMapping
-    public ResponseEntity<Page<ListingShortDTO>> getAll(        
-        @RequestParam(required = false) Long userId, 
-        @RequestParam(required = false) Long id,
-        @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable){
+    public ResponseEntity<Page<FavoriteDTO>> getAll(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) Long id,
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         User user = authService.getUser();
+        Page<FavoriteDTO> response;
         if (authService.isAdmin()) {
-            return ResponseEntity.ok(favoriteService
-                    .filter(userId, id, pageable));
+            response = favoriteService.filter(userId, id, pageable)
+                    .map(favorite -> toFavoriteDto(favorite));
+        } else {
+            response = favoriteService.filter(user.getId(), id, pageable)
+                    .map(favorite -> toFavoriteDto(favorite));
         }
-         return ResponseEntity.ok(favoriteService
-                    .filter(user.getId(), id ,pageable));
+        return ResponseEntity.ok(response);
+    }
+
+    public FavoriteDTO toFavoriteDto(Favorite favorite) {
+        Listing listing = favorite.getListing();
+        return new FavoriteDTO(
+                favorite.getId(),
+                favorite.getCreatedAt(),
+                listing.getId(),
+                listing.getThumbnail(),
+                listing.getTitle(),
+                listing.getPrice()
+        );
     }
 }

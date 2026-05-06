@@ -2,8 +2,8 @@ package com.techlab.store.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -30,7 +30,7 @@ import lombok.ToString;
 @Table(name = "T_ORDER")
 public class Order {
 
-
+    // TODO mover OrderState a enums/OrderStatus.java
 
     public enum OrderState {
         PENDING, COMPLETED, CANCELLED, PAID;
@@ -57,13 +57,15 @@ public class Order {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("order")
-    private Set<OrderDetail> details = new HashSet<>();
+    private List<OrderItem> items = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "order_id")
-    private Set<OrderDetail> failedDetails = new HashSet<>();
+    private List<OrderItem> failedItems = new ArrayList<>();
 
     public BigDecimal totalAmount;
+
+    // TODO evaluar updateAt
     private LocalDateTime createdAt;
 
 }

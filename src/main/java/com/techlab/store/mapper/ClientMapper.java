@@ -4,7 +4,7 @@ import com.techlab.store.dto.ClientDTO;
 import com.techlab.store.dto.ClientFullDTO;
 import com.techlab.store.entity.Client;
 import org.mapstruct.*;
-
+import com.techlab.store.dto.RegisterRequest;
 import java.util.List;
 
 
@@ -35,6 +35,13 @@ public interface ClientMapper {
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "deleted", ignore = true)
     Client toEntity(ClientDTO dto);
+
+    @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+    @Mapping(target = "orders", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "deleted", ignore = true)
+    Client toEntity(RegisterRequest dto);
+
 
     // Para editar un cliente existente
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

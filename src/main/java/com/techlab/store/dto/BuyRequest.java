@@ -1,9 +1,9 @@
 package com.techlab.store.dto;
 
-import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
+
+import jakarta.validation.constraints.NotNull;
 
 public record BuyRequest(
         @NotNull(message = "Order ID is required")
@@ -13,6 +13,6 @@ public record BuyRequest(
         @NotNull(message = "Total amount is required")
         BigDecimal totalAmount,
         @NotNull(message = "Payment token is required")
-        Set<OrderDetailDTO>failedDetails,
+        List<OrderItemDto>failedItems,
         String paymentToken // ← Token generado por Stripe/PayPal
 ) {}

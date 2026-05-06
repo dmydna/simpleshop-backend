@@ -1,27 +1,27 @@
 package com.techlab.store.service;
 
+import java.util.List;
 
-import com.techlab.store.entity.Listing;
+import org.springframework.stereotype.Service;
+
+import com.techlab.store.dto.OrderComplete;
+import com.techlab.store.dto.ReviewDTO;
+import com.techlab.store.entity.PendingReview;
 import com.techlab.store.entity.Product;
 import com.techlab.store.entity.Review;
 import com.techlab.store.entity.User;
-import com.techlab.store.dto.ReviewDTO;
-import com.techlab.store.repository.ListingRepository;
+import com.techlab.store.exceptions.CustomExceptions.ProductHasDeletedException;
+import com.techlab.store.exceptions.CustomExceptions.ReviewExpiratedException;
+import com.techlab.store.repository.PendingReviewRepository;
 import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.repository.ReviewRepository;
 import com.techlab.store.utils.StringUtils;
 
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-
-import com.techlab.store.entity.PendingReview;
-import com.techlab.store.repository.PendingReviewRepository;
-
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ReviewService {
 
@@ -29,69 +29,76 @@ public class ReviewService {
     private final ProductRepository productRepository;
     private final PendingReviewService pendingReviewService;
     private final PendingReviewRepository pendingReviewRepository;
-
     private StringUtils stringUtils;
 
-    public void deleteById(Long id) {
+
+    public void updateProductRating(Product product, Review review){
+        log.info("🔔 Actualizando Rating de producto ..." );
+        Double rating = calcRating(product.getId());
+        product.setRating(rating);
     }
 
-public ReviewDTO addReviewToProduct(ReviewDTO review, User user) {
 
-System.out.println("Entra en addReviewToProduct: ");
-
-    Product product = productRepository.findById(review.productId())
-            .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
-
-
-   System.out.println("try PendingReview con product_id " +  review.productId()  + ", and user_id " +  user.getId());
-   PendingReview pending = pendingReviewService.getPendingReview(review.productId(), user.getId());
-   if(pending.isReviewed() == true){
-      System.out.println("pendingReview vencio.");
-      return review; // no guarda
+    public Double calcRating(Long id){
+        log.info("🔔 Calculando Rating de producto ..." );
+        List<Review> reviews = reviewRepository.findByProductId(id);
+        Double totalRating = 0.0;
+        Integer totalReview = reviews.size();
+        for(Review rev : reviews){
+            totalRating += rev.getRating();
+        }
+        return (totalRating / totalReview);
     }
-    // softdelete
-    if(pending.getUser().getId() == user.getId()){
-         System.out.println("borra pendingReview");
-         pending.setReviewed(true);
-    }else {
-        System.out.println("Intenta borrar pendingReview de otro user");
-        return review;
-     }
 
-    Review savedReview = this.reviewRepository.save(dtoToReview(review, user, product));
-    return entityToDto(savedReview);
-}
+    public Review addReviewToProduct(ReviewDTO review, User user) {
 
+        log.info("🔔 Creando Review ..." );
 
-public void deleteById(Long productId, String username){
-   Review review = reviewRepository.findByProductIdAndReviewerName(productId, username)
-         .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
-   reviewRepository.delete(review);
-}
+        Product product = productRepository.findById(review.productId())
+                .orElseThrow(() -> new ProductHasDeletedException(review.productId()));
 
-public Review dtoToReview(ReviewDTO review, User user, Product product) {
-    Review entity = new Review();
-    entity.setComment(review.comment());
-    entity.setRating(review.rating());
-    entity.setDate(LocalDateTime.now());
-    entity.setReviewerEmail(user.getEmail());
-    entity.setReviewerName(user.getUsername());
-    entity.setProduct(product);
-    return entity;
-}
+        PendingReview pending = pendingReviewService.getPendingReview(review.productId(), user.getId());
+        if (pending.isReviewed() == true) {
+            throw new ReviewExpiratedException(pending.getId());
+        }
+        // softdelete
+        if (pending.getUser().getId() == user.getId()) {
+            log.info("🔔 pendingReview fue eliminado");
+            pending.setReviewed(true);
+        } 
+        
+        Review savedReview = reviewRepository
+               .save(dtoToReview(review, user, product));
 
-public ReviewDTO entityToDto(Review entity) {
-    ReviewDTO dto = new ReviewDTO(
-      entity.getId(),
-      entity.getReviewerName(),
-      entity.getReviewerEmail(),
-      entity.getRating(),
-      entity.getComment(),
-      entity.getProduct().getId()
-    );
-    return dto;
-}
+        updateProductRating(product, savedReview);
+        return savedReview;
+    }
 
+    public void deleteById(Long productId, String username) {
+        Review review = reviewRepository.findByProductIdAndReviewerName(productId, username)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+        reviewRepository.delete(review);
+    }
 
+    public Review dtoToReview(ReviewDTO review, User user, Product product) {
+        Review entity = new Review();
+        entity.setComment(review.comment());
+        entity.setRating(review.rating());
+        entity.setUser(user);
+        entity.setProduct(product);
+        return entity;
+    }
+
+    public ReviewDTO entityToDto(Review entity) {
+        ReviewDTO dto = new ReviewDTO(
+            entity.getId(),
+            entity.getUser().getUsername(),
+            entity.getUser().getEmail(),
+            entity.getRating(),
+            entity.getComment(),
+            entity.getProduct().getId()
+        );
+        return dto;
+    }
 
 }

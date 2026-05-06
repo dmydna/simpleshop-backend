@@ -45,8 +45,6 @@ public class PendingReviewService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User no encontrado"));
-    
-
 
         PendingReview pendingReview = new PendingReview();
         pendingReview.setProduct(product);
@@ -78,12 +76,12 @@ public class PendingReviewService {
           
         return filter(id, userId, productId, active, pageable)
             .map(pr -> reviewToDTO(pr));
+
     }
 
 
 
     public PendingReviewDTO reviewToDTO(PendingReview pendingReview) {
-
 
         return new PendingReviewDTO(    
             pendingReview.getId(),
@@ -97,7 +95,9 @@ public class PendingReviewService {
 
 
    public PendingReview getPendingReview(Long productId, Long userId){
-        return pendingReviewRepository.findOneByUserIdAndProductId(userId, productId).orElseThrow(() -> new RuntimeException("PendingReview no encontrado"));
+        return pendingReviewRepository
+            .findOneByUserIdAndProductId(userId, productId)
+            .orElseThrow(() -> new RuntimeException("PendingReview no encontrado"));
    }
 
 

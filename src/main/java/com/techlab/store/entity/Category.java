@@ -1,31 +1,34 @@
 package com.techlab.store.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-
+import java.util.ArrayList;
 import java.util.List;
+import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-@Entity
-@Table(name = "categories")
 @Getter
 @Setter
+@Entity
+@Table(name = "category")
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Category {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(nullable = false, length = 100)
     private String name;
-
-    @Column(length = 255)
-    private String description;
-
-/*    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
-    private List<Product> products;*/
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Category parentCategory;
+
+    @OneToMany(mappedBy = "parentCategory", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Category> children = new ArrayList<>();
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Product> products;
 }

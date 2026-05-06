@@ -1,17 +1,20 @@
 package com.techlab.store.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-
-
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Getter @Setter
@@ -24,11 +27,14 @@ public class Client {
     private String address;
     private String phone;
     private Boolean deleted;
-    private LocalDate deletedDate;
+
+    private LocalDate updatedAt;
+    private LocalDate createdAt;
+    private LocalDate deletedAt;
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("client")
-    private Set<Order> orders = new HashSet<>();
+    private List<Order> orders = new ArrayList<>();
 
     @OneToOne
     @MapsId// <-- mismo Id que User

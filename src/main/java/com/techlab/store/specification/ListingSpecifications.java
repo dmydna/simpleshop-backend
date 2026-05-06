@@ -4,17 +4,15 @@ package com.techlab.store.specification;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.techlab.store.entity.User;
-
-import com.techlab.store.enums.Visibility;
-import com.techlab.store.utils.StringUtils;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.util.CollectionUtils;
 
 import com.techlab.store.entity.Listing;
+import com.techlab.store.enums.Status;
+import com.techlab.store.utils.StringUtils;
 
 import jakarta.persistence.criteria.Predicate;
-import org.springframework.util.CollectionUtils;
+import lombok.RequiredArgsConstructor;
 
 
 
@@ -22,19 +20,23 @@ import org.springframework.util.CollectionUtils;
 @RequiredArgsConstructor
 public class ListingSpecifications {
 
+
     private final StringUtils stringUtils;
 
     public static Specification<Listing> isNotDeleted() {
-        return (root, query, cb) -> cb.isNull(root.get("deletedDate"));
+        return (root, query, cb) -> cb.isNull(root.get("deletedAt"));
     }
 
-    public static Specification<Listing> hasVisibilty(Visibility visibility) {
+
+
+    public static Specification<Listing> hasStatus(Status status) {
         return (root, query, cb) -> {
-            if (visibility == null) return null;
+            if (status == null) return null;
             // Unimos Listing con Product y filtramos por categoría
-            return cb.equal(root.get("visibility"), visibility);
+            return cb.equal(root.get("status"), status);
         };
     }
+
 
     public static Specification<Listing> hasCategories(List<String> categories) {
         return (root, query, cb) -> {

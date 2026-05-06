@@ -1,11 +1,9 @@
 package com.techlab.store.service;
 
-import com.techlab.store.utils.AuthResponse;
-import com.techlab.store.utils.LoginRequest;
-import com.techlab.store.entity.User;
-import com.techlab.store.utils.RegisterRequest;
-import com.techlab.store.entity.User;
-import lombok.RequiredArgsConstructor;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.techlab.store.dto.PasswordChangeRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,12 +13,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.techlab.store.dto.AuthResponse;
+import com.techlab.store.dto.LoginRequest;
+import com.techlab.store.dto.RegisterRequest;
+import com.techlab.store.entity.User;
 
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
 
 @Service
@@ -32,6 +30,8 @@ public class AuthService {
     private final UserService userService;
     private final ClientService clientService;
 
+
+    // TODO impedir acceso a users con status BANNED o DELETED
     @Transactional
     public AuthResponse login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
@@ -64,6 +64,19 @@ public class AuthService {
         return savedUser;
     }
 
+    @Transactional
+    public void changePassword(String token, PasswordChangeRequest request) {
+        // 1. Extraer el username del token (Seguridad)
+        String username = jwtService.extractUsername(token);
+        // 2. Delegar la lógica de negocio al UserService
+        // El UserService se encargará de buscar en BD, validar hashes y guardar
+        userService.changePassword(username, request.oldPassword(), request.newPassword());
+        
+        // 3. (Opcional) Invalidar tokens anteriores si tu sistema lo requiere
+    }
+
+
+
     public Authentication getAuthentication() {
         return SecurityContextHolder.getContext().getAuthentication();
     }
@@ -85,7 +98,7 @@ public class AuthService {
 
     public User getUser(){
         Authentication auth = getAuthentication();
-        return userService.findEntityByUsername(auth.getName());
+        return userService.findByUsername(auth.getName());
     }
 
     @Transactional

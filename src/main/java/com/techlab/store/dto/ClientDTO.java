@@ -1,12 +1,5 @@
 package com.techlab.store.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
-
 
 public record ClientDTO(
     // client
@@ -14,6 +7,5 @@ public record ClientDTO(
     String firstName,
     String lastName,
     String address,
-    String phone,
-    Boolean deleted
+    String phone
 ){}

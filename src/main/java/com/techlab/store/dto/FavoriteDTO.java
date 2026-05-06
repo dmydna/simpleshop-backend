@@ -1,15 +1,16 @@
 package com.techlab.store.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.validation.constraints.NotNull;
+import java.math.*;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
 
-import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
-
-
-public record FavoriteDTO(
-    // client
+public record FavoriteDTO (
     Long id,
-    Long listingId
-){}
+    LocalDateTime createdAt,
+    // Listing Info. para frontend.
+    Long listingId,
+    String image,
+    String title,
+    Double price
+) {}

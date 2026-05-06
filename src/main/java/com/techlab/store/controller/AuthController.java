@@ -1,22 +1,20 @@
 package com.techlab.store.controller;
 
-import com.techlab.store.utils.AuthResponse;
-import com.techlab.store.utils.LoginRequest;
-import com.techlab.store.utils.RegisterRequest;
-import com.techlab.store.entity.User;
-import com.techlab.store.service.AuthService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.techlab.store.entity.User;
+import com.techlab.store.service.AuthService;
+import com.techlab.store.dto.AuthResponse;
+import com.techlab.store.dto.LoginRequest;
+import com.techlab.store.dto.RegisterRequest;
+import com.techlab.store.dto.PasswordChangeRequest;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -45,12 +43,12 @@ public class AuthController {
         }
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
-    @PostMapping("/bulk")
-    public ResponseEntity<?> registerBulk(@RequestBody List<RegisterRequest> users) {
-        List<User> savedUsers = authService.saveAll(users);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(savedUsers);
-    }
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestHeader("Authorization") String tokenHeader, @RequestBody PasswordChangeRequest request) {
+            // Extrae el token del header (ej: "Bearer <token>")
+            authService.changePassword(tokenHeader.substring(7), request);
+            return ResponseEntity.ok("Contraseña actualizada correctamente");
+   } 
+
 
 }

@@ -21,29 +21,25 @@ public interface ProfileMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "password", ignore = true)
-    @Mapping(target = "deleted", ignore = true)
-    @Mapping(target = "deletedDate", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "client", ignore = true)
     User toUserEntity(ProfileDTO dto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "orders", ignore = true)
-    @Mapping(target = "deleted", ignore = true)
-    @Mapping(target = "deletedDate", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     Client toClientEntity(ProfileDTO dto);
 
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "client", ignore = true)
-    @Mapping(target = "deleted", ignore = true)
-    @Mapping(target = "deletedDate", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateUserFromDto(@MappingTarget User user, ProfileDTO dto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "deleted", ignore = true)
-    @Mapping(target = "deletedDate", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateClientFromDto(@MappingTarget Client client, ProfileDTO dto);
 }

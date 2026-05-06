@@ -1,38 +1,43 @@
 package com.techlab.store.mapper;
 
-import com.techlab.store.dto.OrderDetailDTO;
-import com.techlab.store.dto.OrderFullDTO;
-import com.techlab.store.entity.Order;
-import com.techlab.store.entity.OrderDetail;
-import org.mapstruct.*;
-
 import java.util.List;
+
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.ReportingPolicy;
+
+import com.techlab.store.dto.OrderComplete;
+import com.techlab.store.dto.OrderItemDto;
+import com.techlab.store.entity.Order;
+import com.techlab.store.entity.OrderItem;
 
 @Mapper(componentModel = "spring")
 public interface OrderMapper {
 
     // --- ENTITY -> DTO ---
-    OrderFullDTO toFullDto(Order entity);
+    OrderComplete toFullDto(Order entity);
 
-    @Mapping(target = "productId", source = "product.id")
-    @Mapping(target = "name", source = "product.name")
-    @Mapping(target = "stock", source = "product.stock")
-    OrderDetailDTO toDetailDto(OrderDetail entity);
+    @Mapping(target = "listingId", source = "listing.id")
+    @Mapping(target = "name", source = "listing.product.name")
+    @Mapping(target = "stock", source = "listing.stock")
+    OrderItemDto toDetailDto(OrderItem entity);
 
     // --- DTO -> ENTITY ---
-    Order toEntity(OrderFullDTO dto);
+    Order toEntity(OrderComplete dto);
 
-    @Mapping(target = "product.id", source = "productId")
-    OrderDetail toDetailEntity(OrderDetailDTO dto);
+    @Mapping(target = "listing.id", source = "listingId")
+    OrderItem toDetailEntity(OrderItemDto dto);
 
     // --- LISTAS ---
-    List<OrderFullDTO> toFullDtoList(List<Order> orders);
-    List<OrderDetailDTO> toDetailDtoList(List<OrderDetail> details);
+    List<OrderComplete> toFullDtoList(List<Order> orders);
+    List<OrderItem> toDetailDtoList(List<OrderItemDto> details);
 
     // --- ACTUALIZACIONES ---
     @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "client", ignore = true)
-    @Mapping(target = "details", ignore = true) // Evita problemas con colecciones en updates
-    void updateOrderFromDto(OrderFullDTO dto, @MappingTarget Order entity);
+    @Mapping(target = "items", ignore = true) // Evita problemas con colecciones en updates
+    void updateOrderFromDto(OrderComplete dto, @MappingTarget Order entity);
 }

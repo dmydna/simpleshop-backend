@@ -8,13 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.techlab.store.dto.OrderFullDTO;
+import com.techlab.store.dto.OrderComplete;
 import com.techlab.store.entity.Order;
-import com.techlab.store.entity.Review;
 import com.techlab.store.repository.OrderRepository;
-import com.techlab.store.repository.ProductRepository;
-import com.techlab.store.repository.ReviewRepository;
 import com.techlab.store.repository.PendingReviewRepository;
+import com.techlab.store.repository.ProductRepository;
 
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -23,16 +21,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class BuyService {
 
+    // TODO mover logica DTO a Controller y dejar solo entities.
     @Autowired
-    private final OrderRepository orderRepository;
-    private final ProductRepository productRepository;
+    private final OrderService orderService;
+    private final ClientService clientService; 
     private final InventoryService inventoryService;
     private final PaymentService paymentService;
-    private final ClientService clientService; // Asumiendo que existe
-    private final OrderService orderService;
     private final PaymentGatewayService paymentGateWayService;
-    private final PendingReviewRepository pendingReviewRepositiry;
     private final PendingReviewService pendingReviewService;
+    private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
+    private final PendingReviewRepository pendingReviewRepositiry;
 
     @Transactional
     public boolean confirmPayment(Long orderId, String paymentToken, String userEmail) {
@@ -48,12 +47,12 @@ public class BuyService {
         }
 
         // agregamos pending reviews para cada producto comprado
-        order.getDetails().forEach(item -> {
+        order.getItems().forEach(item -> {
             pendingReviewService
               .create(
-                item.getProduct().getId(), 
+                item.getListing().getProduct().getId(), 
                 order.getClient().getUser().getId(), 
-                item.getListingId()
+                item.getListing().getId()
             );
         });
 
@@ -66,16 +65,21 @@ public class BuyService {
 
     // Se reserva una orden de compra sin pagar
     // se devuelve objeto para pasarela de pago
-    public OrderFullDTO savedOrder(OrderFullDTO dto, Long clientId){
-        // Eliminamos ordenes inpagas;
+    public OrderComplete savedOrder(OrderComplete dto, Long clientId){
+        // Eliminamos ordenes inpagas y restauramos stocks;
         List<Order> listOrders = orderRepository.findAllByState(Order.OrderState.PENDING);
         for(Order order : listOrders){
             orderService
                .deleteOrderAndRestoreStock(order.getId());
         }
+
         return orderService
                  .createOrder(dto, clientId);
     }
+
+
+
+
 
     // Simulación de pago (en producción usar Stripe, PayPal, etc.)
     public boolean processPayment(String token) {

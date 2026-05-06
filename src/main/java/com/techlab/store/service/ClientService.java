@@ -1,24 +1,27 @@
 package com.techlab.store.service;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.techlab.store.dto.ClientDTO;
 import com.techlab.store.dto.ClientFullDTO;
-import com.techlab.store.dto.UserDTO;
+import com.techlab.store.entity.Client;
 import com.techlab.store.entity.User;
 import com.techlab.store.mapper.ClientMapper;
-import com.techlab.store.utils.RegisterRequest;
-import com.techlab.store.utils.StringUtils;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.techlab.store.repository.ClientRepository;
-import com.techlab.store.entity.Client;
-import java.util.List;
-import java.util.Optional;
+import com.techlab.store.dto.RegisterRequest;
+import com.techlab.store.utils.StringUtils;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class ClientService {
 
+    // TODO mover logica DTO a Controller y dejar solo entities.
+    
     @Autowired
     private final ClientRepository clientRepository;
     private final StringUtils stringUtils;
@@ -32,11 +35,7 @@ public class ClientService {
 
     public ClientDTO create(RegisterRequest request, User savedUser) {
         // 3. Crear la entidad Client (Negocio) vinculada al User
-        Client client = new Client();
-        client.setFirstName(request.firstName());
-        client.setLastName(request.lastName());
-        client.setPhone(request.phone());
-        client.setAddress(request.address());
+        Client client = clientMapper.toEntity(request);
         client.setUser(savedUser); // Establecemos la relación 1:1
         Client savedClient  = this.clientRepository.save(client);
         return clientMapper.toSimpleDto(savedClient);
@@ -70,6 +69,13 @@ public class ClientService {
 
     }
 
+
+    public boolean isDeleted(Long id){
+        Client entity = clientRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+        return entity.getDeletedAt() != null;
+    }
+
     public ClientDTO deleteById(Long id) {
         Client clientEntity = clientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
@@ -86,10 +92,6 @@ public class ClientService {
     public ClientDTO  updateById(Long id, ClientDTO dataToEdit) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("No encontrado"));
-
-        if (null != dataToEdit.deleted()){
-            client.setDeleted(dataToEdit.deleted());
-        }
 
         if (!stringUtils.isEmpty(dataToEdit.lastName())){
             client.setLastName(dataToEdit.lastName());

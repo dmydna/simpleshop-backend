@@ -8,7 +8,7 @@ public record ReviewDTO(
         Long id,
         String reviewerName,
         String reviewerEmail,
-        Integer rating,
+        Double rating,
         String comment,
         Long productId
 ) { }
