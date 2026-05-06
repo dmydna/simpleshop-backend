@@ -1,6 +1,7 @@
 package com.techlab.store.entity;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,9 +60,9 @@ public class Listing {
     private Status status = Status.ACTIVE;
 
     // Meta
-    private LocalDate updatedAt;
-    private LocalDate deletedAt;
-    private LocalDate createdAt = LocalDate.now();
+    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     // Relations
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)

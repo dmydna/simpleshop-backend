@@ -3,8 +3,8 @@ import java.time.LocalDateTime;
 import java.time.LocalDate;
 
 public record Meta(
-    LocalDate createdAt,
-    LocalDate updatedAt,
-    LocalDate deletedAt,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt,
+    LocalDateTime deletedAt,
     String status
 ) {}

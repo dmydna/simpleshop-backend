@@ -16,6 +16,7 @@ import com.techlab.store.entity.Category;
 import com.techlab.store.service.CategoryService;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ProductMapper {
@@ -86,7 +87,7 @@ public interface ProductMapper {
     // after creating
     @AfterMapping
     default void productAfterMapping(@MappingTarget Product product, CreateProductDTO dto) {
-        product.setCreatedAt(LocalDate.now());
+        product.setCreatedAt(LocalDateTime.now());
         product.setStatus(Status.ACTIVE);
     }
 

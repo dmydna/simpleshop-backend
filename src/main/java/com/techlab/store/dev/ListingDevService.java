@@ -6,7 +6,10 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import com.techlab.store.dto.ListingDTO; 
 import com.techlab.store.dto.CreateListingDTO;
 import com.techlab.store.dto.ReviewDTO;
@@ -64,7 +67,7 @@ public Listing createListingFromDto(ListingDTO dto) {
         .orElseGet(() -> {
             Product newProduct = listing.getProduct();
             newProduct.setStatus(Status.ACTIVE);
-            newProduct.setCreatedAt(LocalDate.now());
+            newProduct.setCreatedAt(LocalDateTime.now());
             Product savedProduct = productRepository.save(newProduct);
             log.info("✅ Product guardado con ID: {}", savedProduct.getId());
             return savedProduct;
@@ -72,7 +75,7 @@ public Listing createListingFromDto(ListingDTO dto) {
     
     listing.setProduct(finalProduct);
     listing.setHash(HashUtil.generateShortHash());
-    listing.setCreatedAt(LocalDate.now());
+    listing.setCreatedAt(LocalDateTime.now());
     listing.setStatus(Status.ACTIVE);
     saveReviewsFromDTO(dto.reviews(), finalProduct);
     return listing;

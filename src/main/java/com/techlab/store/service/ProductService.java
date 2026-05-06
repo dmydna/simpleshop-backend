@@ -1,6 +1,7 @@
 package com.techlab.store.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -114,7 +115,7 @@ public class ProductService {
         log.info("🔔 ELEMINANDO listing con ID {}...", id);
         Product product = getById(id);
         //this.productRepository.delete(product);
-        product.setDeletedAt(LocalDate.now());
+        product.setDeletedAt(LocalDateTime.now());
         product.setStatus(Status.DELETED);
         log.info("✅ Se ELEMINO el listing con ID {}...", id);
         this.productRepository.save(product);

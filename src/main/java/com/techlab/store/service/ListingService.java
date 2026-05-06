@@ -2,6 +2,7 @@ package com.techlab.store.service;
 
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -204,7 +205,7 @@ public class ListingService {
         // Borrar Imagenes del Storage
         listing.getImages().forEach(fileStorageService::deleteFile);
         listing.setStatus(Status.DELETED);
-        listing.setDeletedAt(LocalDate.now());
+        listing.setDeletedAt(LocalDateTime.now());
         listingRepository.save(listing);
     }
 
