@@ -23,7 +23,7 @@ import com.techlab.store.repository.ListingRepository;
 import com.techlab.store.repository.OrderRepository;
 import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.specification.OrderSpecifications;
-
+import com.techlab.store.enums.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -55,7 +55,7 @@ public class OrderService {
 
         Order newOrder = orderMapper.toEntity(dto);
         newOrder.setClient(client);
-        newOrder.setState(Order.OrderState.PENDING);
+        newOrder.setStatus(OrderStatus.PENDING);
         newOrder.setTotalAmount(dto.totalAmount());
         newOrder.setCreatedAt(java.time.LocalDateTime.now());
 
@@ -77,7 +77,7 @@ public class OrderService {
 
     public Page<OrderComplete> filter(
             Long userId,
-            Order.OrderState status,
+            OrderStatus status,
             Pageable pageable
     ) {
         
@@ -105,12 +105,12 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderComplete updateStatus(Long id, Order.OrderState newState) {
+    public OrderComplete updateStatus(Long id, OrderStatus newStatus) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
-        log.info("Actualizando estado de Pedido ID {} de {} a {}", id, order.getState(), newState);
+        log.info("Actualizando estado de Pedido ID {} de {} a {}", id, order.getStatus(), newStatus);
 
-        if (newState == Order.OrderState.CANCELLED) {
+        if (newStatus == OrderStatus.CANCELLED) {
             log.warn("Pedido cancelado: Reponiendo stock.");
             for (OrderItem detail : order.getItems()) {
                 Listing l = listingRepository.findById(detail.getListing().getId() )
@@ -118,7 +118,7 @@ public class OrderService {
                 l.setStock(l.getStock() + detail.getQuantity());
             }
         }
-        order.setState(newState);
+        order.setStatus(newStatus);
         Order savedOrder = orderRepository.save(order);
         return orderMapper.toFullDto(savedOrder);
     }
@@ -137,13 +137,13 @@ public class OrderService {
         Order existingOrder = orderRepository.findOneWithDetailsAndClientById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
 
-        validateOrderStateForEdit(existingOrder);
+        validateOrderStatusForEdit(existingOrder);
 
         if (dataToEdit.getClient() != null) {
             existingOrder.setClient(dataToEdit.getClient());
         }
 
-        existingOrder.setState(dataToEdit.getState());
+        existingOrder.setStatus(dataToEdit.getStatus());
         if (dataToEdit.getItems() != null) {
             this.updateOrderItemsAndStock(existingOrder, dataToEdit.getItems());
         }
@@ -176,8 +176,8 @@ public class OrderService {
         existingOrder.getItems().addAll(newDetails);
     }
 
-    private void validateOrderStateForEdit(Order order) {
-        if (order.getState() == Order.OrderState.COMPLETED) {
+    private void validateOrderStatusForEdit(Order order) {
+        if (order.getStatus() == OrderStatus.COMPLETED) {
             throw new RuntimeException("No se pueden editar los detalles de una orden en estado COMPLETO o EN_ENVIO.");
         }
     }
@@ -233,7 +233,7 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Orden de comprar no encontrado."));
 
-        if (!order.getState().equals(Order.OrderState.PENDING)) {
+        if (!order.getStatus().equals(OrderStatus.PENDING)) {
             return false;
         }
         deleteOrderAndRestoreStock(order.getId());

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+import com.techlab.store.enums.OrderStatus;
 import com.techlab.store.dto.ClientDTO;
 import com.techlab.store.dto.OrderComplete;
 import com.techlab.store.dto.OrderResponse;
@@ -69,7 +69,7 @@ public class OrderController {
     @GetMapping
     public ResponseEntity<Page<OrderComplete>> getAll(
         @RequestParam(required = false) Long userId, // userId = clientId
-        @RequestParam(required = false) Order.OrderState status,
+        @RequestParam(required = false) OrderStatus status,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
      System.out.println("\n -- entra al filtro de ordernes [controller] -- \n");
@@ -100,7 +100,7 @@ public class OrderController {
     @PutMapping("/{id}/status")
     public OrderComplete updateStatus(
             @PathVariable Long id,
-            @RequestParam Order.OrderState newState) {
-        return this.orderService.updateStatus(id, newState);
+            @RequestParam OrderStatus newStatus) {
+        return this.orderService.updateStatus(id, newStatus);
     }
 }

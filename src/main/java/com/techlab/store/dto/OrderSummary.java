@@ -8,7 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
+import com.techlab.store.enums.OrderStatus;
 
 @Getter
 @Setter
@@ -16,7 +16,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class OrderSummary{
     Long id;
-    Order.OrderState state;
+    OrderStatus status;
     List<OrderItemDto> details;
     Long client_id;
 }

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
+import com.techlab.store.enums.OrderStatus;
 import com.techlab.store.dto.OrderComplete;
 import com.techlab.store.dto.ProfileDTO;
 import com.techlab.store.entity.Order;
@@ -64,7 +64,7 @@ public class ProfileController {
     @GetMapping("/orders")
     public ResponseEntity<Page<OrderComplete>> getMyOrders(
             @RequestParam(required = false) Long userId,
-            @RequestParam(required = false) Order.OrderState status,
+            @RequestParam(required = false) OrderStatus status,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         System.out.println("\n -- entra al filtro de ordernes [controller] -- \n");

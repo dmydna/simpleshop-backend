@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import com.techlab.store.enums.OrderStatus;
 
 import com.techlab.store.entity.Order;
 
@@ -46,7 +47,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> ,JpaSpecific
             "WHERE c.firstName = :name")
     List<Order> findAllByFirstName(@Param("name") String name);
 
-    List<Order> findAllByState(Order.OrderState state);
+    List<Order> findAllByStatus(OrderStatus status);
 
-    List<Order> findByStateAndCreatedAtBefore(String state, LocalDateTime createdAt);
+    List<Order> findByStateAndCreatedAtBefore(String status, LocalDateTime createdAt);
 }

@@ -13,7 +13,7 @@ import com.techlab.store.entity.Order;
 import com.techlab.store.repository.OrderRepository;
 import com.techlab.store.repository.PendingReviewRepository;
 import com.techlab.store.repository.ProductRepository;
-
+import com.techlab.store.enums.OrderStatus;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 
@@ -41,7 +41,7 @@ public class BuyService {
         // Checkeamos token de pasarela valido.
         System.out.println("\n confirmPayment -> Token "+ paymentToken + "\n");
         if (!processPayment(paymentToken)) {
-            order.setState(Order.OrderState.CANCELLED);
+            order.setStatus(OrderStatus.CANCELLED);
 //            orderService.deleteOrderAndRestoreStock(orderId);
             throw new ValidationException("Payment failed");
         }
@@ -56,7 +56,7 @@ public class BuyService {
             );
         });
 
-        order.setState(Order.OrderState.PAID);
+        order.setStatus(OrderStatus.PAID);
         orderRepository.save(order);
         return true;
     }
@@ -67,7 +67,7 @@ public class BuyService {
     // se devuelve objeto para pasarela de pago
     public OrderComplete savedOrder(OrderComplete dto, Long clientId){
         // Eliminamos ordenes inpagas y restauramos stocks;
-        List<Order> listOrders = orderRepository.findAllByState(Order.OrderState.PENDING);
+        List<Order> listOrders = orderRepository.findAllByStatus(OrderStatus.PENDING);
         for(Order order : listOrders){
             orderService
                .deleteOrderAndRestoreStock(order.getId());

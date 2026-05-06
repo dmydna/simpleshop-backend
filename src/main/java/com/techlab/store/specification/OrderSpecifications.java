@@ -4,6 +4,7 @@ package com.techlab.store.specification;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.techlab.store.entity.Order;
+import com.techlab.store.enums.OrderStatus;
 import com.techlab.store.utils.StringUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -23,10 +24,10 @@ public class OrderSpecifications {
     }
 
 
-    public static Specification<Order> hasStatus(Order.OrderState status) {
+    public static Specification<Order> hasStatus(OrderStatus status) {
         return (root, query, cb) -> {
             if (status == null) return cb.conjunction();
-            return cb.equal(root.get("state"), status);
+            return cb.equal(root.get("status"), status);
         };
     }
 }

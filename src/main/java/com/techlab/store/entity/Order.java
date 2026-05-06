@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.techlab.store.enums.OrderStatus;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -30,30 +31,19 @@ import lombok.ToString;
 @Table(name = "T_ORDER")
 public class Order {
 
-    // TODO mover OrderState a enums/OrderStatus.java
-
-    public enum OrderState {
-        PENDING, COMPLETED, CANCELLED, PAID;
-
-        @JsonCreator
-        public static OrderState fromString(String value) {
-            if (value == null || value.trim().isEmpty()) return PENDING; // Valor por defecto
-            return OrderState.valueOf(value.toUpperCase());
-        }
-    }
-
+    // TODO: mover OrderState a enums/OrderStatus.java
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    // enum estado
-    @Enumerated(EnumType.STRING)
-    private OrderState state;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "clientId")
     @JsonIgnoreProperties("orders")
     private Client client;
+
+    // Status
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("order")
