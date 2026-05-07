@@ -36,11 +36,13 @@ public interface ClientMapper {
     Client toEntity(RegisterRequest dto);
 
 
-    // TODO: revisar bien este mapper.
+    // TODO: crear UpdateClientDTO para evitar tantos ignore.
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
+    @Mapping(target = "orders", ignore = true)
+    @Mapping(target = "user", ignore = true)
     public Client updateFromEntity(
         Client update, 
         @MappingTarget Client client);

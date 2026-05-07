@@ -10,7 +10,6 @@ public record CreateProductDTO(
     String brand,
     Integer weight,
     ProductDimensions dimensions,
-    // formato "parent / child / subchild"
     String category, 
     List<String> tags
 ){}

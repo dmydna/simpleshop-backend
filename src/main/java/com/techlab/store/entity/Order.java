@@ -54,8 +54,7 @@ public class Order {
     private List<OrderItem> failedItems = new ArrayList<>();
 
     public BigDecimal totalAmount;
-
-    // TODO: agregar deletedAt, updateAt
+    
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;

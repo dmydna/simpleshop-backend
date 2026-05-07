@@ -1,22 +1,17 @@
 package com.techlab.store.mapper;
 
 import org.mapstruct.AfterMapping;
-
+import org.mapstruct.*;
 import com.techlab.store.dto.ProductDTO;
 import com.techlab.store.dto.UpdateProductDTO;
 import com.techlab.store.dto.CreateProductDTO;
 import com.techlab.store.enums.Status;
-
-import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.Product;
-
-import org.mapstruct.*;
-
 import com.techlab.store.entity.Category;
 import com.techlab.store.service.CategoryService;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ProductMapper {
@@ -38,15 +33,6 @@ public interface ProductMapper {
     @Mapping(target = "category", ignore = true)
     Product toEntity(UpdateProductDTO dto);
 
-    @AfterMapping
-    default void mapCategoryToEntity(ProductDTO dto, @MappingTarget Product product, 
-                                     CategoryService categoryService) {
-        if (dto.category() != null && !dto.category().isEmpty()) {
-            Category category = categoryService
-               .findOrCreateCategoryFromPath(dto.category());
-            product.setCategory(category);
-        }
-    }
 
     // Entity → DTO
     @Mapping(source = "dimensions.width", target = "dimensions.width") 
@@ -55,34 +41,15 @@ public interface ProductMapper {
     @Mapping(source = "createdAt", target = "meta.createdAt")    
     @Mapping(source = "deletedAt", target = "meta.deletedAt")    
     @Mapping(source = "updatedAt", target = "meta.updatedAt")    
-    @Mapping(source = "category", target = "category", qualifiedByName = "categoryToPath")
+    @Mapping(source = "category", target = "category")
     ProductDTO toDto(Product product);
-
-    @Named("categoryToPath")
-    default String categoryToPath(Category category) {
-        if (category == null) {
-            return null;
-        }
-        return buildCategoryPath(category);
-    }
-
-    default String buildCategoryPath(Category category) {
-        if (category.getParentCategory() == null) {
-            return category.getName();
-        }
-        return buildCategoryPath(category.getParentCategory()) + "/" + category.getName();
-    }
-
-
 
     // ignoramos relaciones y campos sensibles(status)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "category", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "pendingReviews", ignore = true)
     @Mapping(target = "reviews", ignore = true) 
     public Product updateFromEntity(Product dataToEdit, @MappingTarget Product product);
-
 
     // after creating
     @AfterMapping
@@ -90,7 +57,5 @@ public interface ProductMapper {
         product.setCreatedAt(LocalDateTime.now());
         product.setStatus(Status.ACTIVE);
     }
-
-
 
 }

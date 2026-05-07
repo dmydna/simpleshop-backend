@@ -1,4 +1,4 @@
-package com.techlab.store.dev;
+package com.techlab.store.dev.service;
 
 
 import com.techlab.store.dto.ListingDTO;

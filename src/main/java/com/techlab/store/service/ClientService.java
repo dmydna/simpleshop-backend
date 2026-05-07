@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ClientService {
 
-    // TODO mover logica DTO a Controller y dejar solo entities.
+    // CHECKME mover logica DTO a Controller y dejar solo entities.
     
     @Autowired
     private final ClientRepository clientRepository;

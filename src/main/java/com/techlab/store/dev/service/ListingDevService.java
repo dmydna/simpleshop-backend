@@ -1,4 +1,4 @@
-package com.techlab.store.dev;
+package com.techlab.store.dev.service;
 
 import java.util.List;
 import java.util.Optional;

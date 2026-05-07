@@ -68,6 +68,7 @@ public class ProductController {
     }
 
 
+    // CHECKME: GET BY SKU
     // GET BY SKU
     @GetMapping("/sku/{sku}")
     public ResponseEntity<ProductDTO> getBySku(@PathVariable String sku) {

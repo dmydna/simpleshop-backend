@@ -18,8 +18,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 
-// TODO eliminar deleted de client
-// TODO actualizar meta 
 @Entity
 @Getter @Setter
 public class Client {

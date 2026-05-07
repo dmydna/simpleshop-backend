@@ -19,6 +19,8 @@ import java.lang.*;
 @RequiredArgsConstructor
 public class ImageService {
 
+    // FIXME: no funciona con background blanco (#fff)
+
     @Autowired
     private FontService fontService;
 

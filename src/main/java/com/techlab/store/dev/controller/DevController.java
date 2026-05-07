@@ -1,4 +1,4 @@
-package com.techlab.store.dev;
+package com.techlab.store.dev.controller;
 
 import java.util.List;
 
@@ -16,6 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.techlab.store.dev.service.AuthDevService;
+import com.techlab.store.dev.service.ListingDevService;
+import com.techlab.store.dev.service.ProductDevService;
+import com.techlab.store.dev.service.UserDevService;
 import com.techlab.store.dto.ListingDTO;
 import com.techlab.store.dto.CreateListingDTO;
 import com.techlab.store.dto.ProductDTO;
@@ -65,8 +69,6 @@ public class DevController {
         List<Product> savedProducts = productDevService.saveAll(products);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedProducts);
     }
-
-
 
 
     @PostMapping("/auth/bulk")

@@ -50,7 +50,7 @@ public class OrderController {
     private final ClientMapper clientMapper;
     private final ClientService clientService;
 
-    // TODO: chequiar cambio input a CreateOrderDTO
+    // CHECKME: cambio input a CreateOrderDTO
     @PostMapping
     public ResponseEntity<?> createOrder(
             Authentication authentication,
