@@ -5,6 +5,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class StringUtils {
 
+
+  public static String toLikePattern(String text){
+    return "%" + text.toLowerCase() + "%";
+  }
+
   public static boolean isEmpty(String textToValidate){
     return textToValidate == null || textToValidate.isBlank();
   }

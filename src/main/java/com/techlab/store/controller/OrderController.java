@@ -1,6 +1,8 @@
 package com.techlab.store.controller;
 
 import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,15 +18,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.techlab.store.enums.OrderStatus;
 import com.techlab.store.dto.ClientDTO;
+import com.techlab.store.dto.CreateOrderDTO;
 import com.techlab.store.dto.OrderComplete;
 import com.techlab.store.dto.OrderResponse;
+import com.techlab.store.entity.Client;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.User;
+import com.techlab.store.mapper.ClientMapper;
 import com.techlab.store.mapper.OrderMapper;
 import com.techlab.store.service.AuthService;
 import com.techlab.store.service.BuyService;
+import com.techlab.store.service.ClientService;
 import com.techlab.store.service.OrderService;
 import com.techlab.store.service.ProfileService;
 
@@ -40,28 +47,28 @@ public class OrderController {
     private final ProfileService profileService;
     private final AuthService authService;
     private final OrderMapper orderMapper;
+    private final ClientMapper clientMapper;
+    private final ClientService clientService;
 
+    // TODO: chequiar cambio input a CreateOrderDTO
     @PostMapping
     public ResponseEntity<?> createOrder(
             Authentication authentication,
             @RequestParam(required = false) Long clientId,
-            @RequestBody OrderComplete dto
+            @RequestBody CreateOrderDTO dto
             ) {
-        Long clientID; 
-
+        Client client;
         if(authService.isAdmin() && clientId != null){
-            clientID = clientId; 
-        }
-        else if(authService.isAdmin() && clientId == null){
-            throw new IllegalArgumentException("Admin debe proporcionar clientId");
+            client = clientService.getById(clientId);
         }else{
-            ClientDTO client = profileService.getMyClient(authentication);
-            clientID = client.id();
-        }
-        OrderComplete savedOrder = buyService.savedOrder(dto, clientID);
+            client = profileService.getMyClient(authentication);
+        } 
+        Order entity = orderMapper.toEntity(dto);
+        entity.setClient(client); // Importante establecer relacion client/order
+        Order savedOrder = orderService.createOrder(entity);
         return ResponseEntity.ok(new OrderResponse(
-                savedOrder.id(),
-                savedOrder.failedItems()
+                savedOrder.getId(),
+                orderMapper.toItemDtoList(savedOrder.getFailedItems())
         ));
     }
 
@@ -72,14 +79,14 @@ public class OrderController {
         @RequestParam(required = false) OrderStatus status,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-     System.out.println("\n -- entra al filtro de ordernes [controller] -- \n");
+        Page<Order> filtered;
         if (authService.isAdmin()) {
-            return ResponseEntity.ok(orderService
-                    .filter(userId, status, pageable));
+            filtered = orderService.filter(userId, status, pageable);
+        }else{
+            User user = authService.getUser();
+            filtered = orderService.filter(user.getId(), status, pageable);
         }
-        User user = authService.getUser();
-        return ResponseEntity.ok(orderService
-                    .filter(user.getId(), status, pageable));
+        return ResponseEntity.ok(filtered.map(order -> orderMapper.toFullDto(order)));
     }
 
 
@@ -101,6 +108,7 @@ public class OrderController {
     public OrderComplete updateStatus(
             @PathVariable Long id,
             @RequestParam OrderStatus newStatus) {
-        return this.orderService.updateStatus(id, newStatus);
+        Order entity = orderService.updateStatus(id, newStatus);
+        return orderMapper.toFullDto(entity);
     }
 }

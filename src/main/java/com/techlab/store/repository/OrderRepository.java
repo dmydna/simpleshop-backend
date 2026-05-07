@@ -16,8 +16,6 @@ import com.techlab.store.entity.Order;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> ,JpaSpecificationExecutor<Order> {
 
-    // TODO ver DT0s.
-
     @Query("SELECT o FROM Order o " +
             "JOIN FETCH o.client c " +
             "JOIN FETCH o.items od " +
@@ -49,5 +47,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> ,JpaSpecific
 
     List<Order> findAllByStatus(OrderStatus status);
 
-    List<Order> findByStateAndCreatedAtBefore(String status, LocalDateTime createdAt);
+    List<Order> findByStatusAndCreatedAtBefore(String status, LocalDateTime createdAt);
 }

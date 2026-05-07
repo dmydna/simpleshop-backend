@@ -16,7 +16,7 @@ import com.techlab.store.enums.Role;
 @RequiredArgsConstructor // <--- Genera el constructor automáticamente
 public class DataInitializer implements CommandLineRunner {
 
-    // TODO chequiar que el FIX crea un cliente para el admin.
+    //CHECKME: se crea cliente para el admin.
 
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;

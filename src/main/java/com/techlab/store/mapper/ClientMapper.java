@@ -8,7 +8,7 @@ import com.techlab.store.dto.RegisterRequest;
 import java.util.List;
 
 
-@Mapper(componentModel = "spring", uses = {OrderMapper.class})
+@Mapper(componentModel = "spring", uses = {OrderMapper.class}, nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ClientMapper {
 
     // --- SALIDA (GET) :
@@ -25,28 +25,24 @@ public interface ClientMapper {
     @IterableMapping(qualifiedByName = "clientToFullDto")
     List<ClientFullDTO> toFullDtoList(List<Client> clients);
 
-    // --- ENTRADA (POST/PUT)
-
-    // Se ignora orders para no romper relacion de entidad client->orders
-
+ 
     // Para crear un cliente nuevo
-    @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
     @Mapping(target = "orders", ignore = true)
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "deleted", ignore = true)
     Client toEntity(ClientDTO dto);
 
-    @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
     @Mapping(target = "orders", ignore = true)
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "deleted", ignore = true)
     Client toEntity(RegisterRequest dto);
 
 
-    // Para editar un cliente existente
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "orders", ignore = true)
-    @Mapping(target = "deleted", ignore = true)
-    void updateClientFromDto(ClientDTO dto, @MappingTarget Client entity);
+    // TODO: revisar bien este mapper.
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
+    public Client updateFromEntity(
+        Client update, 
+        @MappingTarget Client client);
 
 }

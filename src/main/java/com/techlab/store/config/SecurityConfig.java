@@ -30,8 +30,6 @@ import lombok.RequiredArgsConstructor;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    // TODO resolver coors en endpoint (status)
-
     @Value("${CORS_ORIGINS:http://localhost:3000}")
     private String allowedOrigins;
 

@@ -21,8 +21,6 @@ import lombok.RequiredArgsConstructor;
 public class ProductSpecifications {
 
     private final StringUtils stringUtils;
-
-    // TODO agregar filtros de Status (DRAFT)
     
     public static Specification<Product> isNotDeleted() {
         return (root, query, cb) -> cb.isNull(root.get("deletedAt"));

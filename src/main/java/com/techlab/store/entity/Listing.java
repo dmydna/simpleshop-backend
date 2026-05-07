@@ -30,8 +30,6 @@ import lombok.Setter;
 @Setter
 public class Listing {
 
-    // TODO actualizar meta a LocalDataTime
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

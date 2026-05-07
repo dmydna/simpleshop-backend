@@ -7,17 +7,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.techlab.store.exceptions.CustomExceptions.*;
-import com.techlab.store.dto.ClientDTO;
 import com.techlab.store.dto.ProfileDTO;
-import com.techlab.store.dto.UserDTO;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.User;
 import com.techlab.store.mapper.ClientMapper;
 import com.techlab.store.mapper.ProfileMapper;
 import com.techlab.store.mapper.UserMapper;
 import com.techlab.store.repository.UserRepository;
-import com.techlab.store.enums.Status;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,7 +33,7 @@ public class ProfileService {
     private final AuthService authService;
     private final UserRepository userRepository;
 
-    public ProfileDTO getProfile(Authentication authentication) {
+    public ProfileDTO getMyProfile(Authentication authentication) {
 
         log.info("Principal: " + authentication.getName());
         log.info("Authorities: " + authentication.getAuthorities());
@@ -58,28 +55,24 @@ public class ProfileService {
     }
 
 
-    public UserDTO getMyUser(Authentication authentication) {
-
+    public User getMyUser(Authentication authentication) {
         log.info("Principal: " + authentication.getName());
         log.info("Authorities: " + authentication.getAuthorities());
-        User user = userService.findByUsername(authentication.getName());
-        return userMapper.toDto(user);
+        return userService.findByUsername(authentication.getName());
     }
 
-    public ClientDTO getMyClient(Authentication authentication) {
-
+    public Client getMyClient(Authentication authentication) {
         log.info("Principal: " + authentication.getName());
         log.info("Authorities: " + authentication.getAuthorities());
-        User user = userService.findByUsername(authentication.getName());
-        Client client = clientService.findEntityById(user.getId());
-        return clientMapper.toSimpleDto(client);
+        User user = userService.findByUsername(authentication.getName()); 
+        return clientService.getById(user.getId());
     }
 
     @Transactional
     public ProfileDTO updateMyProfile(Authentication authentication, ProfileDTO dto) {
 
         User user = userService.findByUsername(authentication.getName());
-        Client client = clientService.findEntityById(user.getId());
+        Client client = clientService.getById(user.getId());
 
         profileMapper.updateUserFromDto(user, dto);
         profileMapper.updateClientFromDto(client, dto);

@@ -35,8 +35,6 @@ import lombok.ToString;
 @ToString
 public class Product {
     
-    // TODO actualizar meta a LocalDataTime
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -115,7 +115,7 @@ public class ListingController {
         @RequestParam(required = false) Status status,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-         Page<Listing> filtered = null;
+        Page<Listing> filtered;
         if (authService.isAdmin()) {
             filtered = listingService.filter(title, categories, tags, minPrice, maxPrice, status, pageable);
         }else{

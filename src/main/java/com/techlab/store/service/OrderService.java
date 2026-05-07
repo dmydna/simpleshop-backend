@@ -1,5 +1,6 @@
 package com.techlab.store.service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import com.techlab.store.repository.OrderRepository;
 import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.specification.OrderSpecifications;
 import com.techlab.store.enums.OrderStatus;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,50 +34,55 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class OrderService {
 
-    // TODO mover logica DTO a Controller y dejar solo entities.
-    // TODO elimnar metodos no utilizados.
-
+    // CHECKME: mueve logica DTO a Controller y dejar solo entities.
+    // TODO elimnar metodos legacy  o no utilizados.
     private final OrderRepository orderRepository;
-    private final ClientRepository clientRepository;
-    private final ProductRepository productRepository;
-    private final PaymentService paymentService;
     private final InventoryService inventoryService;
-    private final ListingRepository listingRepository;
+    private final ListingService listingService;
 
     @Autowired
     private final OrderMapper orderMapper;
 
+
+    // CHECKME mueve logica procesado y verificacion de orders a orderService
     @Transactional
-    public OrderComplete createOrder(OrderComplete dto, Long clientId) {
+    public Order createOrder(Order order) {
+        cleanupExpiredPendingOrders();
+        Order processedOrder = processOrderStock(order);
+        return orderRepository.save(processedOrder);
+    }
 
-        Client client = clientRepository.findById(clientId)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
 
+    public Order processOrderStock(Order order){
         List<OrderItem> failed = new ArrayList<>();
 
-        Order newOrder = orderMapper.toEntity(dto);
-        newOrder.setClient(client);
-        newOrder.setStatus(OrderStatus.PENDING);
-        newOrder.setTotalAmount(dto.totalAmount());
-        newOrder.setCreatedAt(java.time.LocalDateTime.now());
-
-        for (OrderItem detail : newOrder.getItems()) {
-            detail.setOrder(newOrder);  // establece relacion order<->orderDetail
-            if (inventoryService.decreaseStock(
+        for (OrderItem detail : order.getItems()) {
+            detail.setOrder(order);  // importante: establecer relacion order /orderDetail
+            if (!inventoryService.decreaseStock(
                     detail.getListing().getId(),
                     detail.getQuantity()
             )) {
                 failed.add(detail);
             }
         }
-        if (failed.isEmpty()) {
-            newOrder.setFailedItems(failed);
+        if (!failed.isEmpty()) {
+            order.setFailedItems(failed);
         }
-        Order savedOrder = orderRepository.save(newOrder);
-        return orderMapper.toFullDto(savedOrder);
+
+        return order;
     }
 
-    public Page<OrderComplete> filter(
+    public void cleanupExpiredPendingOrders(){
+        // Eliminamos ordenes inpagas y restauramos stocks;
+        List<Order> listOrders = orderRepository.findAllByStatus(OrderStatus.PENDING);
+        for(Order order : listOrders){
+             // Eliminacion permanentemente.
+              deleteOrderAndRestoreStock(order.getId());
+        }
+    }
+
+
+    public Page<Order> filter(
             Long userId,
             OrderStatus status,
             Pageable pageable
@@ -85,8 +92,7 @@ public class OrderService {
         .where(OrderSpecifications.hasClientId(userId))
         .and(OrderSpecifications.hasStatus(status));
 
-        Page<Order> ordersPage = orderRepository.findAll(spec, pageable);
-        return ordersPage.map(order -> this.orderMapper.toFullDto(order));
+        return orderRepository.findAll(spec, pageable);
     }
 
 
@@ -98,60 +104,53 @@ public class OrderService {
         return order;
     }
 
-    @Transactional(readOnly = true)
-    public List<OrderComplete> getAll() {
-        List<Order> orders = orderRepository.findAll();
-        return this.orderMapper.toFullDtoList(orders);
-    }
-
     @Transactional
-    public OrderComplete updateStatus(Long id, OrderStatus newStatus) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
+    public Order updateStatus(Long id, OrderStatus newStatus) {
+        Order order = getById(id);
+
         log.info("Actualizando estado de Pedido ID {} de {} a {}", id, order.getStatus(), newStatus);
 
         if (newStatus == OrderStatus.CANCELLED) {
             log.warn("Pedido cancelado: Reponiendo stock.");
             for (OrderItem detail : order.getItems()) {
-                Listing l = listingRepository.findById(detail.getListing().getId() )
-                    .orElseThrow(() -> new RuntimeException("Listing no encontrado."));
+                Listing l = listingService.getById(detail.getListing().getId() );
                 l.setStock(l.getStock() + detail.getQuantity());
             }
         }
         order.setStatus(newStatus);
-        Order savedOrder = orderRepository.save(order);
-        return orderMapper.toFullDto(savedOrder);
+        order.setUpdatedAt(LocalDateTime.now());
+        return orderRepository.save(order);
     }
 
-    public OrderComplete updateDetail(Long id, List<OrderItem> items) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
+    // TODO: eliminar. Metodo deprecado (sin uso)
+    public Order updateDetail(Long id, List<OrderItem> items) {
+        Order order = getById(id);
         order.setItems(items);
-
-        Order savedOrder = this.orderRepository.save(order);
-        return this.orderMapper.toFullDto(savedOrder);
+        return orderRepository.save(order);
     }
 
+
+    // @legacy
     @Transactional
-    public OrderComplete updateById(Long id, Order dataToEdit) {
+    public Order updateById(Long id, Order dataToEdit) {
         Order existingOrder = orderRepository.findOneWithDetailsAndClientById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
 
         validateOrderStatusForEdit(existingOrder);
 
-        if (dataToEdit.getClient() != null) {
-            existingOrder.setClient(dataToEdit.getClient());
-        }
+        orderMapper.updateFromEntity(dataToEdit, existingOrder);
 
         existingOrder.setStatus(dataToEdit.getStatus());
+        existingOrder.setUpdatedAt(LocalDateTime.now());
         if (dataToEdit.getItems() != null) {
             this.updateOrderItemsAndStock(existingOrder, dataToEdit.getItems());
         }
-
-        Order saveOrder = this.orderRepository.save(existingOrder);
-        return this.orderMapper.toFullDto(saveOrder);
+ 
+        return orderRepository.save(existingOrder);
     }
 
+
+    // @legacy
     private void updateOrderItemsAndStock(Order existingOrder, List<OrderItem> newDetails) {
 
         Map<Long, OrderItem> oldDetailsMap = existingOrder.getItems().stream()
@@ -182,6 +181,8 @@ public class OrderService {
         }
     }
 
+    // @legacy
+    @Transactional
     private void updateStockForModifiedDetail(OrderItem newDetail, OrderItem oldDetail) {
 
         int newQuantity = newDetail.getQuantity();
@@ -189,8 +190,7 @@ public class OrderService {
 
         int stockAdjustment = oldQuantity - newQuantity;
 
-        Listing listing = listingRepository.findById(oldDetail.getListing().getId())
-                    .orElseThrow(() -> new RuntimeException("Listing no encontrado."));
+        Listing listing = listingService.getById(oldDetail.getListing().getId());
 
         if (listing.getStock() + stockAdjustment < 0) {
             throw new RuntimeException("Stock insuficiente para el producto: " + 
@@ -198,40 +198,39 @@ public class OrderService {
         }
 
         listing.setStock(listing.getStock() + stockAdjustment);
-        listingRepository.save(listing);
+        // listingRepository.save(listing);
     }
 
+    //@legacy
+    @Transactional
     private void restoreStockForDeletedDetails(Map<Long, OrderItem> deletedDetailsMap) {
         for (OrderItem deletedDetail : deletedDetailsMap.values()) {
-            Listing listing = listingRepository.findById(deletedDetail.getListing().getId() )
-                    .orElseThrow(() -> new RuntimeException("Listing no encontrado."));
+            Listing listing = listingService.getById(deletedDetail.getListing().getId());
             // restaura el stock completo del ítem eliminado
             listing.setStock(listing.getStock() + deletedDetail.getQuantity());
-            listingRepository.save(listing);
+           // listingRepository.save(listing);
         }
     }
 
+    @Transactional
     public void deleteOrderAndRestoreStock(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Orden no encontrado."));
+        Order order = getById(orderId);
 
         List<OrderItem> items = order.getItems();
 
         for (OrderItem deletedDetail : items) {
-            Listing listing = listingRepository.findById(deletedDetail.getListing().getId())
-                    .orElseThrow(() -> new RuntimeException("Producto no encontrado."));
+            Listing listing = listingService.getById(deletedDetail.getListing().getId());
 
             // restaura el stock completo del ítem eliminado
             listing.setStock(listing.getStock() + deletedDetail.getQuantity());
-            listingRepository.save(listing);
+            // listingRepository.save(listing);
         }
         orderRepository.delete(order);
     }
 
 
     public boolean cancelOrderById(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Orden de comprar no encontrado."));
+        Order order = getById(orderId);
 
         if (!order.getStatus().equals(OrderStatus.PENDING)) {
             return false;

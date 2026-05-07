@@ -20,8 +20,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class BuyService {
-
-    // TODO mover logica DTO a Controller y dejar solo entities.
     @Autowired
     private final OrderService orderService;
     private final ClientService clientService; 
@@ -35,10 +33,8 @@ public class BuyService {
 
     @Transactional
     public boolean confirmPayment(Long orderId, String paymentToken, String userEmail) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Orden no encontrado"));
-        
-        // Checkeamos token de pasarela valido.
+        Order order = orderService.getById(orderId);
+        // Chequiamos token de pasarela valido.
         System.out.println("\n confirmPayment -> Token "+ paymentToken + "\n");
         if (!processPayment(paymentToken)) {
             order.setStatus(OrderStatus.CANCELLED);
@@ -65,18 +61,7 @@ public class BuyService {
 
     // Se reserva una orden de compra sin pagar
     // se devuelve objeto para pasarela de pago
-    public OrderComplete savedOrder(OrderComplete dto, Long clientId){
-        // Eliminamos ordenes inpagas y restauramos stocks;
-        List<Order> listOrders = orderRepository.findAllByStatus(OrderStatus.PENDING);
-        for(Order order : listOrders){
-            orderService
-               .deleteOrderAndRestoreStock(order.getId());
-        }
-
-        return orderService
-                 .createOrder(dto, clientId);
-    }
-
+    
 
 
 

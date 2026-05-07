@@ -1,6 +1,7 @@
 package com.techlab.store.entity;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +17,9 @@ import jakarta.persistence.OneToOne;
 import lombok.Getter;
 import lombok.Setter;
 
+
+// TODO eliminar deleted de client
+// TODO actualizar meta 
 @Entity
 @Getter @Setter
 public class Client {
@@ -26,11 +30,10 @@ public class Client {
     private String lastName;
     private String address;
     private String phone;
-    private Boolean deleted;
 
-    private LocalDate updatedAt;
-    private LocalDate createdAt;
-    private LocalDate deletedAt;
+    private LocalDateTime updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("client")

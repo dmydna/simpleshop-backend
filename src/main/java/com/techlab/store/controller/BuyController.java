@@ -32,9 +32,13 @@ public class BuyController {
         
         log.info("🔔 Se valida compra con el request {}", request);
 
-        UserDTO user = profileService.getMyUser(authentication);
+        User user = profileService.getMyUser(authentication);
         boolean success = buyService
-            .confirmPayment(request.orderId(), request.paymentToken(), user.email());
+            .confirmPayment(
+                request.orderId(), 
+                request.paymentToken(), 
+                user.getEmail()
+            );
         if (success) return ResponseEntity.ok().build(); // 200 OK 
         return ResponseEntity.badRequest().build(); // 400 Bad Request
     }

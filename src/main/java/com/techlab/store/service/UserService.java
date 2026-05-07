@@ -142,8 +142,6 @@ public class UserService {
     }
 
 
-    // TODO tipo Status no corresponde crear UserStatus
-   //  TODO crear user exceptions
     @Transactional
     public User updateStatusById(Long id, UserStatus status){
         log.info("🔔 actualizando status de usuario con ID {}...", id);

@@ -12,8 +12,7 @@ import jakarta.annotation.Nonnull;
 @EnableWebMvc
 public class WebConfig implements WebMvcConfigurer {
     
-    // TODO resolver coors en endpoint (status)
-
+    // CHECKME: fix coors con endpoint (patch) status
     @Override
     public void addResourceHandlers(@Nonnull ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**")
@@ -23,7 +22,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins("http://localhost:3000")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)
                 .maxAge(3600);

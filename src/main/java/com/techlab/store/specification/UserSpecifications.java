@@ -3,14 +3,13 @@ package com.techlab.store.specification;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.techlab.store.entity.User;
+import com.techlab.store.enums.UserStatus;
 import com.techlab.store.utils.StringUtils;
 
 import jakarta.persistence.criteria.Path;
 
 
 public class UserSpecifications {
-
-    // TODO agregar filtros de Status (BANNED, INACTIVE ...)
 
     public static Specification<User> isNotDeleted() {
         return (root, query, cb) -> cb.isNull(root.get("deletedAt"));
@@ -43,5 +42,12 @@ public class UserSpecifications {
         };
     }
 
+    public static Specification<User> hasStatus(UserStatus status) {
+        return (root, query, cb) -> {
+            if (status == null) return null;
+            // Unimos Listing con Product y filtramos por categoría
+            return cb.equal(root.get("status"), status);
+        };
+    }
 
 }

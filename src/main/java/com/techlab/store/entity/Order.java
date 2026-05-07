@@ -31,7 +31,6 @@ import lombok.ToString;
 @Table(name = "T_ORDER")
 public class Order {
 
-    // TODO: mover OrderState a enums/OrderStatus.java
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -45,6 +44,7 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
+    // Relaciones
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("order")
     private List<OrderItem> items = new ArrayList<>();
@@ -55,7 +55,9 @@ public class Order {
 
     public BigDecimal totalAmount;
 
-    // TODO evaluar updateAt
+    // TODO: agregar deletedAt, updateAt
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 
 }
