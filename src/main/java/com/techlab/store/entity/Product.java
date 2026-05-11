@@ -52,6 +52,7 @@ public class Product {
     private ProductDimensions dimensions;
     @ElementCollection
     private List<String> tags;
+    private String category;
 
     // status
     @Enumerated(EnumType.STRING)
@@ -63,10 +64,6 @@ public class Product {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     // Relations
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private String category;
-
     @OneToMany(mappedBy = "product")
     @JsonIgnore
     private List<Listing> listings;

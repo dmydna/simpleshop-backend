@@ -22,10 +22,12 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.techlab.store.dto.ProfileDTO;
 import com.techlab.store.enums.UserStatus;
 
 import com.techlab.store.dto.UserDTO;
 import com.techlab.store.entity.User;
+import com.techlab.store.mapper.ProfileMapper;
 import com.techlab.store.mapper.UserMapper;
 import com.techlab.store.service.UserService;
 
@@ -41,6 +43,7 @@ public class UserController {
     
     private final UserService userService;
     private final UserMapper userMapper;
+    private final ProfileMapper profileMapper; 
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<User> create(
@@ -91,13 +94,20 @@ public class UserController {
         }
     }
 
+    @GetMapping("/{id}/profile")
+    public ResponseEntity<ProfileDTO> getProfileById(@PathVariable Long id){
+        User user = userService.getById(id);
+        return ResponseEntity.ok(profileMapper.toDto(user, user.getClient()));
+    }
 
     @PutMapping("/{id}/update")
-    public UserDTO updateById(@PathVariable Long id, @RequestBody UserDTO dataToEdit){
+    public ResponseEntity<UserDTO> updateById(
+        @PathVariable Long id, 
+        @RequestBody UserDTO dataToEdit
+    ){
         User user = userService
                 .updateById(id, userMapper.toEntity(dataToEdit));
-        return userMapper.toDto(user);
-        
+        return ResponseEntity.ok(userMapper.toDto(user));
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")

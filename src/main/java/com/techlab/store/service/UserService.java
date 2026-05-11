@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import com.techlab.store.dto.ProfileDTO;
 import com.techlab.store.dto.RegisterRequest;
 import com.techlab.store.dto.UserDTO;
 import com.techlab.store.entity.User;

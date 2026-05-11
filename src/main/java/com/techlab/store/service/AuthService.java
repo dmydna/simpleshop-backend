@@ -30,8 +30,6 @@ public class AuthService {
     private final UserService userService;
     private final ClientService clientService;
 
-
-    // TODO impedir acceso a users con status BANNED o DELETED
     @Transactional
     public AuthResponse login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
