@@ -8,13 +8,17 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 
+
+@Slf4j
 @Service
 public class PaymentGatewayService {
 
     private static final String SECRET_KEY = "tu_clave_secreta_32_caracteres_12345678";
 
     public String generateToken(Long orderId, String userEmail) {
+        log.info("🔔 Generando token de compra para la order con id {} ...", orderId);
         try {
             return Jwts.builder()
                     .setSubject(String.valueOf(orderId))
@@ -29,6 +33,7 @@ public class PaymentGatewayService {
     }
 
     public Boolean validateToken(String token) {
+        log.info("🔔 Validando token de compra ...");
         try {
             Jws<Claims> claims = Jwts.parserBuilder()
                     .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
@@ -38,7 +43,7 @@ public class PaymentGatewayService {
             String orderId = claims.getBody().getSubject();
             String userEmail = claims.getBody().get("userEmail", String.class);
 
-            System.out.println("Token válido: Order=" + orderId + ", UserEmail=" + userEmail);
+            log.info("✅ Token válido para order_id: {}, user_mail: {} ...", orderId, userEmail);
             return true;
         } catch (Exception e) {
             throw new RuntimeException("Token inválido o expirado", e);

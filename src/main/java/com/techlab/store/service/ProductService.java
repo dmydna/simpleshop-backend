@@ -35,14 +35,13 @@ public class ProductService {
     private final ProductMapper productMapper;
 
     public Product createProduct(Product product) {
-        log.info("✅ Se CREO el producto con ID: {}", product.getId());
+        log.info("✅ El producto con ID: {} fue creado con exito.", product.getId());
         return productRepository.save(product);
     }
 
     public Product getById(Long id) {
         Product product = this.productRepository.findById(id)
              .orElseThrow(() -> new ProductNotFoundException(id));
-        log.info("✅ Se OBTUVO listing con ID {}...", id);
         return product;
     }
 
@@ -65,6 +64,7 @@ public class ProductService {
         return productRepository.findAll(spec, pageable);
     }
 
+    // TODO: eliminar filterDTO
     public Page<ProductDTO> findByFilter(
             String name,
             String sku,
@@ -80,7 +80,7 @@ public class ProductService {
 
     @Transactional
     public Product updateStatusById(Long id, Status status){
-        log.info("🔔 Actualizando STATUS de listing con ID {}...", id);
+        log.info("🔔 Actualizando  status de listing con ID {}...", id);
         Product product = getById(id);
 
         if(isDeleted(id)){ throw new ProductHasDeletedException(id);}
@@ -88,6 +88,8 @@ public class ProductService {
         if(status.equals(Status.DELETED)){ deleteById(id); }
 
         product.setStatus(status);
+        product.setUpdatedAt(LocalDateTime.now());
+
         return product;
     }
 
@@ -111,12 +113,12 @@ public class ProductService {
     }
 
     public void deleteById(Long id) {
-        log.info("🔔 ELEMINANDO listing con ID {}...", id);
+        log.info("🔔 Eliminando el listing con ID {}...", id);
         Product product = getById(id);
         //this.productRepository.delete(product);
         product.setDeletedAt(LocalDateTime.now());
         product.setStatus(Status.DELETED);
-        log.info("✅ Se ELEMINO el listing con ID {}...", id);
+        log.info("✅ Se Elimino el listing con ID {}...", id);
         this.productRepository.save(product);
 
     }

@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @Getter
 @Setter
 @Entity
-@Table(name = "category")
+@Table(name = "CATEGORIES")
 @NoArgsConstructor
 public class Category {
 

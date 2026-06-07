@@ -20,6 +20,7 @@ import jakarta.persistence.Id;
 @Entity
 @Getter
 @Setter
+@Table(name = "FAVORITES")
 public class Favorite {
 
     @Id

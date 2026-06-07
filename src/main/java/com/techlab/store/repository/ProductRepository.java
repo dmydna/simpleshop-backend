@@ -4,6 +4,7 @@ import com.techlab.store.entity.Product;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
   Page<Product>  findByNameContainingIgnoreCase(String name, Pageable pageable);
   Page<Product>  findByCategoryContainingIgnoreCase(String category, Pageable pageable);
   Page<Product>  findByNameContainingIgnoreCaseAndCategoryContainingIgnoreCase(String name, String category, Pageable pageable);
+
+  List<Product> findBySkuIn(Set<String> skus);
 
   @Query("SELECT p FROM Product p WHERE p.sku = :sku")
   Optional<Product> findBySku(@Param("sku") String sku);

@@ -36,7 +36,12 @@ import com.techlab.store.mapper.UserMapper;
 import com.techlab.store.service.ProfileService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+
+
+
+@Slf4j
 @RestController
 @RequestMapping("/dev")
 @RequiredArgsConstructor
@@ -55,6 +60,7 @@ public class DevController {
     @PostMapping("/listings/bulk")
     public ResponseEntity<List<ListingDTO>> createPosts(@RequestBody List<ListingDTO> listings) {
         // El service debe usar saveAll()
+        log.info("iniciando listing bulk desde controller");
         List<ListingDTO> savedListings;
         savedListings = listingDevService.saveAll(listings);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -95,7 +101,7 @@ public class DevController {
     @GetMapping("/listings")
     public ResponseEntity<Page<ListingDTO>> getAll(
             @RequestParam(required = false) String title,
-            @RequestParam(required = false) List<String> categories,
+            @RequestParam(required = false) String category,
             @RequestParam(required = false) List<String> tags,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
@@ -104,7 +110,7 @@ public class DevController {
     ) {
         return ResponseEntity
                 .ok(listingService
-                        .findByFilter(title, categories, tags, minPrice, maxPrice, status, pageable));
+                        .findByFilter(title, category, tags, minPrice, maxPrice, status, pageable));
     }
 
     @GetMapping("/users")

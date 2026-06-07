@@ -1,7 +1,7 @@
 package com.techlab.store.service;
 
 
-
+import java.time.LocalDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.techlab.store.dto.ProfileDTO;
 import com.techlab.store.dto.RegisterRequest;
+import com.techlab.store.dto.BanRequest;
 import com.techlab.store.dto.UserDTO;
 import com.techlab.store.entity.User;
 import com.techlab.store.enums.Role;
@@ -31,8 +32,8 @@ import com.techlab.store.exceptions.CustomExceptions.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Service
 @Slf4j
+@Service
 @RequiredArgsConstructor // <--- Genera el constructor automáticamente
 public class UserService {
 
@@ -61,10 +62,45 @@ public class UserService {
         user.setEmail(request.email());
         user.setImage(request.image());
         user.setPassword(passwordEncoder.encode(request.password()));
+        user.setStatus(UserStatus.ACTIVE);
         user.setRole(Role.CLIENT); // Por defecto, todos los registros son Clientes
-        User savedUser = userRepository.save(user);
-        return  savedUser;
+
+        log.info("✅ El usuario con id {} fue creado con exito...", user.getId());
+
+        return  userRepository.save(user);
     }
+
+
+    public User updateRole(User update){
+        User user = getById(update.getId());
+        user.setRole(update.getRole());
+        return userRepository.save(user);
+    }
+
+
+    public User unbanUser(Long id){
+        User user = getById(id);
+        if( user.getStatus().equals(UserStatus.BANNED) 
+          && user.getBanExpiresAt() == null ){
+            throw new RuntimeException("Nose puede deshacer Baneo Permanente");
+        }
+        user.setStatus(UserStatus.ACTIVE);
+        user.setBanExpiresAt(null);
+        return userRepository.save(user);
+    }
+
+    public User banUser(Long id, BanRequest request){
+        User user = getById(id);
+        user.setStatus(UserStatus.BANNED);
+        if(request.banExpiresAt().isBefore(LocalDateTime.now())){
+            throw new RuntimeException("La fecha de banneo debe ser posterior a la actual");
+        }
+        user.setBanExpiresAt(request.banExpiresAt());
+        user.setBanReason(request.banReason());
+        return userRepository.save(user);
+    }
+
+
 
 
     public User getById(Long id){
@@ -121,6 +157,9 @@ public class UserService {
            handleRemoveImage(user.getImage());
        }
        user.setImage(finalUrl);
+
+       log.info("✅ La imagen del usuario con id {} fue actualizada con exito...", user.getId());
+
        return finalUrl;
     }
 
@@ -167,6 +206,8 @@ public class UserService {
         }
         // 3. Encriptar y guardar (Datos)
         user.setPassword(passwordEncoder.encode(newPassword));
+
+        log.info("✅ La contrasena del usuario con id {} fue actualizada con exito...", user.getId());
         userRepository.save(user);
     }
 

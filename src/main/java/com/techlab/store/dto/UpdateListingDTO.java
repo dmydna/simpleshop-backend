@@ -17,5 +17,5 @@ public record UpdateListingDTO (
     Integer      minimumOrderQuantity,
     List<String> images,
     String       thumbnail
-// Nota: no se debe actualizar producto desde listing
+// Nota: no actualizar producto desde listing
 ){}

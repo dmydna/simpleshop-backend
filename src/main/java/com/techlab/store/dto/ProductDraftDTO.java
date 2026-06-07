@@ -2,19 +2,18 @@ package com.techlab.store.dto;
 
 import com.techlab.store.model.ProductDimensions;
 import com.techlab.store.enums.Status;
-import com.techlab.store.dto.Meta;
 import java.util.List;
 
 
-public record ProductDTO(
+public record ProductDraftDTO(
     Long id,
     String name,
     String sku,
     String brand,
     Integer weight,
-    Meta meta,
-    Double rating, // asignar un rating inicial?
+    Status status,
     ProductDimensions dimensions,
-    String category, // formato "parent / child / subchild"
-    List<String> tags
+    String category, 
+    List<String> tags,
+    Meta meta
 ) {}

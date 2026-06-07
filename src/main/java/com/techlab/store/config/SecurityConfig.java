@@ -47,13 +47,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/dev/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/image/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/listing/**").permitAll()
-
+                        .requestMatchers("/api/stats/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/listings/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/health/**").permitAll()
                         // Protegidos (Usamos el texto EXACTO que sale en tu log: ADMIN)
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/profile", "/api/profile/**").hasAnyAuthority("CLIENT", "ADMIN") // El admin también suele querer ver su perfil
-                        .requestMatchers("/api/orders/**").hasAuthority("CLIENT")
-
+                        .requestMatchers("/api/orders/**").hasAnyAuthority("CLIENT", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

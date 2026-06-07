@@ -1,7 +1,7 @@
 package com.techlab.store.dto;
 
 import java.util.List;
-
+import com.techlab.store.enums.Status;
 import com.techlab.store.model.ProductDimensions;
 
 public record CreateProductDTO(
@@ -11,5 +11,6 @@ public record CreateProductDTO(
     Integer weight,
     ProductDimensions dimensions,
     String category, 
-    List<String> tags
+    List<String> tags,
+    Status status
 ){}

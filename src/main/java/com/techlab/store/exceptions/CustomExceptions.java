@@ -10,7 +10,7 @@ public class CustomExceptions {
             super(message);
         }
         public ProductHasDeletedException(Long id) {
-            super("❌ El producto eliminado con " + id + " solo se puede leer");
+            super("El producto eliminado con " + id + " solo se puede leer");
         }
     }
 
@@ -23,12 +23,12 @@ public class CustomExceptions {
 
         // Constructor sin mensaje (usa el predeterminado)
         public ProductNotFoundException() {
-            super("❌ El recurso Listing no fue encontrado.");
+            super("El producto no fue encontrado.");
         }
         
         // Opcional: Constructor con ID para generar el mensaje automáticamente
         public ProductNotFoundException(Long id) {
-            super("❌ El Listing con ID " + id + " no fue encontrado.");
+            super("El producto con ID " + id + " no fue encontrado.");
         }
     }
 
@@ -44,22 +44,22 @@ public class CustomExceptions {
 
         // Constructor sin mensaje (usa el predeterminado)
         public ListingNotFoundException() {
-            super("❌ El recurso Listing no fue encontrado.");
+            super("El recurso Listing no fue encontrado.");
         }
         
         // Opcional: Constructor con ID para generar el mensaje automáticamente
         public ListingNotFoundException(Long id) {
-            super("❌ El Listing con ID " + id + " no fue encontrado.");
+            super("El Listing con ID " + id + " no fue encontrado.");
         }
     }
 
 
     public static class ListingHasDeletedException extends RuntimeException {
         public ListingHasDeletedException() {
-            super("❌ El listing ha sido eliminado");
+            super("El listing ha sido eliminado");
         }
         public ListingHasDeletedException(Long id) {
-            super("❌ El listing con Id "+ id + "ha sido eliminado");
+            super("El listing con Id "+ id + "ha sido eliminado");
         }
     }
 
@@ -69,7 +69,7 @@ public class CustomExceptions {
         }
 
         public ListingUpdatedException(Long id) {
-            super("❌ Error al actualizar. El listing con ID: " + id + " no fue encontrado.");
+            super("Error al actualizar. El listing con ID: " + id + " no fue encontrado.");
         }
     }
 
@@ -79,11 +79,11 @@ public class CustomExceptions {
 
     public static class ImageNotFoundException extends RuntimeException {
         public ImageNotFoundException() {
-            super("❌ La imagen especificada no se encontró en el listado.");
+            super("La imagen especificada no se encontró en el listado.");
         }
         
         public ImageNotFoundException(String imageUrl) {
-            super("❌ La imagen con URL '" + imageUrl + "' no se encontró.");
+            super("La imagen con URL '" + imageUrl + "' no se encontró.");
         }
     }
 
@@ -111,7 +111,7 @@ public class CustomExceptions {
         }
 
         public ReviewExpiratedException (Long id) {
-            super("❌ La solicitud de review expiro o no es valida");
+            super("La solicitud de review expiro o no es valida");
         }
     }
 
@@ -121,10 +121,10 @@ public class CustomExceptions {
 
     public static class UserHasDeletedException extends RuntimeException {
         public UserHasDeletedException() {
-            super("❌ El usuario ha sido eliminado");
+            super("El usuario ha sido eliminado");
         }
         public UserHasDeletedException(Long id) {
-            super("❌ El usuario con Id "+ id + "ha sido eliminado");
+            super("El usuario con Id "+ id + "ha sido eliminado");
         }
     }
 
@@ -136,12 +136,12 @@ public class CustomExceptions {
 
         // Constructor sin mensaje (usa el predeterminado)
         public UserNotFoundException() {
-            super("❌ El User no fue encontrado.");
+            super("El User no fue encontrado.");
         }
         
         // Opcional: Constructor con ID para generar el mensaje automáticamente
         public UserNotFoundException(Long id) {
-            super("❌ El User con ID " + id + " no fue encontrado.");
+            super("El User con ID " + id + " no fue encontrado.");
         }
     }
 }

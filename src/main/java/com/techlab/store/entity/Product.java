@@ -25,6 +25,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -33,6 +34,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
+@Table(name = "PRODUCTS")
 public class Product {
     
     @Id
@@ -67,10 +69,6 @@ public class Product {
     @OneToMany(mappedBy = "product")
     @JsonIgnore
     private List<Listing> listings;
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<PendingReview> pendingReviews = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference

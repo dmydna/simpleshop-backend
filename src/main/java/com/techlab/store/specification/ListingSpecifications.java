@@ -38,11 +38,11 @@ public class ListingSpecifications {
     }
 
 
-    public static Specification<Listing> hasCategories(List<String> categories) {
+    public static Specification<Listing> hasCategory(String category) {
         return (root, query, cb) -> {
-            if (CollectionUtils.isEmpty(categories)) return null;
+            if (category == null) return null;
             // Unimos Listing con Product y filtramos por categoría
-            return root.join("product").get("category").in(categories);
+            return cb.equal(root.join("product").get("category"), category);
         };
     }
 

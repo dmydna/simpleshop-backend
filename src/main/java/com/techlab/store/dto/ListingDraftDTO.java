@@ -5,7 +5,7 @@ import java.util.List;
 import com.techlab.store.enums.Status;
 import com.techlab.store.model.ProductDimensions;
 
-public record ListingDTO (
+public record ListingDraftDTO (
     // Listing
     Long id,
     String title,
@@ -16,21 +16,12 @@ public record ListingDTO (
     String warrantyInformation,
     String shippingInformation,
     String availabilityStatus,
-    List<ReviewDTO> reviews,
     String returnPolicy,
     Integer minimumOrderQuantity,
     List<String> images,
     String thumbnail,
     String hash,
     // product
-    Long productId,
-    String productName,
     String sku,
-    String brand,
-    Integer weight,
-    ProductDimensions dimensions,
-    Integer stock,
-    String category,
-    List<String> tags,
     Meta meta
 ){}

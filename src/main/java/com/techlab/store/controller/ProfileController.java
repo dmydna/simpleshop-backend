@@ -24,7 +24,6 @@ import com.techlab.store.enums.OrderStatus;
 import com.techlab.store.mapper.OrderMapper;
 import com.techlab.store.service.AuthService;
 import com.techlab.store.service.OrderService;
-import com.techlab.store.service.PendingReviewService;
 import com.techlab.store.service.ProfileService;
 
 import lombok.RequiredArgsConstructor;
@@ -37,7 +36,6 @@ public class ProfileController {
     private final ProfileService profileService;
     private final AuthService authService;
     private final OrderService orderService;
-    private final PendingReviewService pendingReviewService;
     private final OrderMapper orderMapper;
 
     @GetMapping("/my")
@@ -70,10 +68,12 @@ public class ProfileController {
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<Order> orders;
-        if (authService.isAdmin() && userId != null) {
-            orders = orderService.filter(userId, status, pageable);
+        User user = authService.getUser();
+        if (authService.isAdmin()) {
+            long id = userId != null ? userId : user.getId();
+            orders = orderService.filter(id, status, pageable);
         } else {
-            User user = authService.getUser();
+
             orders = orderService.filter(user.getId(), status, pageable);
         }
         Page<OrderComplete> response = orders

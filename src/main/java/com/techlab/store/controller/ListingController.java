@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -27,31 +28,32 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.techlab.store.dto.CreateListingDTO;
 import com.techlab.store.dto.ListingDTO;
+import com.techlab.store.dto.ListingSummary;
 import com.techlab.store.dto.UpdateListingDTO;
 import com.techlab.store.entity.Listing;
 import com.techlab.store.enums.Status;
 import com.techlab.store.mapper.ListingMapper;
-import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.service.AuthService;
 import com.techlab.store.service.ListingService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
-@RequestMapping("/api/listing")
+@RequestMapping("/api/listings")
 @RequiredArgsConstructor
 public class ListingController {
 
     private final ListingService listingService;
     private final ListingMapper listingMapper;
-    private final ProductRepository productRepository;
     private final AuthService authService;
 
     @Value("${app.base-url}")
     private String baseUrl;
 
 
-    // CREATE
+    // CREATE: recordar que tambien crea borrador si dto.status == DRAFT
     @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ListingDTO> create(
@@ -64,22 +66,6 @@ public class ListingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-
-    // CREATE DRAFT
-    @PreAuthorize("hasAuthority('ADMIN')")
-    @PostMapping(value="/draft",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ListingDTO> createDraft(
-        @RequestPart("listing") CreateListingDTO dto,
-        @RequestPart(value = "files", required = false) MultipartFile[] files
-    ) {
-        Listing entity = listingMapper.toEntity(dto);
-        entity.setStatus(Status.DRAFT); // <-- importante
-        Listing saveListing = listingService.create(entity, files); 
-        ListingDTO response = listingMapper.toDto(saveListing);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-
     // GET
     @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/{id}")
@@ -90,38 +76,54 @@ public class ListingController {
     }
 
     // GET
-    // La busqueda por hash solo devuelve elementos publicos para cliente
+    // NOTA: probablemente la busqueda por hash deberia ser 
+    // solo publico y por id para admin
     @GetMapping("/hash/{hash}")
-    public ResponseEntity<Map<String, Object>> getByHash(@PathVariable String hash) {
+    public ResponseEntity<Map<String, Object>> getByHash(@PathVariable String hash,
+        @RequestHeader(value = "Authorization", required = false) String authHeader) 
+       {
+        boolean isAdmin = authService.isAdmin(authHeader); 
         Listing entity = listingService.getByHash(hash);
         Status status = entity.getStatus();
-        if(!authService.isAdmin() && 
+        if(!isAdmin && 
           (status.equals(Status.INACTIVE) || status.equals(Status.DRAFT) )){
             throw new RuntimeException("El recurso no disponible para cliente");
         }
-        Map<String, Object> response = new HashMap<>();
-        response.put("listing", listingMapper.toDto(entity));
-        return ResponseEntity.ok(response);
+         Map<String, Object> response = new HashMap<>();
+        
+        if(status.equals(Status.DRAFT)){
+            log.info("🔔 GET listing draft...");
+            response.put("listing", listingMapper.toDraftDto(entity));
+        }else {
+             log.info("🔔 GET normal listing...");
+            response.put("listing", listingMapper.toDto(entity));
+        }
+         return ResponseEntity.ok(response);
     }
 
-
+    // GET ALL
     @GetMapping
-    public ResponseEntity<Page<ListingDTO>> getAll(
+    public ResponseEntity<Page<ListingSummary>> getAll(
         @RequestParam(required = false) String title,
-        @RequestParam(required = false) List<String> categories,
+        @RequestParam(required = false) String category,
         @RequestParam(required = false) List<String> tags,
         @RequestParam(required = false) Double minPrice,
         @RequestParam(required = false) Double maxPrice,
         @RequestParam(required = false) Status status,
+        @RequestParam(required = false, defaultValue = "false") Boolean includeTags,
+        @RequestHeader(value = "Authorization", required = false) String authHeader,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Page<Listing> filtered;
-        if (authService.isAdmin()) {
-            filtered = listingService.filter(title, categories, tags, minPrice, maxPrice, status, pageable);
-        }else{
-            filtered = listingService.filter(title, categories, tags, minPrice, maxPrice, Status.ACTIVE, pageable);
+        
+        boolean isAdmin = authService.isAdmin(authHeader); 
+        Status filterStatus = isAdmin ? status : Status.ACTIVE;
+       Page<Listing> filtered = listingService.filter(title, category, tags, minPrice, maxPrice, filterStatus, pageable);
+        
+        if(includeTags){
+            return ResponseEntity.ok(filtered.map(listing -> this.listingMapper.toSummaryFull(listing)));
         }
-        return ResponseEntity.ok(filtered.map(listing -> this.listingMapper.toDto(listing)));
+
+        return ResponseEntity.ok(filtered.map(listing -> this.listingMapper.toSummaryDto(listing)));
     }
 
     // UPDATE
@@ -141,9 +143,11 @@ public class ListingController {
     // DELETE
     @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/{id}")
-    public  ResponseEntity<Void>  deleteById(@PathVariable Long id){
+    public  ResponseEntity<?>  deleteById(@PathVariable Long id){
         listingService.deleteById(id);
-        return ResponseEntity.noContent().build();
+
+        Map<String,String> responseMSG = Map.of("message", "Listing eliminado correctamente");
+        return ResponseEntity.ok(responseMSG);
     }
 
 
@@ -154,14 +158,8 @@ public class ListingController {
         @PathVariable Long id, 
         @RequestParam("file") MultipartFile file) 
     {
-        try {
-            String url = listingService.uploadImage(id, file);
-            return ResponseEntity.ok(url);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error interno: " + e.getMessage());
-        }
+        String url = listingService.addSingleImage(id, file);
+        return ResponseEntity.ok(url);
     }
 
     // UPLOAD IMAGES
@@ -171,14 +169,8 @@ public class ListingController {
         @PathVariable Long id, 
         @RequestParam("files") MultipartFile[] files) 
     {
-        try {
-            List<String> urls = listingService.uploadImages(id, files);
-            return ResponseEntity.ok(urls);
-        } catch (Exception e) {
-            return ResponseEntity
-               .status(500)
-               .body("Error al procesar lote: " + e.getMessage());
-        }
+        List<String> urls = listingService.addMultiImages(id, files);
+        return ResponseEntity.ok(urls);
     }
 
 
@@ -190,7 +182,9 @@ public class ListingController {
         @RequestParam String imageUrl // El front envía la URL completa de la imagen a borrar
     ) {
         listingService.removeImageFromListing(id, imageUrl);
-        return ResponseEntity.ok("Imagen eliminada correctamente");
+
+        Map<String,String> responseMSG = Map.of("message", "Imagen eliminada correctamente");
+        return ResponseEntity.ok(responseMSG);
     }
 
 

@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +13,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.techlab.store.entity.Listing;
+import com.techlab.store.enums.ReviewStatus;
+
+import jakarta.transaction.Transactional;
 
 @Repository
 public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpecificationExecutor<Listing> {
@@ -24,6 +28,17 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
     @Query("SELECT l FROM Listing l WHERE l.hash = :hash AND l.deletedAt IS NULL")
     Optional<Listing> findActiveByHash(@Param("hash") String hash);
 
+
+    @Query("SELECT l FROM Listing l")
+    Page<Listing> findAllSoft(Pageable pageable);
+
+
+    @Transactional
+    @Query("DELETE FROM Review r WHERE r.listingId = :listingId AND r.status = :status")
+    void deleteReviewByListingIdAndStatus(
+        @Param("listingId") Long listingId, 
+        @Param("status") ReviewStatus status
+    );
 
 
     // -- Filtrar (no eliminados) :

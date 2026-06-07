@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.techlab.store.dto.ListingSummary;
+import com.techlab.store.mapper.ListingMapper;
 import com.techlab.store.dto.FavoriteDTO;
 import com.techlab.store.entity.Favorite;
 import com.techlab.store.entity.Listing;
@@ -24,11 +26,12 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/profile/favorite")
+@RequestMapping("/api/profile/favorites")
 public class FavoriteController {
 
     private final FavoriteService favoriteService;
     private final AuthService authService;
+    private final ListingMapper listingMapper;
 
     @PostMapping("/{listingId}")
     public ResponseEntity<?> create(@PathVariable Long listingId) {
@@ -46,31 +49,18 @@ public class FavoriteController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<FavoriteDTO>> getAll(
+    public ResponseEntity<Page<ListingSummary>> getAll(
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) Long id,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         User user = authService.getUser();
-        Page<FavoriteDTO> response;
-        if (authService.isAdmin()) {
-            response = favoriteService.filter(userId, id, pageable)
-                    .map(favorite -> toFavoriteDto(favorite));
-        } else {
-            response = favoriteService.filter(user.getId(), id, pageable)
-                    .map(favorite -> toFavoriteDto(favorite));
-        }
-        return ResponseEntity.ok(response);
+        Long filterUserId = authService.isAdmin() 
+          ? (userId != null ? userId : user.getId()) : user.getId();
+        Page<Favorite> filtered = favoriteService.filter(filterUserId, id, pageable);
+
+        return ResponseEntity.ok(filtered
+            .map(favorite -> listingMapper.toSummaryDto(favorite.getListing())));
     }
 
-    public FavoriteDTO toFavoriteDto(Favorite favorite) {
-        Listing listing = favorite.getListing();
-        return new FavoriteDTO(
-                favorite.getId(),
-                favorite.getCreatedAt(),
-                listing.getId(),
-                listing.getThumbnail(),
-                listing.getTitle(),
-                listing.getPrice()
-        );
-    }
+
 }

@@ -25,6 +25,7 @@ import com.techlab.store.repository.OrderRepository;
 import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.specification.OrderSpecifications;
 import com.techlab.store.enums.OrderStatus;
+import com.techlab.store.enums.Status;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,9 +59,15 @@ public class OrderService {
 
         for (OrderItem detail : order.getItems()) {
             detail.setOrder(order);  // importante: establecer relacion order /orderDetail
+            
+            if(!detail.getListing().getStatus().equals(Status.ACTIVE)){
+                failed.add(detail);
+                continue;
+            }
+
             if (!inventoryService.decreaseStock(
-                    detail.getListing().getId(),
-                    detail.getQuantity()
+                detail.getListing().getId(),
+                detail.getQuantity()
             )) {
                 failed.add(detail);
             }
@@ -76,7 +83,7 @@ public class OrderService {
         // Eliminamos ordenes inpagas y restauramos stocks;
         List<Order> listOrders = orderRepository.findAllByStatus(OrderStatus.PENDING);
         for(Order order : listOrders){
-             // Eliminacion permanentemente.
+             // Eliminacion permanente.
               deleteOrderAndRestoreStock(order.getId());
         }
     }
@@ -108,7 +115,7 @@ public class OrderService {
     public Order updateStatus(Long id, OrderStatus newStatus) {
         Order order = getById(id);
 
-        log.info("Actualizando estado de Pedido ID {} de {} a {}", id, order.getStatus(), newStatus);
+        log.info("🔔 Actualizando status de Pedido ID {} de {} a {}", id, order.getStatus(), newStatus);
 
         if (newStatus == OrderStatus.CANCELLED) {
             log.warn("Pedido cancelado: Reponiendo stock.");

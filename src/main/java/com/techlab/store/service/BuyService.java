@@ -7,12 +7,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.techlab.store.dto.OrderComplete;
 import com.techlab.store.entity.Order;
 import com.techlab.store.repository.OrderRepository;
-import com.techlab.store.repository.PendingReviewRepository;
-import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.enums.OrderStatus;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -22,14 +18,10 @@ import lombok.RequiredArgsConstructor;
 public class BuyService {
     @Autowired
     private final OrderService orderService;
-    private final ClientService clientService; 
-    private final InventoryService inventoryService;
-    private final PaymentService paymentService;
+
     private final PaymentGatewayService paymentGateWayService;
-    private final PendingReviewService pendingReviewService;
     private final OrderRepository orderRepository;
-    private final ProductRepository productRepository;
-    private final PendingReviewRepository pendingReviewRepositiry;
+    private final ReviewService reviewService;
 
     @Transactional
     public boolean confirmPayment(Long orderId, String paymentToken, String userEmail) {
@@ -42,9 +34,9 @@ public class BuyService {
             throw new ValidationException("Payment failed");
         }
 
-        // agregamos pending reviews para cada producto comprado
+        // crea reviews (con status pendiente) para cada producto comprado
         order.getItems().forEach(item -> {
-            pendingReviewService
+            reviewService
               .create(
                 item.getListing().getProduct().getId(), 
                 order.getClient().getUser().getId(), 

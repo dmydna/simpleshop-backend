@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
+import com.techlab.store.dto.BanRequest;
 import com.techlab.store.dto.ProfileDTO;
 import com.techlab.store.enums.UserStatus;
 
@@ -79,19 +79,30 @@ public class UserController {
 
 
 
+    @PatchMapping("/{id}/unban-user")
+    public ResponseEntity<?> unbanUser(@PathVariable Long id) {
+        userService.unbanUser(id);
+        return ResponseEntity.ok().build();
+    }
+
+
+    @PatchMapping("/{id}/ban-user")
+    public ResponseEntity<?> banUser(
+        @PathVariable Long id, 
+        @RequestBody BanRequest request
+    ){
+        userService.banUser(id, request);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping(value = "/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> upload(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file
     ) {
-        try {
-            String url = userService.uploadImage(id, file);
-            return ResponseEntity.ok(url);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error interno: " + e.getMessage());
-        }
+        String url = userService.uploadImage(id, file);
+        return ResponseEntity.ok(url);
+
     }
 
     @GetMapping("/{id}/profile")
@@ -106,7 +117,7 @@ public class UserController {
         @RequestBody UserDTO dataToEdit
     ){
         User user = userService
-                .updateById(id, userMapper.toEntity(dataToEdit));
+            .updateById(id, userMapper.toEntity(dataToEdit));
         return ResponseEntity.ok(userMapper.toDto(user));
     }
 

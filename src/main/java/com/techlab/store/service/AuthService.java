@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.techlab.store.dto.PasswordChangeRequest;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -11,16 +12,21 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import io.jsonwebtoken.JwtException;
 
 import com.techlab.store.dto.AuthResponse;
 import com.techlab.store.dto.LoginRequest;
 import com.techlab.store.dto.RegisterRequest;
 import com.techlab.store.entity.User;
+import lombok.extern.slf4j.Slf4j;
+
 
 import lombok.RequiredArgsConstructor;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -53,7 +59,7 @@ public class AuthService {
         );
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW) 
     public User register(RegisterRequest request) {
         // Registra user en el userService
         User savedUser = userService.create(request);
@@ -93,6 +99,22 @@ public class AuthService {
     public boolean isAdmin() {
         return isRole("ADMIN");
     }
+
+    public boolean isAdmin(String authHeader) {
+        log.info("🔔 Extrayendo Role de TOKEN...");
+        if(authHeader == null) return false ;
+        String token = authHeader.substring(7);
+        List<String> userRoles = new ArrayList<>();
+        try {
+            userRoles = jwtService.extractRoles(token);
+        } catch (JwtException e) {
+            // Token inválido, ignoramos roles y tratamos como usuario público
+            log.warn("Token inválido o expirado", e);
+        }
+        return userRoles.contains("ADMIN");
+    }
+
+
 
     public User getUser(){
         Authentication auth = getAuthentication();

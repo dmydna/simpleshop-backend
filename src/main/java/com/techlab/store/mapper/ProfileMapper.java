@@ -8,15 +8,26 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
+
+
+
 @Mapper(componentModel = "spring")
 public interface ProfileMapper {
 
+    @Mapping(source = "user.id", target = "id")
     @Mapping(source = "user.username", target = "username")
     @Mapping(source = "user.email", target = "email")
     @Mapping(source = "client.firstName", target = "firstName")
     @Mapping(source = "client.lastName", target = "lastName")
     @Mapping(source = "client.address", target = "address")
     @Mapping(source = "client.phone", target = "phone")
+    @Mapping(source = "user.createdAt",    target = "meta.createdAt")
+    @Mapping(source = "user.updatedAt",    target = "meta.updatedAt")
+    @Mapping(source = "user.deletedAt",    target = "meta.deletedAt")
+    @Mapping(source = "user.bannedAt",     target = "meta.bannedAt")
+    @Mapping(source = "user.banExpiresAt", target = "meta.banExpiresAt")
+    @Mapping(source = "user.banReason",    target = "meta.banReason")
+    @Mapping(source = "user.status",       target = "meta.status")
     ProfileDTO toDto(User user, Client client);
 
     @Mapping(target = "id", ignore = true)

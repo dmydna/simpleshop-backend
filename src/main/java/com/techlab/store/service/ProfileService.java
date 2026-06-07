@@ -77,6 +77,8 @@ public class ProfileService {
         profileMapper.updateUserFromDto(user, dto);
         profileMapper.updateClientFromDto(client, dto);
 
+        log.info("✅ El usuario con id {} actualizo su perfil con exito...", user.getId());
+
         return profileMapper.toDto(user, client);
     }
 
@@ -88,6 +90,8 @@ public class ProfileService {
 
         profileMapper.updateUserFromDto(user, dto);
         profileMapper.updateClientFromDto(user.getClient(), dto);
+
+        log.info("✅ El perfil del usuario con id {} fue actualizado con exito...", user.getId());
 
         return profileMapper.toDto(user, user.getClient());
     }
@@ -104,9 +108,12 @@ public class ProfileService {
         String finalUrl = fileStorageService.storeFile(file, user.getId(), folderName);
         if (user.getImage() != null && !user.getImage().isEmpty()) {
             handleRemoveImage(user.getImage());
-            System.out.println("Borrando imagen antigua: " + user.getImage());
+            log.info("🔔 Borrando imagen antigua: {}", user.getImage());
         }
         user.setImage(finalUrl);
+
+        log.info("✅ La imagen de perfil del usuario con id {} fue actualizado con exito...", user.getId());
+
         return finalUrl;
     }
 

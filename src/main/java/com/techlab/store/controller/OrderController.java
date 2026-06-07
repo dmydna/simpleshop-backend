@@ -34,9 +34,11 @@ import com.techlab.store.service.BuyService;
 import com.techlab.store.service.ClientService;
 import com.techlab.store.service.OrderService;
 import com.techlab.store.service.ProfileService;
+import lombok.extern.slf4j.Slf4j;
 
 import lombok.RequiredArgsConstructor;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/orders")// Endpoint base
@@ -80,10 +82,13 @@ public class OrderController {
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<Order> filtered;
+        User user = authService.getUser();
         if (authService.isAdmin()) {
-            filtered = orderService.filter(userId, status, pageable);
+            // Si admin no envia una id se usa la propia.
+            long id = userId != null ? userId : user.getId();
+            log.info("🔔 ADMIN obtiene ordenes de id...",id);
+            filtered = orderService.filter(user.getId(), status, pageable);
         }else{
-            User user = authService.getUser();
             filtered = orderService.filter(user.getId(), status, pageable);
         }
         return ResponseEntity.ok(filtered.map(order -> orderMapper.toFullDto(order)));

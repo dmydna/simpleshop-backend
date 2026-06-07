@@ -28,7 +28,7 @@ import lombok.ToString;
 @Entity
 @Getter @Setter
 @ToString
-@Table(name = "T_ORDER")
+@Table(name = "ORDERS")
 public class Order {
 
     @Id

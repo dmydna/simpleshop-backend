@@ -23,21 +23,13 @@ public class PaymentGatewayController {
 
     @PostMapping("/initiate")
     public ResponseEntity<String> initiatePayment(@RequestBody PaymentRequest request) {
-        try {
-            String token = paymentGatewayService.generateToken(request.orderId(), request.userEmail());
-            return ResponseEntity.ok(token);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error: " + e.getMessage());
-        }
+        String token = paymentGatewayService.generateToken(request.orderId(), request.userEmail());
+        return ResponseEntity.ok(token);
     }
 
     @PostMapping("/validate")
     public ResponseEntity<?> validateToken(@RequestBody TokenRequest tokenRequest) {
-        try {
-            Boolean result = paymentGatewayService.validateToken(tokenRequest.token());
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.status(401).body("Error: " + e.getMessage());
-        }
+        Boolean result = paymentGatewayService.validateToken(tokenRequest.token());
+        return ResponseEntity.ok(result);
     }
 }

@@ -1,28 +1,29 @@
 package com.techlab.store.service;
 
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.techlab.store.dto.ListingDTO;
 import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.Product;
 import com.techlab.store.entity.Review;
+import com.techlab.store.enums.ReviewStatus;
 import com.techlab.store.enums.Status;
+import com.techlab.store.exceptions.CustomExceptions.ListingHasDeletedException;
+import com.techlab.store.exceptions.CustomExceptions.ListingNotFoundException;
+import com.techlab.store.exceptions.CustomExceptions.ProductNotFoundException;
+import com.techlab.store.exceptions.CustomExceptions.StorageException;
 import com.techlab.store.mapper.ListingMapper;
 import com.techlab.store.repository.ListingRepository;
 import com.techlab.store.repository.ProductRepository;
@@ -30,18 +31,15 @@ import com.techlab.store.specification.ListingSpecifications;
 import com.techlab.store.utils.HashUtil;
 import com.techlab.store.utils.StringUtils;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import com.techlab.store.exceptions.CustomExceptions.*;
-
-import jakarta.persistence.metamodel.IdentifiableType;
 
 
-@Service
+
 @Slf4j
 @RequiredArgsConstructor
+@Service
 public class ListingService {
 
     private final ListingRepository listingRepository;
@@ -51,23 +49,30 @@ public class ListingService {
     private final ListingMapper listingMapper;
 
     // -- CREATE
+    // Nota. recordar que se manejan listing normal y draft en este metodo.
+    // TODO: se debe chequiar en caso de publicar un listing que el producto tenga status ACTIVE.
     @Transactional
     public Listing create(Listing listing, MultipartFile[] files) {
 
-        // buscamos existencia de producto
-        Product product =  this.productRepository
-            .findBySku(listing.getProduct().getSku())
-            .orElseThrow(() -> new ProductNotFoundException());
+       log.info("🔔 Creando nuevo listing...");
+
+     // Nota. esto ya lo hace el @aftermapping en el caso de un listing normal,
+     // para draft esto se omite.
+     // public void publishListing(Listing listing)
 
         Listing saveListing = listingRepository.saveAndFlush(listing);
         // 5. Procesar imagen si el archivo no está vacío (Auxiliar)
-        for (MultipartFile file : files) {
-            if (!file.isEmpty()) {
-                handleImageUpload(saveListing, file);
+        if(files != null){
+            for (MultipartFile file : files) {
+               if (!file.isEmpty()) {
+                   imageFileUpload(saveListing, file);
+               }
             }
         }
+
         return saveListing;
     }
+
 
 
     // -- GET BY ID
@@ -81,6 +86,8 @@ public class ListingService {
         return listing;
     }
 
+
+
     // -- GET BY HASH
     public Listing getByHash(String hash){
         Listing listing = this.listingRepository.findActiveByHash(hash)
@@ -92,13 +99,20 @@ public class ListingService {
         return listing;
     }
 
-   public Listing limitReviews(Listing listing, Integer limit) {
-         listing.getProduct().getReviews().stream()
-             .sorted(Comparator.comparing(Review::getCreatedAt).reversed())
-             .limit(limit)
-             .collect(Collectors.toList());
-    return listing; // Retorna el listing modificado
-   }
+
+   // TODO: Se debe devolver reviews con status ACTIVE.
+    public Listing limitReviews(Listing listing, Integer limit) {
+        if (listing.getProduct() != null) {
+            List<Review> filteredReviews = listing.getProduct().getReviews().stream()
+                .filter(r -> r.getStatus() == ReviewStatus.ACTIVE)
+                .sorted(Comparator.comparing(Review::getCreatedAt).reversed())
+                .limit(limit)
+                .collect(Collectors.toList());
+            
+            listing.getProduct().setReviews(filteredReviews); // Asignar el resultado
+        }
+        return listing;
+    }
 
 
     public Page<Listing> findAllPage(Pageable pageable){
@@ -107,15 +121,18 @@ public class ListingService {
 
     public Page<Listing> filter(
             String title,
-            List<String> categories,
+            String category,
             List<String> tags,
             Double min, Double max,
             Status status,
             Pageable pageable
     ) {
+
+       log.info("🔔 Filtrando listings...");
+
         Specification<Listing> spec = Specification
             .where(ListingSpecifications.isNotDeleted())
-            .and(ListingSpecifications.hasCategories(categories))
+            .and(ListingSpecifications.hasCategory(category))
             .and(ListingSpecifications.hasStatus(status))
             .and(ListingSpecifications.hasTitle(title))
             .and(ListingSpecifications.hasTags(tags))
@@ -127,14 +144,14 @@ public class ListingService {
 
     public Page<ListingDTO> findByFilter(
             String title,
-            List<String> categories,
+            String category,
             List<String> tags,
             Double min, Double max,
             Status status,
             Pageable pageable
     ) {
         // 3. Convertir a Page de DTOs usando tu mapper
-        return filter(title, categories, tags, min, max, status, pageable)
+        return filter(title, category, tags, min, max, status, pageable)
             .map(listing -> this.listingMapper.toDto(listing));
     }
 
@@ -142,18 +159,44 @@ public class ListingService {
     @Transactional
     public Listing updateStatusById(Long id, Status status){
         log.info("🔔 actualizando status de listing con ID {}...", id);
-        Listing listing = this.listingRepository.findById(id)
-              .orElseThrow(() -> new ListingNotFoundException(id));
+        Listing listing = getById(id);
 
-        if(isDeleted(id)){ throw new ListingHasDeletedException(id) ;}
+        if(isDeleted(id)){ 
+           throw new ListingHasDeletedException(id) ;
+        }
 
-        if(status.equals(Status.DELETED)){ deleteById(id); }
+        if(status.equals(Status.DELETED)){ 
+            deleteById(id); 
+        }
+
+        // validamos antes de "crear" el listing a partir del borrador.
+        if(listing.getStatus().equals(Status.DRAFT) && 
+           status.equals(Status.ACTIVE)){
+             publishListing(listing);
+        }
 
         listing.setStatus(status);
+        listing.setUpdatedAt(LocalDateTime.now());
         return listing;
     }
 
 
+    // Nota. esto ya lo hace el @aftermapping en el caso de un listing normal.
+    public void publishListing(Listing listing){
+        log.info("🔔 publicando listing draft con ID {}...", listing.getId());
+        // validamos existencia de producto
+       Product existingProduct =  productRepository
+                   .findBySku(listing.getProduct().getSku())
+                   .orElseThrow(() -> new ProductNotFoundException());
+        listing.setProduct(existingProduct);
+        listing.getProduct().setStatus(Status.ACTIVE);
+        listing.setStatus(Status.ACTIVE);
+        listing.setHash(HashUtil.generateShortHash());
+        listing.setAvailabilityStatus("In Stock");
+    }
+
+
+    // CHECKME actualiza imagenes de lista.
     @Transactional
     public Listing updateById(Long id, Listing dataToEdit, MultipartFile[] files) {
 
@@ -164,8 +207,9 @@ public class ListingService {
         
         if(dataToEdit.getStatus() != null){ updateStatusById(id, dataToEdit.getStatus());}
         // Importante: esta funcion requiere listing.images sin modificar.
-        if(files != null && files.length != 0){ 
-            updateImages(id, dataToEdit.getImages(), files);}
+        updateImages(id, dataToEdit.getImages(), files);
+
+        listing.setUpdatedAt(LocalDateTime.now());
 
         return listingMapper.updateFromEntity(dataToEdit, listing);
     }
@@ -175,8 +219,10 @@ public class ListingService {
     public List<String> updateImages(
             Long id, 
             List<String> updatedImages, 
-            MultipartFile[] files){
-        log.info("🔔 actualizando imagenes de listing con ID {}...", id);
+            MultipartFile[] files
+        ){
+
+        log.info("🔔 Actualizando imagenes de listing con ID {}...", id);
         Listing listing = this.listingRepository.findActiveById(id)
                 .orElseThrow(() -> new ListingNotFoundException(id));
         List<String> currentImages = listing.getImages();
@@ -191,17 +237,19 @@ public class ListingService {
         deletedImages
            .forEach(imageName -> removeImageFromListing(id, imageName));
         // Subo las nuevas imagenes.
-        if (files != null && files.length > 0) {  uploadImages(id, files); }
+        if (files != null && files.length > 0) {  addMultiImages(id, files); }
 
         return listing.getImages();
     }
 
 
     public void deleteById(Long id) {
-        log.info("🔔 eliminando listing con ID {}...", id);
+        log.info("🔔 Eliminando listing con ID {}...", id);
         Listing listing = this.listingRepository.findActiveById(id)
            .orElseThrow(() -> new ListingNotFoundException(id));
-        //this.productRepository.delete(post);
+
+        // Elimina reviews con status "PENDING".
+        listingRepository.deleteReviewByListingIdAndStatus(id, ReviewStatus.PENDING);
         // Borrar Imagenes del Storage
         listing.getImages().forEach(fileStorageService::deleteFile);
         listing.setStatus(Status.DELETED);
@@ -220,7 +268,7 @@ public class ListingService {
 
     @Transactional
     public void removeImageFromListing(Long listingId, String imageUrl) {
-        log.info("🔔 eliminado imagen {} de listing con ID {}...",imageUrl, listingId);
+        log.info("🔔 Eliminado imagen {} de listing con ID {}...",imageUrl, listingId);
         Listing listing = listingRepository.findById(listingId)
             .orElseThrow(() -> new ListingNotFoundException(listingId));
         boolean removed = listing.getImages().remove(imageUrl);
@@ -233,31 +281,32 @@ public class ListingService {
 
 
     @Transactional
-    public String uploadImage(Long id, MultipartFile file) {
-        log.info("subiendo imagen para listing...");
-        if (file.isEmpty()) throw new StorageException("❌ El archivo está vacío");
+    public String addSingleImage(Long id, MultipartFile file) {
+        log.info("🔔 Subiendo imagen para listing...");
+        if (file.isEmpty()) throw new StorageException("⚠️ El archivo está vacío");
         Listing listing = listingRepository.findById(id)
             .orElseThrow(() -> new ListingNotFoundException(id));
-        return handleImageUpload(listing, file);
+        return imageFileUpload(listing, file);
     }
 
     @Transactional
-    public List<String> uploadImages(Long id, MultipartFile[] files) {
-        log.info("subiendo imagenes para listing...");
+    public List<String> addMultiImages(Long id, MultipartFile[] files) {
+        log.info("🔔 Subiendo lista de imagenes para listing...");
         if (files == null || files.length == 0)
-            throw new StorageException("❌ El archivo está vacío");
+            throw new StorageException("⚠️ El archivo está vacío");
         Listing listing = listingRepository.findById(id)
                 .orElseThrow(() -> new ListingNotFoundException(id));
         List<String> urls = new ArrayList<>();
         for (MultipartFile file : files) {
             if (!file.isEmpty()) {
-                urls.add(handleImageUpload(listing, file));
+                urls.add(imageFileUpload(listing, file));
             }
         }
         return urls;
     }
 
-    private String handleImageUpload(Listing listing, MultipartFile file) {
+    private String imageFileUpload(Listing listing, MultipartFile file) {
+        log.info("🔔 Subiendo imagen para listing...");
         String finalUrl = fileStorageService.storeFile(file, listing.getId());
         listing.getImages().add(finalUrl);
 

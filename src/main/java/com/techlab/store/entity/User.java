@@ -29,7 +29,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(name = "APP_USER")
+@Table(name = "USERS")
 public class User {
 
     @Id
@@ -55,6 +55,9 @@ public class User {
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
+    private LocalDateTime bannedAt;
+    private LocalDateTime banExpiresAt;
+    private String banReason;
 
     // Relations
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
@@ -67,5 +70,9 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private List<PendingReview> pendingReviews = new ArrayList<>();
+    private List<Review> reviews = new ArrayList<>();
+    
+
+    // NOTA:
+    // Status.BANNED y banExpiresAt = Null entonces es el baneo es permanente.
 }

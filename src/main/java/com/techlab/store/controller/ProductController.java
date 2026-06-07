@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestHeader;
+import com.techlab.store.service.AuthService;
+import com.techlab.store.service.ProductService;
 import com.techlab.store.exceptions.CustomExceptions.*;
 import com.techlab.store.mapper.ProductMapper;
 import com.techlab.store.dto.CreateProductDTO;
@@ -25,7 +28,7 @@ import com.techlab.store.dto.ProductDTO;
 import com.techlab.store.dto.UpdateProductDTO;
 import com.techlab.store.entity.Product;
 import com.techlab.store.enums.Status;
-import com.techlab.store.service.ProductService;
+
 import lombok.RequiredArgsConstructor;
 
 
@@ -38,23 +41,13 @@ public class ProductController {
 
     private final ProductService productService;
     private final ProductMapper productMapper;
+    private final AuthService authService;
 
     // CREATE
     @PostMapping
     public ResponseEntity<ProductDTO> create(
       @RequestBody CreateProductDTO dto){
         Product entity = productMapper.toEntity(dto);
-        Product saveProduct = productService.createProduct(entity);
-        ProductDTO response = productMapper.toDto(saveProduct);
-        return ResponseEntity.ok(response);
-    }
-
-    // CREATE DRAFT
-    @PostMapping("/draft")
-    public ResponseEntity<ProductDTO> createDraft(
-      @RequestBody CreateProductDTO dto){
-        Product entity = productMapper.toEntity(dto);
-        entity.setStatus(Status.DRAFT);// <-- importante
         Product saveProduct = productService.createProduct(entity);
         ProductDTO response = productMapper.toDto(saveProduct);
         return ResponseEntity.ok(response);
@@ -83,9 +76,14 @@ public class ProductController {
             @RequestParam(required = false, defaultValue = "") String sku,
             @RequestParam(required = false, defaultValue = "") List<String> tags,
             @RequestParam(required = false, defaultValue = "") String category,
-            @RequestParam(required = false, defaultValue = "ACTIVE") Status status,
+            @RequestParam(required = false, defaultValue = "") Status status,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(productService.findByFilter(name, sku, tags, category, status, pageable));
+        boolean isAdmin = authService.isAdmin(authHeader); 
+        Status filterStatus = isAdmin ? status : Status.ACTIVE;
+        Page<Product> filtered = productService.filter(name, sku, tags, category, filterStatus, pageable);
+
+        return ResponseEntity.ok(filtered.map(p -> this.productMapper.toDto(p)));
     }
 
     // UPDATE
