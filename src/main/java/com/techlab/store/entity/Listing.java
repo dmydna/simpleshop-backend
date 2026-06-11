@@ -42,7 +42,7 @@ public class Listing {
     private String description;
     private Double price;
     private Integer stock;
-    
+    private Integer visits = 0; 
     private Double discountPercentage;
     private String warrantyInformation;
     private String shippingInformation;
@@ -58,6 +58,8 @@ public class Listing {
     // Status
     @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE;
+
+
 
     // Meta
     private LocalDateTime updatedAt;

@@ -87,6 +87,17 @@ public class ListingService {
     }
 
 
+    // -- Visits Counter
+    @Transactional
+    public void IncVisits(String hash){
+        Listing listing = this.listingRepository.findActiveByHash(hash)
+            .orElseThrow(() -> new ListingNotFoundException());
+
+        Integer visits = listing.getVisits();
+        listing.setVisits(visits+1);
+    }
+
+
 
     // -- GET BY HASH
     public Listing getByHash(String hash){
@@ -103,13 +114,18 @@ public class ListingService {
    // TODO: Se debe devolver reviews con status ACTIVE.
     public Listing limitReviews(Listing listing, Integer limit) {
         if (listing.getProduct() != null) {
-            List<Review> filteredReviews = listing.getProduct().getReviews().stream()
+            List<Review> originalReviews = listing.getProduct().getReviews();
+            
+            // Filtrar y ordenar
+            List<Review> filteredReviews = originalReviews.stream()
                 .filter(r -> r.getStatus() == ReviewStatus.ACTIVE)
                 .sorted(Comparator.comparing(Review::getCreatedAt).reversed())
                 .limit(limit)
                 .collect(Collectors.toList());
             
-            listing.getProduct().setReviews(filteredReviews); // Asignar el resultado
+            // SOLUCIÓN: Mantener la misma referencia de lista
+            originalReviews.clear(); 
+            originalReviews.addAll(filteredReviews);
         }
         return listing;
     }

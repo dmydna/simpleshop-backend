@@ -79,9 +79,11 @@ public class ListingController {
     // NOTA: probablemente la busqueda por hash deberia ser 
     // solo publico y por id para admin
     @GetMapping("/hash/{hash}")
-    public ResponseEntity<Map<String, Object>> getByHash(@PathVariable String hash,
-        @RequestHeader(value = "Authorization", required = false) String authHeader) 
-       {
+    public ResponseEntity<Map<String, Object>> getByHash(
+        @RequestParam(required = false) Boolean fallow,
+        @PathVariable String hash,
+        @RequestHeader(value = "Authorization", required = false) String authHeader
+    ){
         boolean isAdmin = authService.isAdmin(authHeader); 
         Listing entity = listingService.getByHash(hash);
         Status status = entity.getStatus();
@@ -95,8 +97,9 @@ public class ListingController {
             log.info("🔔 GET listing draft...");
             response.put("listing", listingMapper.toDraftDto(entity));
         }else {
-             log.info("🔔 GET normal listing...");
+            log.info("🔔 GET normal listing...");
             response.put("listing", listingMapper.toDto(entity));
+            if(fallow) listingService.IncVisits(hash);
         }
          return ResponseEntity.ok(response);
     }
