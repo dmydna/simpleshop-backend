@@ -1,6 +1,5 @@
 package com.techlab.store.service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,9 +16,9 @@ import com.techlab.store.exceptions.CustomExceptions.*;
 import com.techlab.store.exceptions.CustomExceptions.ProductHasDeletedException;
 import com.techlab.store.exceptions.CustomExceptions.ProductNotFoundException;
 import com.techlab.store.mapper.ProductMapper;
-import com.techlab.store.repository.CategoryRepository;
 import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.specification.ProductSpecifications;
+import com.techlab.store.utils.EnumUtils;
 import com.techlab.store.utils.StringUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -79,15 +78,29 @@ public class ProductService {
 
 
     @Transactional
-    public Product updateStatusById(Long id, Status status){
+    public Product updateStatusById(Long id, Status newStatus){
         log.info("🔔 Actualizando  status de listing con ID {}...", id);
         Product product = getById(id);
+        Status currentStatus = product.getStatus();
 
-        if(isDeleted(id)){ throw new ProductHasDeletedException(id);}
+        // 1. Validar que no esté ya eliminado
+        if (currentStatus == Status.DELETED) {
+            throw new ProductHasDeletedException(id);
+        }
 
-        if(status.equals(Status.DELETED)){ deleteById(id); }
+        // 2. Validar la transición permitida según la jerarquía
+        if (!EnumUtils.isStatusTransitionAllowed(currentStatus, newStatus)) {
+            log.warn("Transición no permitida de {} a {} para product ID {}", 
+                currentStatus, newStatus, id);
+            return product;
+        }
 
-        product.setStatus(status);
+        // 3. Ejecutar lógica específica antes del cambio de estado
+        if (newStatus == Status.DELETED) {
+            deleteById(id); // Soft delete
+        }
+
+        product.setStatus(newStatus);
         product.setUpdatedAt(LocalDateTime.now());
 
         return product;
@@ -96,6 +109,7 @@ public class ProductService {
     @Transactional
     public Product updateById(Long id, Product dataToEdit) {
         log.info("🔔 Actualizando listing con ID {}...", id);
+
         Product product = getById(id);
 
         if (dataToEdit.getId() != null && !dataToEdit.getId().equals(id)) {
@@ -105,6 +119,9 @@ public class ProductService {
         if(dataToEdit.getStatus() != null){ updateStatusById(id, dataToEdit.getStatus());}
         return  productMapper.updateFromEntity(dataToEdit, product);
     }
+
+
+    
 
     public boolean isDeleted(Long id) {
         Product entity = productRepository.findById(id)

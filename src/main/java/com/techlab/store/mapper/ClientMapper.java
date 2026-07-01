@@ -36,7 +36,6 @@ public interface ClientMapper {
     Client toEntity(RegisterRequest dto);
 
 
-    // TODO: crear UpdateClientDTO para evitar tantos ignore.
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)

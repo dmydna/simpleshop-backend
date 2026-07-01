@@ -25,7 +25,7 @@ import com.techlab.store.repository.OrderRepository;
 import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.specification.OrderSpecifications;
 import com.techlab.store.enums.OrderStatus;
-import com.techlab.store.enums.Status;
+import com.techlab.store.enums.ListingStatus;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +60,7 @@ public class OrderService {
         for (OrderItem detail : order.getItems()) {
             detail.setOrder(order);  // importante: establecer relacion order /orderDetail
             
-            if(!detail.getListing().getStatus().equals(Status.ACTIVE)){
+            if(!detail.getListing().getStatus().equals(ListingStatus.ACTIVE)){
                 failed.add(detail);
                 continue;
             }

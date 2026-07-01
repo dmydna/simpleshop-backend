@@ -1,5 +1,5 @@
 package com.techlab.store.dto;
-import com.techlab.store.enums.Status;
+import com.techlab.store.enums.ListingStatus;
 import java.util.List;
 
 public record CreateListingDTO (
@@ -15,5 +15,5 @@ public record CreateListingDTO (
     List<String> images,
     String       thumbnail,
     String       sku,
-    Status       status // <-- Valido solo para crear draft, en otros casos se ignora.
+    ListingStatus       status // <-- Valido solo para crear draft, en otros casos se ignora.
 ){}

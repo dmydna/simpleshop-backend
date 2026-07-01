@@ -5,10 +5,9 @@ import org.mapstruct.*;
 import com.techlab.store.dto.ProductDTO;
 import com.techlab.store.dto.UpdateProductDTO;
 import com.techlab.store.dto.CreateProductDTO;
+import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.enums.Status;
 import com.techlab.store.entity.Product;
-import com.techlab.store.entity.Category;
-import com.techlab.store.service.CategoryService;
 import com.techlab.store.utils.EnumUtils;
 import java.time.LocalDateTime;
 
@@ -51,17 +50,21 @@ public interface ProductMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "reviews", ignore = true) 
-    public Product updateFromEntity(Product dataToEdit, @MappingTarget Product product);
+    public Product updateFromEntity(
+        Product dataToEdit, 
+        @MappingTarget Product product
+    );
 
 
 
     // after creating
     @AfterMapping
-    default void productAfterMapping(@MappingTarget Product product, CreateProductDTO dto) {
+    default void productAfterMapping(
+        @MappingTarget Product product, 
+        CreateProductDTO dto
+    ) {
         product.setCreatedAt(LocalDateTime.now());
-        if(!dto.status().equals(Status.DRAFT)){
-            product.setStatus(Status.ACTIVE);
-        }
+        product.setStatus(Status.ACTIVE);
     }
 
 
@@ -71,8 +74,8 @@ public interface ProductMapper {
     }
 
     @Named("stringToStatus")
-    default Status stringToStatus(String str) {
-        return EnumUtils.stringToStatus(str);
+    default ListingStatus stringToStatus(String str) {
+        return EnumUtils.stringToListingStatus(str);
     }
 
 

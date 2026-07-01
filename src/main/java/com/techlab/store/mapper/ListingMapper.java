@@ -9,15 +9,13 @@ import com.techlab.store.dto.ReviewDTO;
 import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.Product;
 import com.techlab.store.entity.Review;
+import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.enums.Status;
 import com.techlab.store.utils.EnumUtils;
 import org.mapstruct.InheritInverseConfiguration;
 import org.mapstruct.Mapper;
 import org.mapstruct.*;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.techlab.store.exceptions.CustomExceptions.ProductNotFoundException;
@@ -78,6 +76,7 @@ public abstract class ListingMapper {
 
 
     @Mapping(source = "user.username", target = "username")
+    @Mapping(source = "user.image", target = "userPic")
     @Mapping(source = "product.id", target = "productId")
     @Mapping(source = "comment", target = "comment")
     @Mapping(source = "rating", target = "rating")
@@ -101,7 +100,10 @@ public abstract class ListingMapper {
     public abstract ListingDTO productToDto(Product product);
 
     @Mapping(target = "product", ignore = true) // Lo asignamos manualmente en el AfterMapping
-    public abstract Review toReviewEntity(ReviewDTO reviewDto, @Context Product parent);
+    public abstract Review toReviewEntity(
+        ReviewDTO reviewDto, 
+        @Context Product parent
+    );
 
     @AfterMapping
     protected void linkReviewToParent(
@@ -113,7 +115,10 @@ public abstract class ListingMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "images", ignore = true)
-    public abstract Listing updateFromDto(ListingDTO dto, @MappingTarget Listing listing);
+    public abstract Listing updateFromDto(
+        ListingDTO dto, 
+        @MappingTarget Listing listing
+    );
 
 
     @Mapping(target = "id", ignore = true)
@@ -128,7 +133,6 @@ public abstract class ListingMapper {
     @Mapping(target = "id", ignore = true)
     public abstract Listing toEntity(CreateListingDTO dto);
 
-    @Mapping(target = "status", ignore = true)
     public abstract Listing toEntity(UpdateListingDTO dto);
 
 
@@ -139,7 +143,8 @@ public abstract class ListingMapper {
     {
        // Saltamos validaciones y campos no necesarios para borrador
        // Nota: despues lo agregamos antes de publicar.
-       if(dto.status() != null && dto.status().equals(Status.DRAFT)){
+       if(dto.status() != null && dto.status().equals(ListingStatus.DRAFT)){
+         
          log.info("🔔 Creando listing draft...");
          listing.setAvailabilityStatus("Pending");
          listing.setProduct(null);
@@ -151,21 +156,20 @@ public abstract class ListingMapper {
                    .orElseThrow(() -> new ProductNotFoundException());
          listing.setProduct(existingProduct);
          listing.getProduct().setStatus(Status.ACTIVE);
-         listing.setStatus(Status.ACTIVE);
+         listing.setStatus(ListingStatus.ACTIVE);
          listing.setAvailabilityStatus("In Stock");
          listing.setHash(HashUtil.generateShortHash());
     }
 
 
-
     @Named("statusToString")
-    public String statusToString(Status status) {
-        return EnumUtils.statusToString(status);
+    public String statusToString(ListingStatus status) {
+        return EnumUtils.listingStatusToString(status);
     }
 
     @Named("stringToStatus")
-    public Status stringToStatus(String str) {
-        return EnumUtils.stringToStatus(str);
+    public ListingStatus stringToStatus(String str) {
+        return EnumUtils.stringToListingStatus(str);
     }
 
 

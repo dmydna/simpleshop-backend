@@ -8,7 +8,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.CollectionUtils;
 
 import com.techlab.store.entity.Listing;
-import com.techlab.store.enums.Status;
+import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.utils.StringUtils;
 
 import jakarta.persistence.criteria.Predicate;
@@ -29,7 +29,7 @@ public class ListingSpecifications {
 
 
 
-    public static Specification<Listing> hasStatus(Status status) {
+    public static Specification<Listing> hasStatus(ListingStatus status) {
         return (root, query, cb) -> {
             if (status == null) return null;
             // Unimos Listing con Product y filtramos por categoría

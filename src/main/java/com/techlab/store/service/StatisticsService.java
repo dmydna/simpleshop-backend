@@ -30,6 +30,7 @@ public class StatisticsService {
             SELECT l.*
             FROM listings l
             JOIN order_items oi ON l.id = oi.listing_id
+            WHERE l.status = 'ACTIVE'
             GROUP BY l.id
             ORDER BY SUM(oi.quantity) DESC
             LIMIT ?
@@ -45,6 +46,7 @@ public class StatisticsService {
             SELECT l.*
             FROM listings l
             JOIN products p ON l.product_id = p.id
+            WHERE l.status = 'ACTIVE'
             ORDER BY p.rating DESC
             LIMIT ?
             """;
@@ -59,6 +61,7 @@ public class StatisticsService {
         String sql = """
             SELECT l.*
             FROM listings l
+            WHERE l.status = 'ACTIVE'
             ORDER BY l.discount_percentage DESC
             LIMIT ?
             """;
@@ -74,6 +77,7 @@ public class StatisticsService {
         String sql = """
             SELECT l.*
             FROM listings l
+            WHERE l.status = 'ACTIVE'
             ORDER BY l.visits DESC
             LIMIT ?
             """;

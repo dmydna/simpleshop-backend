@@ -23,7 +23,7 @@ import com.techlab.store.entity.Product;
 import com.techlab.store.entity.Review;
 import com.techlab.store.entity.User;
 import com.techlab.store.enums.ReviewStatus;
-import com.techlab.store.enums.Status;
+import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.mapper.ListingMapper;
 import com.techlab.store.mapper.ReviewMapper;
 import com.techlab.store.repository.ListingRepository;
@@ -151,7 +151,7 @@ public class ListingDevService {
             listing.setProduct(product);
             listing.setHash(HashUtil.generateShortHash());
             listing.setCreatedAt(LocalDateTime.now());
-            listing.setStatus(Status.ACTIVE);
+            listing.setStatus(ListingStatus.ACTIVE);
 
             pairsToSave.add(new ListingReviewPair(listing, reviews));
         }
@@ -207,7 +207,7 @@ public class ListingDevService {
         newProduct.setBrand(dto.brand());
         newProduct.setWeight(dto.weight());
         newProduct.setSku(dto.sku());
-        newProduct.setStatus(Status.ACTIVE);
+        newProduct.setStatus(ListingStatus.ACTIVE);
         newProduct.setCreatedAt(LocalDateTime.now());
         // Copiar otros campos si es necesario desde el DTO o Listing
         return productRepository.save(newProduct);

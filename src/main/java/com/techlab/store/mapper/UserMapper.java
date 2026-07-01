@@ -7,7 +7,7 @@ import com.techlab.store.dto.UpdateUserDTO;
 import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.User;
 import com.techlab.store.utils.EnumUtils;
-import com.techlab.store.enums.Status;
+import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.enums.UserStatus;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

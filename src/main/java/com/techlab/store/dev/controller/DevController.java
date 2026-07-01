@@ -27,7 +27,7 @@ import com.techlab.store.dto.ProfileDTO;
 import com.techlab.store.dto.UserDTO;
 import com.techlab.store.entity.Product;
 import com.techlab.store.entity.User;
-import com.techlab.store.enums.Status;
+import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.service.ListingService;
 import com.techlab.store.service.ProductService;
 import com.techlab.store.service.UserService;
@@ -84,7 +84,7 @@ public class DevController {
                 .body(savedUsers);
     }
 
-
+/*
     @GetMapping("/products")
     public ResponseEntity<Page<ProductDTO>> getAll(
             @RequestParam(required = false, defaultValue = "") String name,
@@ -96,7 +96,7 @@ public class DevController {
         return ResponseEntity
                   .ok(productService.findByFilter(name, sku, tags, category, status, pageable));
     }
-
+*/
 
     @GetMapping("/listings")
     public ResponseEntity<Page<ListingDTO>> getAll(
@@ -105,7 +105,7 @@ public class DevController {
             @RequestParam(required = false) List<String> tags,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
-            @RequestParam(required = false) Status status,
+            @RequestParam(required = false) ListingStatus status,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ResponseEntity

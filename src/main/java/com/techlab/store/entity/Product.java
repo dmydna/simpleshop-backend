@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.enums.Status;
 import com.techlab.store.model.ProductDimensions;
 import com.techlab.store.model.ProductMeta;

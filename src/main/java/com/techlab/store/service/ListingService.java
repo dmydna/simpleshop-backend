@@ -20,6 +20,7 @@ import com.techlab.store.entity.Product;
 import com.techlab.store.entity.Review;
 import com.techlab.store.enums.ReviewStatus;
 import com.techlab.store.enums.Status;
+import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.exceptions.CustomExceptions.ListingHasDeletedException;
 import com.techlab.store.exceptions.CustomExceptions.ListingNotFoundException;
 import com.techlab.store.exceptions.CustomExceptions.ProductNotFoundException;
@@ -29,7 +30,8 @@ import com.techlab.store.repository.ListingRepository;
 import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.specification.ListingSpecifications;
 import com.techlab.store.utils.HashUtil;
-import com.techlab.store.utils.StringUtils;
+import com.techlab.store.utils.EnumUtils;
+
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +45,6 @@ import lombok.extern.slf4j.Slf4j;
 public class ListingService {
 
     private final ListingRepository listingRepository;
-    private final StringUtils stringUtils;
     private final ProductRepository productRepository;
     private final FileStorageService fileStorageService;
     private final ListingMapper listingMapper;
@@ -140,7 +141,7 @@ public class ListingService {
             String category,
             List<String> tags,
             Double min, Double max,
-            Status status,
+            ListingStatus status,
             Pageable pageable
     ) {
 
@@ -163,7 +164,7 @@ public class ListingService {
             String category,
             List<String> tags,
             Double min, Double max,
-            Status status,
+            ListingStatus status,
             Pageable pageable
     ) {
         // 3. Convertir a Page de DTOs usando tu mapper
@@ -172,28 +173,41 @@ public class ListingService {
     }
 
 
+
     @Transactional
-    public Listing updateStatusById(Long id, Status status){
-        log.info("🔔 actualizando status de listing con ID {}...", id);
-        Listing listing = getById(id);
+    public Listing updateStatusById(Long id, ListingStatus newStatus) {
+    log.info("🔔 Actualizando status de listing con ID {} a {}", id, newStatus);
 
-        if(isDeleted(id)){ 
-           throw new ListingHasDeletedException(id) ;
-        }
+    Listing listing = getById(id);
+    ListingStatus currentStatus = listing.getStatus();
 
-        if(status.equals(Status.DELETED)){ 
-            deleteById(id); 
-        }
+    // 1. Validar que no esté ya eliminado
+    if (currentStatus == ListingStatus.DELETED) {
+        throw new ListingHasDeletedException(id);
+    }
 
-        // validamos antes de "crear" el listing a partir del borrador.
-        if(listing.getStatus().equals(Status.DRAFT) && 
-           status.equals(Status.ACTIVE)){
-             publishListing(listing);
-        }
-
-        listing.setStatus(status);
-        listing.setUpdatedAt(LocalDateTime.now());
+    // 2. Validar la transición permitida según la jerarquía
+    if (!EnumUtils.isStatusTransitionAllowed(currentStatus, newStatus)) {
+        log.warn("Transición no permitida de {} a {} para listing ID {}", 
+            currentStatus, newStatus, id);
         return listing;
+    }
+
+    // 3. Ejecutar lógica específica antes del cambio de estado
+    if (newStatus == ListingStatus.DELETED) {
+        deleteById(id); // Soft delete
+    }
+
+    // 4. Lógica específica para publicar (DRAFT -> ACTIVE)
+    if (currentStatus == ListingStatus.DRAFT && newStatus == ListingStatus.ACTIVE) {
+        publishListing(listing);
+    }
+
+    // 5. Actualizar estado y fecha
+    listing.setStatus(newStatus);
+    listing.setUpdatedAt(LocalDateTime.now());
+    
+    return listing; 
     }
 
 
@@ -201,27 +215,53 @@ public class ListingService {
     public void publishListing(Listing listing){
         log.info("🔔 publicando listing draft con ID {}...", listing.getId());
         // validamos existencia de producto
-       Product existingProduct =  productRepository
-                   .findBySku(listing.getProduct().getSku())
-                   .orElseThrow(() -> new ProductNotFoundException());
+        Product existingProduct =  productRepository
+            .findActiveBySku(listing.getProduct().getSku())
+            .orElseThrow(() -> new ProductNotFoundException());
         listing.setProduct(existingProduct);
         listing.getProduct().setStatus(Status.ACTIVE);
-        listing.setStatus(Status.ACTIVE);
+        listing.setStatus(ListingStatus.ACTIVE);
         listing.setHash(HashUtil.generateShortHash());
         listing.setAvailabilityStatus("In Stock");
     }
 
 
+
+
     // CHECKME actualiza imagenes de lista.
     @Transactional
-    public Listing updateById(Long id, Listing dataToEdit, MultipartFile[] files) {
+    public Listing updateById(
+        Long id, 
+        Listing dataToEdit, 
+        MultipartFile[] files, 
+        String sku
+    ) {
 
         log.info("🔔 actualizando listing con ID {}...", id);
 
-        Listing listing = listingRepository.findActiveById(id)
-                .orElseThrow(() -> new ListingNotFoundException(dataToEdit.getId()));
+        Listing listing = listingRepository.findById(id)
+            .orElseThrow(() -> new ListingNotFoundException(dataToEdit.getId()));
         
-        if(dataToEdit.getStatus() != null){ updateStatusById(id, dataToEdit.getStatus());}
+        ListingStatus status = listing.getStatus();
+
+        // Logica de status == DELETED
+        if(status.equals(ListingStatus.DELETED)){
+            // Si esta eliminado no puede actualizarse.
+            throw new ListingHasDeletedException(dataToEdit.getId());
+        }
+
+        // Logica de status == DRAFT
+        if(status.equals(ListingStatus.DRAFT)){
+            log.info("🔔 actualizando listing-draft con ID {}, status {}, sku {}", id, status, sku);
+            // Nota: solo draft puede actualizar producto (por SKU)
+            if(sku != null) updateProductBySku(id, sku);
+        }
+
+        // Actualizar status
+        if(dataToEdit.getStatus() != null){ 
+            updateStatusById(id, dataToEdit.getStatus());
+        }
+
         // Importante: esta funcion requiere listing.images sin modificar.
         updateImages(id, dataToEdit.getImages(), files);
 
@@ -232,6 +272,23 @@ public class ListingService {
 
 
 
+    @Transactional
+    public Listing updateProductBySku(Long id, String sku){
+        log.info("🔔 actualizando producto de listing-draft con ID {}...", id);
+
+        Listing listing = listingRepository.findById(id)
+            .orElseThrow(() -> new ListingNotFoundException(id));
+
+        Product existingProduct =  productRepository
+                    .findActiveBySku(sku)
+                    .orElseThrow(() -> new ProductNotFoundException());
+
+        listing.setProduct(existingProduct);
+
+        return listing;
+    }
+
+
     public List<String> updateImages(
             Long id, 
             List<String> updatedImages, 
@@ -240,7 +297,7 @@ public class ListingService {
 
         log.info("🔔 Actualizando imagenes de listing con ID {}...", id);
         Listing listing = this.listingRepository.findActiveById(id)
-                .orElseThrow(() -> new ListingNotFoundException(id));
+            .orElseThrow(() -> new ListingNotFoundException(id));
         List<String> currentImages = listing.getImages();
         // Busco las imágenes que ya no están en el nuevo DTO
         List<String> deletedImages = 
@@ -268,7 +325,7 @@ public class ListingService {
         listingRepository.deleteReviewByListingIdAndStatus(id, ReviewStatus.PENDING);
         // Borrar Imagenes del Storage
         listing.getImages().forEach(fileStorageService::deleteFile);
-        listing.setStatus(Status.DELETED);
+        listing.setStatus(ListingStatus.DELETED);
         listing.setDeletedAt(LocalDateTime.now());
         listingRepository.save(listing);
     }

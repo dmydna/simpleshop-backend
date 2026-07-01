@@ -29,6 +29,17 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
     @Query("SELECT l FROM Listing l WHERE l.hash = :hash AND l.deletedAt IS NULL")
     Optional<Listing> findActiveByHash(@Param("hash") String hash);
 
+    @Query("SELECT l FROM Listing l WHERE l.id = :id AND l.status = 'DRAFT' ")
+    Optional<Listing> findDraftById(@Param("id") Long id);
+
+
+    @Query("SELECT l FROM Listing l WHERE l.id = :id AND l.status = :status")
+    Optional<Listing> findStatusById(
+        @Param("id") Long id, 
+        @Param("status") String status
+    );
+
+
 
     @Query("SELECT l FROM Listing l")
     Page<Listing> findAllSoft(Pageable pageable);

@@ -32,7 +32,12 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
   @Query("SELECT p FROM Product p WHERE p.sku = :sku")
   Optional<Product> findBySku(@Param("sku") String sku);
 
-  @Query("SELECT p FROM Product p WHERE p.sku = :sku AND p.deletedAt IS NULL")
+  @Query("""
+    SELECT p FROM Product p 
+    WHERE p.sku = :sku 
+    AND p.deletedAt IS NULL 
+    AND p.status = 'ACTIVE'
+    """)
   Optional<Product> findActiveBySku(@Param("sku") String sku);
 
 }

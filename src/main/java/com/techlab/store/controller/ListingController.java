@@ -31,13 +31,25 @@ import com.techlab.store.dto.ListingDTO;
 import com.techlab.store.dto.ListingSummary;
 import com.techlab.store.dto.UpdateListingDTO;
 import com.techlab.store.entity.Listing;
-import com.techlab.store.enums.Status;
+import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.mapper.ListingMapper;
 import com.techlab.store.service.AuthService;
 import com.techlab.store.service.ListingService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+
+/* TODO: para mejor control y flujo sobre DRAFTs, 
+  considerar:
+  -  implementar metodos con dto dedicados para creacion y actualizacion.
+  -  implementar de ser necesario, service dedidaco.
+  -  implementar de ser necesario, tabla dedicada.
+*/
+
+/* FIXME: DRAFT no puede actualizar Sku.
+   El metodo updateById no permite actualizar Sku.
+*/
 
 @Slf4j
 @RestController
@@ -80,20 +92,20 @@ public class ListingController {
     // solo publico y por id para admin
     @GetMapping("/hash/{hash}")
     public ResponseEntity<Map<String, Object>> getByHash(
-        @RequestParam(required = false) Boolean fallow,
+        @RequestParam(required = false, defaultValue = "false") Boolean fallow,
         @PathVariable String hash,
         @RequestHeader(value = "Authorization", required = false) String authHeader
     ){
         boolean isAdmin = authService.isAdmin(authHeader); 
         Listing entity = listingService.getByHash(hash);
-        Status status = entity.getStatus();
+        ListingStatus status = entity.getStatus();
         if(!isAdmin && 
-          (status.equals(Status.INACTIVE) || status.equals(Status.DRAFT) )){
+          (status.equals(ListingStatus.INACTIVE) || status.equals(ListingStatus.DRAFT) )){
             throw new RuntimeException("El recurso no disponible para cliente");
         }
          Map<String, Object> response = new HashMap<>();
         
-        if(status.equals(Status.DRAFT)){
+        if(status.equals(ListingStatus.DRAFT)){
             log.info("🔔 GET listing draft...");
             response.put("listing", listingMapper.toDraftDto(entity));
         }else {
@@ -112,14 +124,14 @@ public class ListingController {
         @RequestParam(required = false) List<String> tags,
         @RequestParam(required = false) Double minPrice,
         @RequestParam(required = false) Double maxPrice,
-        @RequestParam(required = false) Status status,
+        @RequestParam(required = false) ListingStatus status,
         @RequestParam(required = false, defaultValue = "false") Boolean includeTags,
         @RequestHeader(value = "Authorization", required = false) String authHeader,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         
         boolean isAdmin = authService.isAdmin(authHeader); 
-        Status filterStatus = isAdmin ? status : Status.ACTIVE;
+        ListingStatus filterStatus = isAdmin ? status : ListingStatus.ACTIVE;
        Page<Listing> filtered = listingService.filter(title, category, tags, minPrice, maxPrice, filterStatus, pageable);
         
         if(includeTags){
@@ -132,14 +144,17 @@ public class ListingController {
     // UPDATE
     @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping(value="/{id}", consumes = {"multipart/form-data"})
-    public ResponseEntity<ListingDTO> updateById(
+    public ResponseEntity<ListingSummary> updateById(
         @PathVariable Long id,
         @RequestPart("data") UpdateListingDTO dataToEdit, // Cambiado de @RequestBody
-        @RequestPart(value = "files", required = false) MultipartFile[] files) 
-    {
+        @RequestPart(value = "files", required = false) MultipartFile[] files) {
+
+        log.info("🔔 { path: api/listings/{}, method: PUT, sku {}, stock {} }", id, dataToEdit.sku(), dataToEdit.stock());
+
         Listing entity = listingMapper.toEntity(dataToEdit);
-        Listing saveEntity = listingService.updateById(id, entity, files);
-        ListingDTO response = listingMapper.toDto(saveEntity);
+        Listing saveEntity =  listingService.updateById(id, entity, files, dataToEdit.sku());
+        ListingSummary response = listingMapper.toSummaryDto(saveEntity);
+
         return ResponseEntity.ok(response);
     }
 
@@ -196,7 +211,7 @@ public class ListingController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<ListingDTO> updateStatus( 
         @PathVariable Long id, 
-        @RequestParam Status status) {
+        @RequestParam ListingStatus status) {
         Listing listing = listingService.updateStatusById(id, status);
         ListingDTO response = listingMapper.toDto(listing);
         return ResponseEntity.ok(response);
