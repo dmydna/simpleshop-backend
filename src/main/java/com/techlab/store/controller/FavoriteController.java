@@ -1,5 +1,8 @@
 package com.techlab.store.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -47,6 +50,25 @@ public class FavoriteController {
         favoriteService.delete(listingId, user.getId(), isAdmin);
         return ResponseEntity.ok().build();
     }
+
+
+    @GetMapping("/{listingId}")
+    public ResponseEntity<Favorite> getByListingId(@PathVariable Long listingId) {
+        User user = authService.getUser();
+        boolean isAdmin = authService.isAdmin();
+        return ResponseEntity.ok
+           (favoriteService.getByListingId(listingId, user.getId(), isAdmin));
+    }
+
+    @GetMapping("/{listingId}/check")
+    public ResponseEntity<Map<String, Boolean>> isFavoriteListing(@PathVariable Long listingId) {
+        User user = authService.getUser();
+        boolean isAdmin = authService.isAdmin();
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("isFavorite", favoriteService.isFavoriteListing(listingId, user.getId(), isAdmin));
+        return ResponseEntity.ok(response);
+    }
+
 
     @GetMapping
     public ResponseEntity<Page<ListingSummary>> getAll(

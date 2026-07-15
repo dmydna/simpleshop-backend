@@ -28,6 +28,9 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> ,JpaSp
     @Query("SELECT f FROM Favorite f WHERE f.listing.id = :listingId AND f.user.id = :userId")
     Optional<Favorite> findByListingId(Long listingId, Long userId);
 
+    @Query("SELECT f FROM Favorite f WHERE f.listing.hash = :listingHash AND f.user.id = :userId")
+    Optional<Favorite> findByListingHash(String listingHash, Long userId);
+
     @Query("SELECT f FROM Favorite f WHERE f.user.id = :userId AND f.id = :id")
     Page<Favorite> findAllByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId, Pageable pageable);
 
