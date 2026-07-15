@@ -2,6 +2,8 @@ package com.techlab.store.dev.controller;
 
 import java.util.List;
 
+import java.math.BigDecimal;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -28,10 +30,14 @@ import com.techlab.store.dto.UserDTO;
 import com.techlab.store.entity.Product;
 import com.techlab.store.entity.User;
 import com.techlab.store.enums.ListingStatus;
+import com.techlab.store.enums.Status;
 import com.techlab.store.service.ListingService;
 import com.techlab.store.service.ProductService;
 import com.techlab.store.service.UserService;
 import com.techlab.store.dto.RegisterRequest;
+import com.techlab.store.mapper.ListingMapper;
+import com.techlab.store.mapper.ProductMapper;
+import com.techlab.store.mapper.ProfileMapper;
 import com.techlab.store.mapper.UserMapper;
 import com.techlab.store.service.ProfileService;
 
@@ -47,16 +53,27 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class DevController {
 
+    // LISTING
     private final ListingService listingService;
+    private final ListingMapper listingMapper;
     private final ListingDevService listingDevService;
+    // PRODUCT
     private final ProductService productService;
+    private final ProductMapper productMapper;
     private final ProductDevService productDevService;
-    private final UserDevService userDevService;
-    private final UserMapper userMapper;
-    private final ProfileService profileService;
-    private final AuthDevService authDevService;
+    // USER 
     private final UserService userService;
+    private final UserMapper userMapper;
+    private final UserDevService userDevService;
+    // PROFILE
+    private final ProfileService profileService;
+    private final ProfileMapper profileMapper;
+    private final AuthDevService authDevService;
 
+
+    // Nota: 
+    // Los endpoints: `/product/bulk`, `/auth/bulk` seran eliminados.
+    // Usar endpoint `/listings/bulk`, que integra todas las funciones bulk (Todo en Uno). 
     @PostMapping("/listings/bulk")
     public ResponseEntity<List<ListingDTO>> createPosts(@RequestBody List<ListingDTO> listings) {
         // El service debe usar saveAll()
@@ -68,6 +85,7 @@ public class DevController {
     }
 
 
+    // @deprecated: este metodo no fue actualizado hace mucho y sera eliminado. 
     @PostMapping("/products/bulk")
     public ResponseEntity<List<Product>> createProducts(@RequestBody List<Product> products) {
         // El service debe usar saveAll()
@@ -76,7 +94,7 @@ public class DevController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedProducts);
     }
 
-
+    // @deprecated: este metodo no fue actualizado hace mucho y sera eliminado.  
     @PostMapping("/auth/bulk")
     public ResponseEntity<?> registerBulk(@RequestBody List<RegisterRequest> users) {
         List<User> savedUsers = authDevService.saveAll(users);
@@ -84,7 +102,7 @@ public class DevController {
                 .body(savedUsers);
     }
 
-/*
+
     @GetMapping("/products")
     public ResponseEntity<Page<ProductDTO>> getAll(
             @RequestParam(required = false, defaultValue = "") String name,
@@ -94,24 +112,30 @@ public class DevController {
             @RequestParam(required = false, defaultValue = "ACTIVE") Status status,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity
-                  .ok(productService.findByFilter(name, sku, tags, category, status, pageable));
+                  .ok(productService
+                    .filter(name, sku, tags, category, status, pageable)
+                    .map(product -> productMapper.toDto(product)));
     }
-*/
+
 
     @GetMapping("/listings")
     public ResponseEntity<Page<ListingDTO>> getAll(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) List<String> tags,
-            @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) ListingStatus status,
+            @RequestParam(required = false) String availability,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ResponseEntity
                 .ok(listingService
-                        .findByFilter(title, category, tags, minPrice, maxPrice, status, pageable));
+                  .filter(title, category, tags, minPrice, maxPrice, status, availability,pageable)
+                  .map(listing -> listingMapper.toDto(listing)));
     }
+
+
 
     @GetMapping("/users")
     public ResponseEntity<Page<UserDTO>> getAll(
@@ -135,7 +159,8 @@ public class DevController {
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         // El Service decide si usa filtros o si devuelve todo
-        return ResponseEntity.ok(profileService.findByFilter(username, email, clientname, pageable));
+        return ResponseEntity
+                 .ok(profileService.filter(username, email, clientname, pageable));
     }
 
 

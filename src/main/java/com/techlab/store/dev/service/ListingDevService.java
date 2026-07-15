@@ -1,17 +1,22 @@
 package com.techlab.store.dev.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +28,7 @@ import com.techlab.store.entity.Product;
 import com.techlab.store.entity.Review;
 import com.techlab.store.entity.User;
 import com.techlab.store.enums.ReviewStatus;
+import com.techlab.store.enums.Status;
 import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.mapper.ListingMapper;
 import com.techlab.store.mapper.ReviewMapper;
@@ -31,23 +37,38 @@ import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.repository.ReviewRepository;
 import com.techlab.store.repository.UserRepository;
 import com.techlab.store.service.AuthService;
+import com.techlab.store.service.FileStorageService;
+import com.techlab.store.service.ListingService;
+import com.techlab.store.service.PriceService;
 import com.techlab.store.utils.HashUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+
+
+// NOTA:
+// - Este servicio integra todas las funciones `bulk` 
+//   para la creación de entidades a partir de listas.
+// FUNCIONAMIENTO: 
+// - Dada una lista de listings, escanea las dependencias (productos, reviews, usuarios) 
+//   y crea las entidades en caso de que no existan.
+// PENDIENTE:
+// - No genera órdenes de compra (se saltea el proceso de compra) 
+//   y publica reviews falsas.
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ListingDevService {
+public class ListingDevService{
 
-    private final ListingRepository listingRepository;
-    private final ProductRepository productRepository;
-    private final ListingMapper listingMapper;
     private final ReviewMapper reviewMapper;
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final AuthService authService;
+    private final ListingRepository listingRepository;
+    private final ProductRepository productRepository;
+    private final ListingMapper listingMapper;
+    private final PriceService priceService;
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -207,7 +228,7 @@ public class ListingDevService {
         newProduct.setBrand(dto.brand());
         newProduct.setWeight(dto.weight());
         newProduct.setSku(dto.sku());
-        newProduct.setStatus(ListingStatus.ACTIVE);
+        newProduct.setStatus(Status.ACTIVE);
         newProduct.setCreatedAt(LocalDateTime.now());
         // Copiar otros campos si es necesario desde el DTO o Listing
         return productRepository.save(newProduct);
@@ -234,11 +255,15 @@ public class ListingDevService {
               .stream().map(url -> baseUrl + url)
               .collect(Collectors.toList());
         String thumbnail = baseUrl + dto.thumbnail();
+        BigDecimal finalPrice = priceService
+               .calculateDiscount(dto.price(), dto.discountPercentage())
+               .finalPrice();
         return new ListingDTO(
             dto.id(),
             dto.title(),
             dto.description(),
             dto.price(),
+            finalPrice, 
             dto.discountPercentage(),
             dto.rating(),
             dto.warrantyInformation(),
@@ -303,6 +328,5 @@ public class ListingDevService {
         }
         return (totalRating / totalReview);
     }
-
 
 }

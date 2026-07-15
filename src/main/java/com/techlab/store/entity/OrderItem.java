@@ -1,5 +1,7 @@
 package com.techlab.store.entity;
 
+import java.math.BigDecimal;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Entity;
@@ -33,6 +35,6 @@ public class OrderItem {
     private Listing listing;
 
     private int quantity;
-    private double priceAtPurchase; // guarda el precio actual del producto
+    private BigDecimal priceAtPurchase; // guarda el precio actual del producto
 
 }

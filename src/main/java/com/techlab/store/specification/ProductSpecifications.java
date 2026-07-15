@@ -13,7 +13,7 @@ import com.techlab.store.utils.StringUtils;
 
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
-
+import java.math.BigDecimal;
 
 
 
@@ -77,24 +77,7 @@ public class ProductSpecifications {
     }
 
 
-    // REVISION PENDIENTE
-    public static Specification<Product> priceInRange(Double min, Double max) {
-        return (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
 
-            if (predicates.isEmpty()) {
-                return null; // No aplica ningún filtro de precio
-            }
-            
-            if (min != null) {
-                predicates.add(cb.ge(root.get("price"), min));
-            }
-            if (max != null) {
-                predicates.add(cb.le(root.get("price"), max));
-            }
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
-    }
 
     public static Specification<Product> hasId(Long id) {
         return (root, query, cb) -> {

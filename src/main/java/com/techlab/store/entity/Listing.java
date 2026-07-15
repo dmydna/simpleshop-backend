@@ -1,5 +1,6 @@
 package com.techlab.store.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -40,10 +41,10 @@ public class Listing {
     private String title;
     @Column(length = 1000)
     private String description;
-    private Double price;
+    private BigDecimal price;
     private Integer stock;
     private Integer visits = 0; 
-    private Double discountPercentage;
+    private Integer discountPercentage = 0;
     private String warrantyInformation;
     private String shippingInformation;
     private String availabilityStatus;

@@ -12,6 +12,8 @@ import com.techlab.store.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+
+// TODO: eliminar ProductDevService.java
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -22,7 +24,6 @@ public class ProductDevService {
 
     @Transactional
     public List<Product> saveAll(List<Product> products) {
-
         return productRepository.saveAll(products);
     }
 

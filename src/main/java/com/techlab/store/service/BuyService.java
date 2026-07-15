@@ -56,8 +56,6 @@ public class BuyService {
     
 
 
-
-
     // Simulación de pago (en producción usar Stripe, PayPal, etc.)
     public boolean processPayment(String token) {
         // Aquí iría la lógica real de integración con pasarelas

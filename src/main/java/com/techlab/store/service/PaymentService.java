@@ -17,6 +17,7 @@ public class PaymentService {
 
     public boolean refundPayment(BigDecimal amount) {
         // Simulación de reembolso
+        if(amount == null) return false;
         return amount.compareTo(BigDecimal.ZERO) > 0;
     }
 }

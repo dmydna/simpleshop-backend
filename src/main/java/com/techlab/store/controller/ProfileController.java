@@ -57,7 +57,7 @@ public class ProfileController {
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         // El Service decide si usa filtros o si devuelve todo
-        return ResponseEntity.ok(profileService.findByFilter(username, email, clientname, pageable));
+        return ResponseEntity.ok(profileService.filter(username, email, clientname, pageable));
     }
 
     //Nota: se coloca el endpoint para el usuario pueda ver sus ordenes, aunque  orders tiene un controller especifico.

@@ -27,10 +27,8 @@ import com.techlab.store.dto.OrderResponse;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.User;
-import com.techlab.store.mapper.ClientMapper;
 import com.techlab.store.mapper.OrderMapper;
 import com.techlab.store.service.AuthService;
-import com.techlab.store.service.BuyService;
 import com.techlab.store.service.ClientService;
 import com.techlab.store.service.OrderService;
 import com.techlab.store.service.ProfileService;
@@ -45,11 +43,9 @@ import lombok.RequiredArgsConstructor;
 public class OrderController {
 
     private final OrderService orderService;
-    private final BuyService buyService;
     private final ProfileService profileService;
     private final AuthService authService;
     private final OrderMapper orderMapper;
-    private final ClientMapper clientMapper;
     private final ClientService clientService;
 
     // CHECKME: cambio input a CreateOrderDTO
@@ -65,6 +61,7 @@ public class OrderController {
         }else{
             client = profileService.getMyClient(authentication);
         } 
+        System.out.println("creteate order dto: " + dto);
         Order entity = orderMapper.toEntity(dto);
         entity.setClient(client); // Importante establecer relacion client/order
         Order savedOrder = orderService.createOrder(entity);

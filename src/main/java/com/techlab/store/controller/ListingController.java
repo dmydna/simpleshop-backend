@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,10 +46,6 @@ import lombok.extern.slf4j.Slf4j;
   -  implementar metodos con dto dedicados para creacion y actualizacion.
   -  implementar de ser necesario, service dedidaco.
   -  implementar de ser necesario, tabla dedicada.
-*/
-
-/* FIXME: DRAFT no puede actualizar Sku.
-   El metodo updateById no permite actualizar Sku.
 */
 
 @Slf4j
@@ -122,9 +119,10 @@ public class ListingController {
         @RequestParam(required = false) String title,
         @RequestParam(required = false) String category,
         @RequestParam(required = false) List<String> tags,
-        @RequestParam(required = false) Double minPrice,
-        @RequestParam(required = false) Double maxPrice,
+        @RequestParam(required = false) BigDecimal minPrice,
+        @RequestParam(required = false) BigDecimal maxPrice,
         @RequestParam(required = false) ListingStatus status,
+        @RequestParam(required = false) String availability,
         @RequestParam(required = false, defaultValue = "false") Boolean includeTags,
         @RequestHeader(value = "Authorization", required = false) String authHeader,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
@@ -132,13 +130,16 @@ public class ListingController {
         
         boolean isAdmin = authService.isAdmin(authHeader); 
         ListingStatus filterStatus = isAdmin ? status : ListingStatus.ACTIVE;
-       Page<Listing> filtered = listingService.filter(title, category, tags, minPrice, maxPrice, filterStatus, pageable);
+       Page<Listing> filtered = listingService
+             .filter(title, category, tags, minPrice, maxPrice, filterStatus, availability, pageable);
         
         if(includeTags){
-            return ResponseEntity.ok(filtered.map(listing -> this.listingMapper.toSummaryFull(listing)));
+            return ResponseEntity
+                    .ok(filtered.map(listing -> this.listingMapper.toSummaryFull(listing)));
         }
 
-        return ResponseEntity.ok(filtered.map(listing -> this.listingMapper.toSummaryDto(listing)));
+        return ResponseEntity
+                 .ok(filtered.map(listing -> this.listingMapper.toSummaryDto(listing)));
     }
 
     // UPDATE

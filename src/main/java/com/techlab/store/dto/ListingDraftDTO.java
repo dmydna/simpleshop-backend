@@ -1,5 +1,6 @@
 package com.techlab.store.dto;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import com.techlab.store.enums.ListingStatus;
@@ -10,9 +11,10 @@ public record ListingDraftDTO (
     Long id,
     String title,
     String description,
-    Double price,
+    BigDecimal price,
+    BigDecimal finalPrice,
     Integer stock,
-    Double discountPercentage,
+    Integer discountPercentage,
     Double rating,
     String warrantyInformation,
     String shippingInformation,

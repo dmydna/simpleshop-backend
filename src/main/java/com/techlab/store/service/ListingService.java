@@ -1,6 +1,7 @@
 package com.techlab.store.service;
 
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -14,13 +15,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.techlab.store.dto.ListingDTO;
 import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.Product;
 import com.techlab.store.entity.Review;
+import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.enums.ReviewStatus;
 import com.techlab.store.enums.Status;
-import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.exceptions.CustomExceptions.ListingHasDeletedException;
 import com.techlab.store.exceptions.CustomExceptions.ListingNotFoundException;
 import com.techlab.store.exceptions.CustomExceptions.ProductNotFoundException;
@@ -29,10 +29,8 @@ import com.techlab.store.mapper.ListingMapper;
 import com.techlab.store.repository.ListingRepository;
 import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.specification.ListingSpecifications;
-import com.techlab.store.utils.HashUtil;
 import com.techlab.store.utils.EnumUtils;
-
-
+import com.techlab.store.utils.HashUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -140,8 +138,10 @@ public class ListingService {
             String title,
             String category,
             List<String> tags,
-            Double min, Double max,
+            BigDecimal min, 
+            BigDecimal max,
             ListingStatus status,
+            String availability,
             Pageable pageable
     ) {
 
@@ -150,26 +150,13 @@ public class ListingService {
         Specification<Listing> spec = Specification
             .where(ListingSpecifications.isNotDeleted())
             .and(ListingSpecifications.hasCategory(category))
+            .and(ListingSpecifications.hasAvailability(availability))
             .and(ListingSpecifications.hasStatus(status))
             .and(ListingSpecifications.hasTitle(title))
             .and(ListingSpecifications.hasTags(tags))
             .and(ListingSpecifications.priceInRange(min, max));
 
         return listingRepository.findAll(spec, pageable);
-    }
-
-
-    public Page<ListingDTO> findByFilter(
-            String title,
-            String category,
-            List<String> tags,
-            Double min, Double max,
-            ListingStatus status,
-            Pageable pageable
-    ) {
-        // 3. Convertir a Page de DTOs usando tu mapper
-        return filter(title, category, tags, min, max, status, pageable)
-            .map(listing -> this.listingMapper.toDto(listing));
     }
 
 

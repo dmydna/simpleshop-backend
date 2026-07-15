@@ -13,7 +13,7 @@ import com.techlab.store.utils.StringUtils;
 
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
-
+import java.math.BigDecimal;
 
 
 
@@ -27,6 +27,16 @@ public class ListingSpecifications {
         return (root, query, cb) -> cb.isNull(root.get("deletedAt"));
     }
 
+
+    public static Specification<Listing> hasAvailability(String status){
+        return (root, query, cb) -> {
+            if (status == null) return null;
+            // i.e: "InStock" -> "In Stock"
+            String formated = status.replaceAll("(?<!^)([A-Z])", " $1");
+            // Unimos Listing con Product y filtramos por categoría
+            return cb.equal(root.get("availabilityStatus"), formated);    
+        };
+    }
 
 
     public static Specification<Listing> hasStatus(ListingStatus status) {
@@ -72,7 +82,7 @@ public class ListingSpecifications {
     }
 
 
-    public static Specification<Listing> priceInRange(Double min, Double max) {
+    public static Specification<Listing> priceInRange(BigDecimal min, BigDecimal max) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 

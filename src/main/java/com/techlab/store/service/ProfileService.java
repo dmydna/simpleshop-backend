@@ -42,7 +42,7 @@ public class ProfileService {
         return profileMapper.toDto(user, user.getClient());
     }
 
-    public Page<ProfileDTO> findByFilter(
+    public Page<ProfileDTO> filter(
             String username,
             String clientname,
             String email,

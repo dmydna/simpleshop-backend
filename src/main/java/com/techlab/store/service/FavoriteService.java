@@ -18,15 +18,18 @@ import com.techlab.store.specification.FavoriteSpecifications;
 
 import lombok.RequiredArgsConstructor;
 
+// Nota: Favorite es una entidad que requiere user 
+// logeado o role admin para manipular, 
+// forma parte del user profile.
+
 @Service
 @RequiredArgsConstructor
 public class FavoriteService {
 
+
     private final ListingRepository listingRepository;
     private final FavoriteRepository favoriteRepository;
     private final UserRepository userRepository;
-
-
 
     public Favorite create(Long listingId, Long userId) {
 
@@ -55,10 +58,37 @@ public class FavoriteService {
 
         // Si no es admin, verificar que pertenece al usuario
         if (!isAdmin && !favorite.getUser().getId().equals(userId)) {
-            throw new RuntimeException("No tienes permiso para eliminar este favorite");
+            throw new RuntimeException("No tiene permiso para eliminar este favorite");
         }
 
         favoriteRepository.delete(favorite);
+    }
+
+    public Favorite getByListingId(Long listingId, Long userId, boolean isAdmin) {
+        Favorite favorite = favoriteRepository.findByListingId(listingId, userId)
+                .orElseThrow(() -> new RuntimeException("Favorite no encontrado"));
+
+        // Si no es admin, verificar que pertenece al usuario
+        if (!isAdmin && !favorite.getUser().getId().equals(userId)) {
+            throw new RuntimeException("No tiene permiso para leer este favorite");
+        }
+
+        return favorite;
+    }
+
+
+    public Boolean isFavoriteListing(Long listingId, Long userId, boolean isAdmin) {
+        Favorite favorite = favoriteRepository.findByListingId(listingId, userId)
+                .orElse(null);
+
+        // Si no es admin, verificar que pertenece al usuario
+        if (!isAdmin && favorite != null && !favorite.getUser().getId().equals(userId)) {
+            throw new RuntimeException("No tiene permiso para leer este favorite");
+        }
+
+        if(favorite != null) return true;
+
+        return false;
     }
 
 

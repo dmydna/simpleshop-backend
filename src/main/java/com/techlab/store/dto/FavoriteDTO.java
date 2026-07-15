@@ -1,5 +1,6 @@
 package com.techlab.store.dto;
 
+import java.math.BigDecimal;
 import jakarta.validation.constraints.NotNull;
 import java.math.*;
 import java.time.LocalDateTime;
@@ -12,5 +13,5 @@ public record FavoriteDTO (
     Long listingId,
     String image,
     String title,
-    Double price
+    BigDecimal price
 ) {}

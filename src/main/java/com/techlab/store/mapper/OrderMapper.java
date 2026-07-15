@@ -18,10 +18,11 @@ import com.techlab.store.enums.OrderStatus;
 import org.mapstruct.*;
 
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(
+    componentModel = "spring", 
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, 
+    uses = {OrderMappingHelper.class})
 public interface OrderMapper {
-
-    // CHECKME se implementa CreateOrderDTO
 
     // --- ENTITY -> DTO ---
     @Mapping(target = "meta.createdAt", source = "createdAt")
@@ -36,34 +37,30 @@ public interface OrderMapper {
 
     // --- DTO -> ENTITY ---
     Order toEntity(OrderComplete dto);
+
+    // Al compilar, MapStruct buscará un método que convierta OrderItemDto -> OrderItem
     Order toEntity(CreateOrderDTO dto);
 
+    // SOLUCIÓN: Cambiar el nombre de 'toDetailEntity' a 'toOrderItem'
+    // Al llamarse igual que el tipo de la lista, MapStruct lo asocia automáticamente
     @Mapping(target = "listing.id", source = "listingId")
-    OrderItem toDetailEntity(OrderItemDto dto);
+    @Mapping(target = "priceAtPurchase", source = "priceAtPurchase")
+    @Mapping(target = "quantity", source = "quantity")
+    OrderItem toOrderItem(OrderItemDto dto);
 
     // --- LISTAS ---
     List<OrderComplete> toFullDtoList(List<Order> orders);
-    List<OrderItem> toItemList(List<OrderItemDto> items);
+    List<OrderItem> toOrderItemList(List<OrderItemDto> items);
     List<OrderItemDto> toItemDtoList(List<OrderItem> items);
 
     // --- ACTUALIZACIONES ---
     @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "client", ignore = true)
-    @Mapping(target = "items", ignore = true) // Evita problemas con colecciones en updates
+    @Mapping(target = "items", ignore = true) 
     void updateOrderFromDto(OrderComplete dto, @MappingTarget Order entity);
-
 
     @Mapping(target = "id", ignore = true)
     void updateFromEntity(Order update, @MappingTarget Order order);
 
-
-    @AfterMapping
-    default void orderAfterMapping(
-        CreateOrderDTO dto, 
-        @MappingTarget Order order)
-    {
-        order.setStatus(OrderStatus.PENDING);
-        order.setCreatedAt(java.time.LocalDateTime.now());
-    }
 }

@@ -1,22 +1,12 @@
 package com.techlab.store.mapper;
 
 
-import com.techlab.store.dto.ListingDTO;
 import com.techlab.store.dto.UserDTO;
-import com.techlab.store.dto.UpdateUserDTO;
-import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.User;
-import com.techlab.store.utils.EnumUtils;
-import com.techlab.store.enums.ListingStatus;
-import com.techlab.store.enums.UserStatus;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
-
-
-import com.techlab.store.entity.Client;
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface UserMapper {

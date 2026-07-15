@@ -11,6 +11,8 @@ import com.techlab.store.dto.PaymentRequest;
 import com.techlab.store.dto.TokenRequest;
 import com.techlab.store.service.PaymentGatewayService;
 
+
+//NOTA: Este controller simula una pasarela de pago externa
 @RestController
 @RequestMapping("/toy-gateway")
 public class PaymentGatewayController {

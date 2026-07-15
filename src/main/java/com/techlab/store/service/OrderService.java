@@ -1,9 +1,11 @@
 package com.techlab.store.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,16 +15,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.techlab.store.dto.OrderComplete;
-import com.techlab.store.entity.Client;
 import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderItem;
 import com.techlab.store.mapper.OrderMapper;
-import com.techlab.store.repository.ClientRepository;
-import com.techlab.store.repository.ListingRepository;
 import com.techlab.store.repository.OrderRepository;
-import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.specification.OrderSpecifications;
 import com.techlab.store.enums.OrderStatus;
 import com.techlab.store.enums.ListingStatus;
@@ -30,8 +27,8 @@ import com.techlab.store.enums.ListingStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Service
 @Slf4j
+@Service
 @RequiredArgsConstructor
 public class OrderService {
 
@@ -40,6 +37,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final InventoryService inventoryService;
     private final ListingService listingService;
+    private final PriceService priceService;
 
     @Autowired
     private final OrderMapper orderMapper;
@@ -49,30 +47,71 @@ public class OrderService {
     @Transactional
     public Order createOrder(Order order) {
         cleanupExpiredPendingOrders();
-        Order processedOrder = processOrderStock(order);
+        Order processedOrder = processOrder(order);
         return orderRepository.save(processedOrder);
     }
 
 
-    public Order processOrderStock(Order order){
+    public Order processOrder(Order order){
         List<OrderItem> failed = new ArrayList<>();
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        Listing listing = null;
 
         for (OrderItem detail : order.getItems()) {
-            detail.setOrder(order);  // importante: establecer relacion order /orderDetail
-            
-            if(!detail.getListing().getStatus().equals(ListingStatus.ACTIVE)){
+            listing = detail.getListing();
+            log.info("order detail { id: {}, quantity: {}, getPriceAtPurchase: {} }", 
+                detail.getId(), detail.getQuantity(), detail.getPriceAtPurchase());
+            // Validacion de LISTING 
+            if(!listing.getStatus().equals(ListingStatus.ACTIVE)){
+                log.warn("[FALLO VALIDACIÓN] El listing no está ACTIVE. Estado actual: {}", listing.getStatus());
                 failed.add(detail);
                 continue;
             }
-
-            if (!inventoryService.decreaseStock(
-                detail.getListing().getId(),
-                detail.getQuantity()
-            )) {
+            // Validacion de PRECIO
+            if(!priceService.validateItemPrice(detail, listing)){
+                log.warn("[FALLO VALIDACIÓN] El precio no coincide. Frontend: {}, Backend calculó: {}",
+                detail.getPriceAtPurchase(), priceService.getFinalPrice(listing)    
+            ); 
                 failed.add(detail);
+                continue;
             }
+            // Validacion de STOCK
+            if (!inventoryService.decreaseStock(
+                listing.getId(),
+                detail.getQuantity())
+            ) {
+                log.warn("[FALLO VALIDACIÓN] No hay suficiente stock para el listing ID: {}", listing.getId());
+                failed.add(detail);
+                continue;
+            }
+            // calculamos manualmente el totalAmount
+            // Nota: recordar que totalAmount viene del frontend.
+            if (detail.getPriceAtPurchase() != null) {
+                log.info("INCREMENTA TOTAL_AMOUNT");
+                BigDecimal quantity = BigDecimal.valueOf(detail.getQuantity());
+                BigDecimal itemSubtotal = detail.getPriceAtPurchase().multiply(quantity);
+                totalAmount = totalAmount.add(itemSubtotal); // Reasigna siempre el resultado
+            }
+            
         }
+
+        // Validacion de TOTAL_AMOUNT
+        if (order.getTotalAmount() == null || totalAmount.compareTo(order.getTotalAmount()) != 0) {
+            log.info("Comparando: " + totalAmount.toPlainString() + " vs " + order.getTotalAmount().toPlainString());
+            throw new RuntimeException("Error al crear Orden, detalles: failed totalAmount"); 
+        }
+
+        // Validacion de Items fallidos 
         if (!failed.isEmpty()) {
+
+            // Borra los items fallidos de la orden original.
+            Set<Long> failedIds = failed.stream()
+                .map(oi -> oi.getListing().getId())
+                .collect(Collectors.toSet());
+
+            order.getItems().removeIf(item -> 
+                failedIds.contains(item.getListing().getId())); 
+
             order.setFailedItems(failed);
         }
 
