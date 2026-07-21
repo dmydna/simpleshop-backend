@@ -51,13 +51,14 @@ public class ProductService {
             Status status,
             Pageable pageable) {
 
-        Specification<Product> spec = Specification
-            .where(ProductSpecifications.isNotDeleted())
-            .and(ProductSpecifications.hasStatus(status))
-            .and(ProductSpecifications.hasName(name))
-            .and(ProductSpecifications.hasSku(sku))
-            .and(ProductSpecifications.hasTags(tags))
-            .and(ProductSpecifications.hasCategory(category));
+        Specification<Product> spec = Specification.allOf(
+            ProductSpecifications.isNotDeleted(),
+            ProductSpecifications.hasStatus(status),
+            ProductSpecifications.hasName(name),
+            ProductSpecifications.hasSku(sku),
+            ProductSpecifications.hasTags(tags),
+            ProductSpecifications.hasCategory(category)
+        );
 
         return productRepository.findAll(spec, pageable);
     }

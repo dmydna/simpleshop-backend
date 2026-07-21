@@ -135,9 +135,10 @@ public class OrderService {
             Pageable pageable
     ) {
         
-    Specification<Order> spec = Specification
-        .where(OrderSpecifications.hasClientId(userId))
-        .and(OrderSpecifications.hasStatus(status));
+    Specification<Order> spec = Specification.allOf(
+            OrderSpecifications.hasClientId(userId),
+            OrderSpecifications.hasStatus(status)
+        );
 
         return orderRepository.findAll(spec, pageable);
     }

@@ -208,11 +208,12 @@ public class ReviewService {
           ReviewStatus status,
           Pageable pageable) {
 
-        Specification<Review> spec = Specification
-                .where(ReviewSpecifications.hasStatus(status))
-                .and(ReviewSpecifications.hasUserId(userId))
-                .and(ReviewSpecifications.hasProductId(productId))
-                .and(ReviewSpecifications.hasId(id));
+        Specification<Review> spec = Specification.allOf(
+                ReviewSpecifications.hasStatus(status),
+                ReviewSpecifications.hasUserId(userId),
+                ReviewSpecifications.hasProductId(productId),
+                ReviewSpecifications.hasId(id)
+        );
 
         return reviewRepository.findAll(spec, pageable);
     }

@@ -147,15 +147,15 @@ public class ListingService {
 
        log.info("🔔 Filtrando listings...");
 
-        Specification<Listing> spec = Specification
-            .where(ListingSpecifications.isNotDeleted())
-            .and(ListingSpecifications.hasCategory(category))
-            .and(ListingSpecifications.hasAvailability(availability))
-            .and(ListingSpecifications.hasStatus(status))
-            .and(ListingSpecifications.hasTitle(title))
-            .and(ListingSpecifications.hasTags(tags))
-            .and(ListingSpecifications.priceInRange(min, max));
-
+        Specification<Listing> spec = Specification.allOf(
+            ListingSpecifications.isNotDeleted(),
+            ListingSpecifications.hasCategory(category),
+            ListingSpecifications.hasAvailability(availability),
+            ListingSpecifications.hasStatus(status),
+            ListingSpecifications.hasTitle(title),
+            ListingSpecifications.hasTags(tags),
+            ListingSpecifications.priceInRange(min, max)
+        );
         return listingRepository.findAll(spec, pageable);
     }
 

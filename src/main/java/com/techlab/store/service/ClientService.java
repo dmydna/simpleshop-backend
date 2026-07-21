@@ -55,10 +55,12 @@ public class ClientService {
             String lastname,
             Pageable pageable
     ){
-        Specification<Client> spec = Specification
-                .where(ClientSpecifications.isNotDeleted())
-                .and(ClientSpecifications.hasFirstName(firstname))
-                .and(ClientSpecifications.hasLastName(lastname));
+        // allOf ignora automáticamente cualquier Specification que sea null
+        Specification<Client> spec = Specification.allOf(
+            ClientSpecifications.isNotDeleted(),
+            ClientSpecifications.hasFirstName(firstname),
+            ClientSpecifications.hasLastName(lastname)
+        );
 
         return clientRepository.findAll(spec, pageable);
     }

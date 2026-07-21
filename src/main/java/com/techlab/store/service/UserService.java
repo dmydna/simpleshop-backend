@@ -169,11 +169,12 @@ public class UserService {
             Pageable pageable
     ) {
         // Iniciamos con una especificación base: solo usuarios no eliminados
-        Specification<User> spec = Specification
-            .where(UserSpecifications.isNotDeleted())
-            .and(UserSpecifications.hasUsername(username))
-            .and(UserSpecifications.hasEmail(email))
-            .and(UserSpecifications.hasClientName(clientname));
+        Specification<User> spec = Specification.allOf(
+            UserSpecifications.isNotDeleted(),
+            UserSpecifications.hasUsername(username),
+            UserSpecifications.hasEmail(email),
+            UserSpecifications.hasClientName(clientname)
+        );
         // findAll maneja automáticamente si la spec es null o compuesta
         return userRepository.findAll(spec, pageable);
     }

@@ -93,9 +93,10 @@ public class FavoriteService {
 
 
     public Page<Favorite> filter(Long userId, Long id, Pageable pageable) {
-        Specification<Favorite> spec = Specification
-                .where(FavoriteSpecifications.hasUserId(userId))
-                .and(FavoriteSpecifications.hasId(id));
+        Specification<Favorite> spec = Specification.allOf(
+                FavoriteSpecifications.hasUserId(userId),
+                FavoriteSpecifications.hasId(id)
+        );
         return favoriteRepository.findAll(spec, pageable);
     }
 
