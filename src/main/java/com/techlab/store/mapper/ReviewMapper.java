@@ -15,12 +15,18 @@ public abstract class ReviewMapper {
     @Mapping(target = "product", ignore = true)
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "listingId", source = "listingId")
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     public abstract Review toEntity(ReviewDTO reviewDto);
 
 
     @Mapping(target = "username", source = "user.username")
     @Mapping(target = "productId", source = "product.id")
-    public abstract ReviewDTO toDto(Review reviewDto);
+    @Mapping(target = "userPic", source = "user.image")
+    @Mapping(target = "meta", ignore = true)
+    public abstract ReviewDTO toDto(Review review);
 
 
     @Mapping(target = "id", ignore = true)

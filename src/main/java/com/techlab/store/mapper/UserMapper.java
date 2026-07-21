@@ -30,6 +30,9 @@ public interface UserMapper {
     @Mapping(target = "banReason", source = "meta.banReason")
     @Mapping(target = "status", source = "meta.status")
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "client", ignore = true)
+    @Mapping(target = "favorites", ignore = true)
+    @Mapping(target = "reviews", ignore = true)
     User toEntity(UserDTO dto);
 
     @Mapping(target = "id", ignore = true)
