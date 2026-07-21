@@ -1,17 +1,12 @@
 package com.techlab.store.service;
 
-import com.techlab.store.entity.Product;
-import com.techlab.store.repository.ProductRepository;
+
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.Optional;
-
-import com.sun.source.tree.LabeledStatementTree;
 import com.techlab.store.entity.Listing;
 import com.techlab.store.repository.ListingRepository;
 

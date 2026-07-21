@@ -128,6 +128,10 @@ public class StatisticsService {
                 "  COALESCE((SELECT COUNT(*) FROM products), 0) as total_products, " +
                 "  COALESCE((SELECT COUNT(*) FROM products WHERE status = 'DRAFT'), 0) as total_products_draft, " +
                 "  COALESCE((SELECT COUNT(*) FROM products WHERE status = 'ACTIVE'), 0) as total_products_active, " +
+                // REVIEWS
+                "  COALESCE((SELECT COUNT(*) FROM reviews), 0) as total_reviews, " + 
+                "  COALESCE((SELECT COUNT(*) FROM reviews WHERE status = 'ACTIVE'), 0) as total_reviews_active, " +
+                "  COALESCE((SELECT COUNT(*) FROM reviews WHERE status = 'PENDING'), 0) as total_reviews_pending, " +
                 // USERS
                 "  COALESCE((SELECT COUNT(*) FROM users), 0) as total_users, " +
                 "  COALESCE((SELECT COUNT(*) FROM users WHERE status = 'ACTIVE'), 0) as total_user_active," +
@@ -136,9 +140,9 @@ public class StatisticsService {
         return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
             Map<String, Object> stats = new HashMap<>();
 
-            stats.put("totalListings", rs.getLong("total_listings"));
+            stats.put("totalListings",     rs.getLong("total_listings"));
             stats.put("totalListingValue", rs.getBigDecimal("total_listing_value"));
-            stats.put("totalSales", rs.getBigDecimal("total_sales"));
+            stats.put("totalSales",        rs.getBigDecimal("total_sales"));
  
             // stats.user
             Map<String, Object> users = new HashMap<>();
@@ -147,11 +151,18 @@ public class StatisticsService {
             users.put("total",  rs.getLong("total_users"));
             stats.put("users", users);
 
+            // stats.reviews
+            Map<String, Object> reviews = new HashMap<>();
+            reviews.put("total",   rs.getLong("total_reviews")); 
+            reviews.put("active",  rs.getLong("total_reviews_active"));
+            reviews.put("pending", rs.getLong("total_reviews_pending"));
+            stats.put("reviews", reviews);
+
             // statas.orders
             Map<String, Object> orders = new HashMap<>();
-            orders.put("paid", rs.getLong("total_orders_paid")); 
+            orders.put("paid",    rs.getLong("total_orders_paid")); 
             orders.put("pending", rs.getLong("total_orders_pending")); 
-            orders.put("total", rs.getLong("total_orders")); 
+            orders.put("total",   rs.getLong("total_orders")); 
             stats.put("orders", orders);
 
             // statas.products

@@ -11,12 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import com.techlab.store.dto.ProfileDTO;
 import com.techlab.store.dto.RegisterRequest;
 import com.techlab.store.dto.BanRequest;
-import com.techlab.store.dto.UserDTO;
 import com.techlab.store.entity.User;
 import com.techlab.store.enums.Role;
 import com.techlab.store.enums.UserStatus;

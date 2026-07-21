@@ -2,16 +2,10 @@ package com.techlab.store.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-
 import org.springframework.stereotype.Service;
-
-
 import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderItem;
-import com.techlab.store.repository.ListingRepository;
-
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 import com.techlab.store.dto.DiscountResult;

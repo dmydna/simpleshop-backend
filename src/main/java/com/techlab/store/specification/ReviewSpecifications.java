@@ -1,18 +1,12 @@
 package com.techlab.store.specification;
 
-
-
 import org.springframework.data.jpa.domain.Specification;
 
-import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.Review;
+import com.techlab.store.enums.ReviewStatus;
 import com.techlab.store.utils.StringUtils;
 
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
-import com.techlab.store.enums.ReviewStatus;
 
 
 

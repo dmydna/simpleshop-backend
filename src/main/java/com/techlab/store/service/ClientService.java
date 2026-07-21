@@ -1,14 +1,8 @@
 package com.techlab.store.service;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.techlab.store.dto.ClientDTO;
-import com.techlab.store.dto.ClientFullDTO;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.User;
 import com.techlab.store.mapper.ClientMapper;

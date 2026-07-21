@@ -89,6 +89,7 @@ public class OrderService {
             if (detail.getPriceAtPurchase() != null) {
                 log.info("INCREMENTA TOTAL_AMOUNT");
                 BigDecimal quantity = BigDecimal.valueOf(detail.getQuantity());
+                log.info("QUANTITY: {}", quantity);
                 BigDecimal itemSubtotal = detail.getPriceAtPurchase().multiply(quantity);
                 totalAmount = totalAmount.add(itemSubtotal); // Reasigna siempre el resultado
             }
