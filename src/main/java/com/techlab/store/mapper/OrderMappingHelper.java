@@ -1,13 +1,10 @@
 package com.techlab.store.mapper;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 import org.mapstruct.AfterMapping;
-import org.mapstruct.Context;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import com.techlab.store.dto.CreateOrderDTO;
@@ -16,10 +13,7 @@ import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderItem;
 import com.techlab.store.enums.OrderStatus;
-import com.techlab.store.repository.ListingRepository;
 import com.techlab.store.service.ListingService;
-import com.techlab.store.utils.EnumUtils;
-import com.techlab.store.utils.HashUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,5 +38,11 @@ public class OrderMappingHelper {
     public void orderItemAfterMapping(OrderItemDto dto, @MappingTarget OrderItem orderItem) {
         Listing listing = listingService.getById(dto.listingId());
         orderItem.setListing(listing);
+    }
+
+
+    @Named("calculateTotalQuantity")
+    public Integer calculateTotalQuantity(List<OrderItem> items) {
+        return items == null ? 0 : items.stream().mapToInt(OrderItem::getQuantity).sum();
     }
 }
