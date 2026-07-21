@@ -3,9 +3,6 @@ package com.techlab.store.dto;
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.techlab.store.enums.ListingStatus;
-import com.techlab.store.model.ProductDimensions;
-
 public record ListingDraftDTO (
     // Listing
     Long id,
@@ -22,6 +19,7 @@ public record ListingDraftDTO (
     String returnPolicy,
     Integer minimumOrderQuantity,
     List<String> images,
+    List<String> tags,
     String thumbnail,
     String hash,
     // product
