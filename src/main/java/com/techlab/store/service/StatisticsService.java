@@ -1,19 +1,11 @@
 package com.techlab.store.service;
 
-import org.springframework.stereotype.Service;
-
-import com.techlab.store.entity.Listing;
-import com.techlab.store.mapper.ListingMapper;
 
 import lombok.RequiredArgsConstructor;
-
+import com.techlab.store.entity.Listing;
+import org.springframework.stereotype.Service;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -89,7 +81,13 @@ public class StatisticsService {
 
     // 1. Top Tags (Top N)
     public List<Map<String, Object>> getPopularTags(int limit) {
-        String sql = "SELECT tags, COUNT(*) as count FROM product_tags GROUP BY tags ORDER BY count DESC LIMIT ?";
+        String sql = """
+            SELECT tags, COUNT(*) as count 
+            FROM product_tags 
+            GROUP BY tags 
+            ORDER BY count 
+            DESC LIMIT ?
+            """;
 
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             Map<String, Object> row = new HashMap<>();
@@ -99,11 +97,95 @@ public class StatisticsService {
         }, limit);
     }
 
+
+    // 1. Top Listing Status (Top N)
+    public List<Map<String, Object>> getTopListingStatus(int limit) {
+        String sql = """
+            SELECT status, COUNT(*) as count 
+            FROM listings
+            GROUP BY status
+            ORDER BY count 
+            DESC LIMIT ?
+            """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            Map<String, Object> row = new HashMap<>();
+            row.put("name", rs.getString("status"));
+            row.put("count", rs.getLong("count"));
+            return row;
+        }, limit);
+    }
+
+    // 1. Top User Status (Top N)
+    public List<Map<String, Object>> getTopUserStatus(int limit) {
+        String sql = """
+            SELECT status, COUNT(*) as count 
+            FROM users
+            GROUP BY status
+            ORDER BY count 
+            DESC LIMIT ?
+            """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            Map<String, Object> row = new HashMap<>();
+            row.put("name", rs.getString("status"));
+            row.put("count", rs.getLong("count"));
+            return row;
+        }, limit);
+    }
+
+
+    // 
+    // 1. Top Product Status (Top N)
+    public List<Map<String, Object>> getTopAvailabilityStatus(int limit) {
+        String sql = """
+            SELECT availability_status, COUNT(*) as count 
+            FROM listings
+            GROUP BY availability_status
+            ORDER BY count 
+            DESC LIMIT ?
+            """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            Map<String, Object> row = new HashMap<>();
+            row.put("name", rs.getString("availability_status"));
+            row.put("count", rs.getLong("count"));
+            return row;
+        }, limit);
+    }
+
+
+    // 1. Top Product Status (Top N)
+    public List<Map<String, Object>> getTopProductStatus(int limit) {
+        String sql = """
+            SELECT status, COUNT(*) as count 
+            FROM products
+            GROUP BY status
+            ORDER BY count 
+            DESC LIMIT ?
+            """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            Map<String, Object> row = new HashMap<>();
+            row.put("name", rs.getString("status"));
+            row.put("count", rs.getLong("count"));
+            return row;
+        }, limit);
+    }
+
+
+
     // 2. Categorías Populares (Asumiendo que tienes una tabla 'categories' o
     // columna en 'listings')
     public List<Map<String, Object>> getPopularCategories(int limit) {
         // Ejemplo si la categoría está en la tabla 'listings'
-        String sql = "SELECT category, COUNT(*) as count FROM products GROUP BY category ORDER BY count DESC LIMIT ?";
+        String sql = """
+            SELECT category, COUNT(*) as count 
+            FROM products 
+            GROUP BY category 
+            ORDER BY count 
+            DESC LIMIT ?
+            """;
 
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             Map<String, Object> row = new HashMap<>();

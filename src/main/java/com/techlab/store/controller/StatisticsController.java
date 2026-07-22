@@ -49,6 +49,32 @@ public class StatisticsController {
     }
 
 
+    @GetMapping("/top/listing-status")
+    public ResponseEntity< List<Map<String, Object>> > getTopListingStatus(
+        @RequestParam(defaultValue="0", required = false) int limit){
+        return ResponseEntity.ok(statisticsService.getTopListingStatus(limit));
+    }
+
+    @GetMapping("/top/availability-status")
+    public ResponseEntity< List<Map<String, Object>> > getTopAvailabilityStatus(
+        @RequestParam(defaultValue="0", required = false) int limit){
+        return ResponseEntity.ok(statisticsService.getTopAvailabilityStatus(limit));
+    }
+
+
+    @GetMapping("/top/user-status")
+    public ResponseEntity< List<Map<String, Object>> > getTopUserStatus(
+        @RequestParam(defaultValue="0", required = false) int limit){
+        return ResponseEntity.ok(statisticsService.getTopUserStatus(limit));
+    }
+
+    @GetMapping("/top/product-status")
+    public ResponseEntity< List<Map<String, Object>> > getTopProductStatus(
+        @RequestParam(defaultValue="0", required = false) int limit){
+        return ResponseEntity.ok(statisticsService.getTopProductStatus(limit));
+    }
+
+
     @GetMapping("/top/sales")
     public ResponseEntity< List<ListingSummary> > getTopSales (
         @RequestParam(defaultValue="0", required = false) int limit){
