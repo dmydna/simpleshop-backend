@@ -2,7 +2,6 @@ package com.techlab.store.config;
 
 import java.util.Arrays;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +22,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.techlab.store.repository.UserRepository;
 import com.techlab.store.service.CustomAuthenticationEntryPoint;
-import com.techlab.store.service.JwtAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
 
