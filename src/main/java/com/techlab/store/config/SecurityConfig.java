@@ -21,7 +21,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.techlab.store.repository.UserRepository;
-import com.techlab.store.service.CustomAuthenticationEntryPoint;
 
 import lombok.RequiredArgsConstructor;
 

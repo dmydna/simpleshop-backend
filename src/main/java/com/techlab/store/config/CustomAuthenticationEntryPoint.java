@@ -1,4 +1,4 @@
-package com.techlab.store.service;
+package com.techlab.store.config;
 
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
