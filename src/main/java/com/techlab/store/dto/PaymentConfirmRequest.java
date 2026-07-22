@@ -1,4 +1,4 @@
-package com.techlab.store.service;
+package com.techlab.store.dto;
 
 public record PaymentConfirmRequest(
         Long orderId,

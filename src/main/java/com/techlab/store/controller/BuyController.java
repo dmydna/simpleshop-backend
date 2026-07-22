@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import com.techlab.store.dto.UserDTO;
 import com.techlab.store.entity.User;
 import com.techlab.store.service.BuyService;
-import com.techlab.store.service.PaymentConfirmRequest;
+import com.techlab.store.dto.PaymentConfirmRequest;
 import com.techlab.store.service.ProfileService;
 
 import jakarta.validation.Valid;
