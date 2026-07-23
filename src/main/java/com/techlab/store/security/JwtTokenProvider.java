@@ -1,4 +1,4 @@
-package com.techlab.store.service;
+package com.techlab.store.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -20,7 +20,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-public class JwtService {
+public class JwtTokenProvider {
     // Esta es tu "firma". En producción debe ser secreta y larga.
     private static final String SECRET_KEY = "tu_clave_secreta_super_larga_y_segura_para_el_backend_de_techlab";
 

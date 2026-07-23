@@ -3,8 +3,6 @@ package com.techlab.store.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.techlab.store.dto.PasswordChangeRequest;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -14,16 +12,17 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import io.jsonwebtoken.JwtException;
 
 import com.techlab.store.dto.AuthResponse;
 import com.techlab.store.dto.LoginRequest;
+import com.techlab.store.dto.PasswordChangeRequest;
 import com.techlab.store.dto.RegisterRequest;
 import com.techlab.store.entity.User;
-import lombok.extern.slf4j.Slf4j;
+import com.techlab.store.security.JwtTokenProvider;
 
-
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
@@ -32,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthService {
 
     private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
+    private final JwtTokenProvider jwtService;
     private final UserService userService;
     private final ClientService clientService;
 

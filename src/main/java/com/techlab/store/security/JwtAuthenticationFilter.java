@@ -1,4 +1,4 @@
-package com.techlab.store.config;
+package com.techlab.store.security;
 
 import java.io.IOException;
 import java.util.List;
@@ -16,8 +16,6 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.techlab.store.service.JwtService;
-
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -31,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
+    private final JwtTokenProvider jwtService;
     private final UserDetailsService userDetailsService;
     private final AuthenticationEntryPoint customAuthenticationEntryPoint;
 
@@ -66,12 +64,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.warn("Token expirado detectado al extraer username: {}", e.getMessage());
             // Lanzamos la excepción de autenticación para que Spring Security la maneje
             // throw new BadCredentialsException("Token expirado");
-            customAuthenticationEntryPoint.commence(request, response, new BadCredentialsException("Token expirado", e));
+            customAuthenticationEntryPoint.commence(
+                request, 
+                response, 
+                new BadCredentialsException("Token expirado", e)
+            );
             return; // Detener ejecución
         } catch (Exception e) {
             log.error("Error al extraer username del token: {}", e.getMessage());
             // throw new BadCredentialsException("Token inválido o malformado");
-            customAuthenticationEntryPoint.commence(request, response, new BadCredentialsException("Token invalido o malformado", e));
+            customAuthenticationEntryPoint.commence(
+                request, 
+                response, 
+                new BadCredentialsException("Token invalido o malformado", e)
+            );
             return;
         }
 
@@ -87,9 +93,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             .map(SimpleGrantedAuthority::new)
                             .collect(Collectors.toList());
 
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, authorities);
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+                    authToken.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                     
                     log.info("Usuario autenticado exitosamente: {}", username);
@@ -97,7 +104,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // Token inválido (devolvió false, pero no lanzó excepción)
                     log.warn("Token inválido o expirado para usuario: {}", username);
                     // throw new BadCredentialsException("Token expirado o invalido");
-                    customAuthenticationEntryPoint.commence(request, response, new BadCredentialsException("Token expirado o invalido"));
+                    customAuthenticationEntryPoint.commence(
+                        request, 
+                        response, 
+                        new BadCredentialsException("Token expirado o invalido")
+                    );
                     return;              }
 
             } catch (Exception e) {

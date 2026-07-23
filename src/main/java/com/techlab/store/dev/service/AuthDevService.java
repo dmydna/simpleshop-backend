@@ -22,8 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.techlab.store.security.JwtTokenProvider;
 import com.techlab.store.service.ClientService;
-import com.techlab.store.service.JwtService;
 import com.techlab.store.service.UserService;
 
 
@@ -33,7 +33,7 @@ import com.techlab.store.service.UserService;
 public class AuthDevService {
 
     private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
+    private final JwtTokenProvider jwtService;
     private final UserService userService;
     private final ClientService clientService;
 

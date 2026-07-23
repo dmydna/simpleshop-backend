@@ -12,7 +12,6 @@ import jakarta.annotation.Nonnull;
 @EnableWebMvc
 public class WebConfig implements WebMvcConfigurer {
     
-    // CHECKME: fix coors con endpoint (patch) status
     @Override
     public void addResourceHandlers(@Nonnull ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**")
