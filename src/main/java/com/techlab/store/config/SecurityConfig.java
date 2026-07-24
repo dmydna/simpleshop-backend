@@ -1,8 +1,5 @@
 package com.techlab.store.config;
 
-import java.util.Arrays;
-
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,11 +13,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.techlab.store.repository.UserRepository;
 import com.techlab.store.security.CustomAuthenticationEntryPoint;
 import com.techlab.store.security.JwtAuthenticationFilter;
 
@@ -32,23 +26,18 @@ import lombok.RequiredArgsConstructor;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Value("${CORS_ORIGINS:http://localhost:3000}")
-    private String allowedOrigins;
-
     private final JwtAuthenticationFilter jwtAuthFilter;
-    private final UserRepository userRepository;
-    private CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
-
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CorsConfigurationSource corsConfigurationSource; 
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) 
+                .cors(cors -> cors.configurationSource(corsConfigurationSource)) // Usa el bean inyectado
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(customAuthenticationEntryPoint) )
+                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(customAuthenticationEntryPoint))
                 .authorizeHttpRequests(auth -> auth
-                        // Públicos
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/dev/**").permitAll()
@@ -58,31 +47,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/stats/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/listings/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/health/**").permitAll()
-                        // Protegidos (Usamos el texto EXACTO que sale en tu log: ADMIN)
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/profile", "/api/profile/**").hasAnyAuthority("CLIENT", "ADMIN") // El admin también suele querer ver su perfil
+                        .requestMatchers("/api/profile", "/api/profile/**").hasAnyAuthority("CLIENT", "ADMIN")
                         .requestMatchers("/api/orders/**").hasAnyAuthority("CLIENT", "ADMIN")
                         .anyRequest().authenticated()
                 ) 
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        // Usamos la variable inyectada
-        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
-        // Permitimos todos los métodos, incluyendo PATCH y OPTIONS
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        // Es vital permitir Authorization y Content-Type
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
     }
 
     @Bean
@@ -94,5 +66,4 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 }
