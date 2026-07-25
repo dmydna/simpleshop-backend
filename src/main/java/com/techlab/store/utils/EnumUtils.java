@@ -95,4 +95,22 @@ public class EnumUtils {
     }
 
 
+    public static boolean isStatusTransitionAllowed(
+        ReviewStatus current, ReviewStatus target
+    ){
+        /* Transicion de Status: 
+           - ACTIVE:   actualizable a (DELETED) 
+           - DELETED:  no actualizable */
+
+        if (current == ReviewStatus.DELETED) 
+           return false; // Ya validado arriba, pero por seguridad
+    
+        return switch (current) {
+            case PENDING  -> target == ReviewStatus.DELETED || target == ReviewStatus.ACTIVE;
+            case ACTIVE   -> target == ReviewStatus.DELETED;
+            case DELETED  -> false; // No debería llegar aquí
+        };
+    }
+
+
 }

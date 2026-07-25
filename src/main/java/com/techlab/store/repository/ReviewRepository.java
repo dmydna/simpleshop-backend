@@ -16,6 +16,9 @@ public interface ReviewRepository extends JpaRepository<Review,Long>, JpaSpecifi
     @Query("SELECT r FROM Review r WHERE r.product.id = :productId AND r.user.username = :reviewerName")
     Optional<Review> findByProductIdAndReviewerName(@Param("productId") Long productId, @Param("reviewerName") String reviewerName);
 
+    @Query("SELECT r FROM Review r WHERE r.id = :id AND r.user.username = :reviewerName")
+    Optional<Review> findByIdAndReviewerName(@Param("id") Long id, @Param("reviewerName") String reviewerName);
+
 
     @Query("SELECT r FROM Review r WHERE r.user.id = :userId")
     Optional<Review> findByUserId(@Param("userId") Long userId);

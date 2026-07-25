@@ -22,7 +22,7 @@ import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.repository.ReviewRepository;
 import com.techlab.store.repository.UserRepository;
 import com.techlab.store.specification.ReviewSpecifications;
-
+import com.techlab.store.utils.EnumUtils;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -71,7 +71,7 @@ public class ReviewService {
        if (existing.isPresent()) {return existing.get();}
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                .orElseThrow(() -> new RuntimeException("!Producto no encontrado"));
 
         Listing listing = listingRepository.findById(listingId)
                 .orElseThrow(() -> new RuntimeException("Listing no encontrado"));
@@ -89,8 +89,8 @@ public class ReviewService {
     }
 
 
-    public void deleteById(Long productId, String username) {
-        Review review = reviewRepository.findByProductIdAndReviewerName(productId, username)
+    public void deleteById(Long reviewId, String username) {
+        Review review = reviewRepository.findByIdAndReviewerName(reviewId, username)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         reviewRepository.delete(review);
     }
@@ -144,19 +144,27 @@ public class ReviewService {
     }
 
     @Transactional
-    public Review updateSatusById(Long id, ReviewStatus status){
-        log.info("🔔 actualizando status de listing con ID {}...", id);
+    public Review updateSatusById(Long id, ReviewStatus newStatus){
+        log.info("[REVIEW#{}] actualizando status", id);
         Review review = getById(id);
+        ReviewStatus currentStatus = review.getStatus();
 
-        if(isDeleted(id)){ 
-           throw new RuntimeException("Review no encontrada") ;
+        if (currentStatus == ReviewStatus.DELETED) {
+            throw new RuntimeException("[REVIEW EXECEPTION] No puede actualizar status");
         }
 
-        if(status.equals(ReviewStatus.DELETED)){ 
+        if (!EnumUtils.isStatusTransitionAllowed(currentStatus, newStatus)) {
+            log.warn("[REVIEW#{}] Transición no permitida de {} a {} para ID {}", 
+            id,currentStatus, newStatus);
+            return review;
+        }
+
+
+        if(newStatus.equals(ReviewStatus.DELETED)){ 
             deleteById(id); 
         }
-
-        review.setStatus(status);
+        review.setStatus(newStatus);
+        review.setUpdatedAt(LocalDateTime.now());
 
         return review;
     }

@@ -130,5 +130,15 @@ public class ReviewController {
     }
 
 
+    @DeleteMapping("/requests/{id}")
+    public ResponseEntity<?> deleteReviewRequest(@PathVariable Long id){
+        Review entity = reviewService.getById(id);
+        User user = authService.getUser();
+        if(entity.getUser().getId() != user.getId()){
+            throw new RuntimeException("No tiene permisos para leer esta Review") ; 
+        }
+        reviewService.updateSatusById(id, ReviewStatus.DELETED);
+        return ResponseEntity.ok().build();
+    }
 
 }
