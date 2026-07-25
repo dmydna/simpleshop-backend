@@ -1,14 +1,24 @@
 package com.techlab.store.service;
 
+import jakarta.validation.ValidationException;
+import lombok.RequiredArgsConstructor;
+
 import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+
 import com.techlab.store.entity.Order;
+import com.techlab.store.entity.OrderItem;
+import com.techlab.store.repository.OrderItemRepository;
 import com.techlab.store.repository.OrderRepository;
 import com.techlab.store.enums.OrderStatus;
-import jakarta.validation.ValidationException;
-import lombok.RequiredArgsConstructor;
+import com.techlab.store.specification.OrderItemSpecifications;
+import com.techlab.store.specification.OrderSpecifications;
+
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +29,7 @@ public class BuyService {
     private final PaymentGatewayService paymentGateWayService;
     private final OrderRepository orderRepository;
     private final ReviewService reviewService;
+    private final OrderItemRepository orderItemRepository; 
 
     @Transactional
     public boolean confirmPayment(Long orderId, String paymentToken, String userEmail) {
@@ -67,6 +78,20 @@ public class BuyService {
     }
 
 
+    // Filtrar historial de compras.
+    public Page<OrderItem> filter(
+            Long userId,
+            OrderStatus status,
+            Pageable pageable
+    ) {
+        
+        Specification<OrderItem> spec = Specification.allOf(
+            OrderItemSpecifications.hasClientId(userId),
+            OrderItemSpecifications.hasStatus(status)
+        );
+
+        return orderItemRepository.findAll(spec, pageable);
+    }
 
 
 }
