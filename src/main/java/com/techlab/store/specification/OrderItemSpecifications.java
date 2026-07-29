@@ -30,7 +30,7 @@ public class OrderItemSpecifications {
     public static Specification<OrderItem> hasStatus(OrderStatus status) {
         return (root, query, cb) -> {
             if (status == null) return cb.conjunction();
-            return cb.equal(root.get("status"), status);
+            return cb.equal(root.get("order").get("status"), status);
         };
     }
 }

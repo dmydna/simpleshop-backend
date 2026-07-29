@@ -34,7 +34,7 @@ public class ListingSpecifications {
             // i.e: "InStock" -> "In Stock"
             String formated = status.replaceAll("(?<!^)([A-Z])", " $1");
             // Unimos Listing con Product y filtramos por categoría
-            return cb.equal(root.get("availabilityStatus"), formated);    
+            return cb.equal(root.get("availabilityStatus"), status);    
         };
     }
 
