@@ -1,7 +1,6 @@
 package com.techlab.store.controller;
 
 import java.util.List;
-import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -23,9 +22,12 @@ import com.techlab.store.enums.OrderStatus;
 import com.techlab.store.dto.ClientDTO;
 import com.techlab.store.dto.CreateOrderDTO;
 import com.techlab.store.dto.OrderComplete;
+import com.techlab.store.dto.OrderItemDto;
 import com.techlab.store.dto.OrderResponse;
+import com.techlab.store.dto.OrderSummary;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.Order;
+import com.techlab.store.entity.OrderItem;
 import com.techlab.store.entity.User;
 import com.techlab.store.mapper.OrderMapper;
 import com.techlab.store.service.AuthService;
@@ -73,7 +75,7 @@ public class OrderController {
 
 
     @GetMapping
-    public ResponseEntity<Page<OrderComplete>> getAll(
+    public ResponseEntity<Page<OrderSummary>> getAll(
         @RequestParam(required = false) Long userId, // userId = clientId
         @RequestParam(required = false) OrderStatus status,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
@@ -88,7 +90,7 @@ public class OrderController {
         }else{
             filtered = orderService.filter(user.getId(), status, pageable);
         }
-        return ResponseEntity.ok(filtered.map(order -> orderMapper.toFullDto(order)));
+        return ResponseEntity.ok(filtered.map(order -> orderMapper.toSummaryDto(order)));
     }
 
 

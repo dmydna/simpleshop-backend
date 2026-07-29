@@ -10,6 +10,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import com.techlab.store.dto.CreateOrderDTO;
 import com.techlab.store.dto.OrderComplete;
 import com.techlab.store.dto.OrderItemDto;
+import com.techlab.store.dto.OrderSummary;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderItem;
 
@@ -28,9 +29,25 @@ public interface OrderMapper {
     qualifiedByName = "calculateTotalQuantity")
     OrderComplete toFullDto(Order entity);
 
+    @Mapping(target = "meta.createdAt", source = "createdAt")
+    @Mapping(target = "meta.updatedAt", source = "updatedAt")
+    @Mapping(target = "meta.deletedAt", source = "deletedAt")
+    @Mapping(target = "totalQuantity",  source = "items", 
+    qualifiedByName = "calculateTotalQuantity")
+    OrderSummary toSummaryDto(Order order);
+
+
+    @Mapping(target = "orderId", source = "order.id")
     @Mapping(target = "listingId", source = "listing.id")
+    @Mapping(target = "productId", source = "listing.product.id")
+    @Mapping(target = "discountPercentageAtPurchase", source="discountPercentageAtPurchase")
+    @Mapping(target = "reviewId", source = "review.id")
+    @Mapping(target = "rating", source = "review.rating")
     @Mapping(target = "name", source = "listing.product.name")
+    @Mapping(target = "thumbnail", source = "listing.thumbnail")
     @Mapping(target = "stock", source = "listing.stock")
+    @Mapping(target = "status", source = "order.status", qualifiedByName = "statusToString")
+    @Mapping(target = "createdAt", source = "order.createdAt")
     OrderItemDto toItemDto(OrderItem entity);
 
     // --- DTO -> ENTITY ---

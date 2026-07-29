@@ -2,6 +2,7 @@ package com.techlab.store.entity;
 
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Entity;
@@ -11,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,6 +27,14 @@ public class OrderItem {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Data (snapshot)
+    private int quantity;
+    private String thumbnail;
+    private BigDecimal priceAtPurchase; 
+    private Integer discountPercentageAtPurchase;
+
+    // Relations
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     @JsonIgnoreProperties("items")
@@ -34,7 +44,7 @@ public class OrderItem {
     @JoinColumn(name = "listing_id")
     private Listing listing;
 
-    private int quantity;
-    private BigDecimal priceAtPurchase; // guarda el precio actual del producto
-
+    @JsonIgnore
+    @OneToOne(mappedBy = "orderItem")
+    private Review review;
 }

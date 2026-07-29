@@ -4,7 +4,6 @@ import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -13,19 +12,17 @@ import org.springframework.data.jpa.domain.Specification;
 
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderItem;
+import com.techlab.store.entity.Review;
 import com.techlab.store.repository.OrderItemRepository;
 import com.techlab.store.repository.OrderRepository;
 import com.techlab.store.enums.OrderStatus;
 import com.techlab.store.specification.OrderItemSpecifications;
-import com.techlab.store.specification.OrderSpecifications;
 
 
 @Service
 @RequiredArgsConstructor
 public class BuyService {
-    @Autowired
     private final OrderService orderService;
-
     private final PaymentGatewayService paymentGateWayService;
     private final OrderRepository orderRepository;
     private final ReviewService reviewService;
@@ -44,12 +41,15 @@ public class BuyService {
 
         // crea reviews (con status pendiente) para cada producto comprado
         order.getItems().forEach(item -> {
-            reviewService
-              .create(
-                item.getListing().getProduct().getId(), 
-                order.getClient().getUser().getId(), 
-                item.getListing().getId()
+
+            Review review = reviewService
+              .createPendingReview(
+                item, 
+                order.getClient().getUser() 
             );
+
+            item.setReview(review);  
+
         });
 
         order.setStatus(OrderStatus.PAID);

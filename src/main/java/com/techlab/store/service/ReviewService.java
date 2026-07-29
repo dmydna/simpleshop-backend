@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.techlab.store.dto.ReviewDTO;
 import com.techlab.store.dto.ReviewRequest;
 import com.techlab.store.entity.Listing;
+import com.techlab.store.entity.OrderItem;
 import com.techlab.store.entity.Product;
 import com.techlab.store.entity.Review;
 import com.techlab.store.entity.User;
@@ -86,6 +87,23 @@ public class ReviewService {
         review.setUser(user);
         review.setStatus(ReviewStatus.PENDING);
         return  reviewRepository.save(review);
+    }
+
+
+    @Transactional
+    public Review createPendingReview(OrderItem item, User user) {
+        Review review = new Review();
+        
+        // Asignamos la relación en el LADO DUEÑO (Fundamental para JPA)
+        review.setOrderItem(item);
+        
+        // Obtenemos los datos directos del snapshot/listing
+        review.setProduct(item.getListing().getProduct());
+        review.setListingId(item.getListing().getId());
+        review.setUser(user);
+        review.setStatus(ReviewStatus.PENDING);
+        
+        return reviewRepository.save(review);
     }
 
 

@@ -37,6 +37,16 @@ public class EnumUtils {
         return statusStr != null ? UserStatus.valueOf(statusStr) : null;
     }
 
+    // Order: String -> OrderStatus
+    public static OrderStatus stringToOrderStatus(String statusStr) {
+        return statusStr != null ? OrderStatus.valueOf(statusStr) : null;
+    }
+
+
+    // Order:  Status -> String
+    public static String orderStatusToString(OrderStatus status) {
+        return status != null ? status.name() : null;
+    }
 
     public static boolean isStatusTransitionAllowed(
         ListingStatus current, ListingStatus target

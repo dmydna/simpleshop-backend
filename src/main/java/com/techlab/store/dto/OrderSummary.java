@@ -1,11 +1,11 @@
 package com.techlab.store.dto;
-import java.util.List;
 import com.techlab.store.enums.OrderStatus;
-
 
 public record OrderSummary(
     Long id,
+    Long clientId,
     OrderStatus status,
-    List<OrderItemDto> items,
-    Long client_id
+    Integer totalAmount,
+    Integer totalQuantity,
+    Meta meta
 ){}

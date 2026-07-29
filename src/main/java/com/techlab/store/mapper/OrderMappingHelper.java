@@ -14,6 +14,8 @@ import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderItem;
 import com.techlab.store.enums.OrderStatus;
 import com.techlab.store.service.ListingService;
+import com.techlab.store.service.ReviewService;
+import com.techlab.store.utils.EnumUtils;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OrderMappingHelper {
 
 	private final ListingService listingService;
+    private final ReviewService reviewService;
 
     @AfterMapping
     public void orderAfterMapping(CreateOrderDTO dto, @MappingTarget Order order) {
@@ -38,6 +41,14 @@ public class OrderMappingHelper {
     public void orderItemAfterMapping(OrderItemDto dto, @MappingTarget OrderItem orderItem) {
         Listing listing = listingService.getById(dto.listingId());
         orderItem.setListing(listing);
+        orderItem.setThumbnail(listing.getThumbnail());
+    }
+
+
+
+    @Named("statusToString")
+    public String statusToString(OrderStatus status){
+        return EnumUtils.orderStatusToString(status);
     }
 
 
