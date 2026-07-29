@@ -1,6 +1,7 @@
 package com.techlab.store.service;
 
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ public class ListingService {
     private final ProductRepository productRepository;
     private final FileStorageService fileStorageService;
     private final ListingMapper listingMapper;
+    private final ImageService imageService;
 
     // -- CREATE
     // Nota. recordar que se manejan listing normal y draft en este metodo.
@@ -311,6 +313,7 @@ public class ListingService {
         // Elimina reviews con status "PENDING".
         listingRepository.deleteReviewByListingIdAndStatus(id, ReviewStatus.PENDING);
         // Borrar Imagenes del Storage
+        // NOTA: NO eliminar thumbnail
         listing.getImages().forEach(fileStorageService::deleteFile);
         listing.setStatus(ListingStatus.DELETED);
         listing.setDeletedAt(LocalDateTime.now());
@@ -365,6 +368,19 @@ public class ListingService {
         return urls;
     }
 
+
+    private String createThumbnail(MultipartFile file){
+            String thumbnailUrl = null;
+            try {
+                thumbnailUrl = imageService.generateAndSaveThumbnail(file);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            return thumbnailUrl;
+    }
+
+
     private String imageFileUpload(Listing listing, MultipartFile file) {
         log.info("🔔 Subiendo imagen para listing...");
         String finalUrl = fileStorageService.storeFile(file, listing.getId());
@@ -372,7 +388,7 @@ public class ListingService {
 
         if (listing.getThumbnail() == null ||
             listing.getThumbnail().isEmpty()) {
-            listing.setThumbnail(finalUrl);
+            listing.setThumbnail(createThumbnail(file));
         }
         listingRepository.save(listing);
         return finalUrl;
