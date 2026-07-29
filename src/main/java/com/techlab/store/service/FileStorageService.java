@@ -24,9 +24,9 @@ public class FileStorageService {
     private final Path root = Paths.get("/app/uploads/");
 
 
-    public String storeFile(MultipartFile file, Long id, String folderName) {
+    public String storeFile(MultipartFile file, Long id, String targetPathStr) {
         try { // Define la subdiretorios
-            Path targetPath = this.root.resolve(folderName);
+            Path targetPath = this.root.resolve(targetPathStr);
             if (!Files.exists(targetPath)) {
                 Files.createDirectories(targetPath);
             }
@@ -38,7 +38,7 @@ public class FileStorageService {
             Files.copy(file.getInputStream(), targetPath.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
 
             // Retorna la URL incluyendo subdirectorios
-            return baseUrl + "/uploads/" + folderName + "/" + fileName;
+            return baseUrl + "/uploads/" + targetPathStr + "/" + fileName;
         } catch (IOException e) {
             throw new RuntimeException("Error: " + e.getMessage());
         }
@@ -86,6 +86,19 @@ public class FileStorageService {
             System.err.println("Error al eliminar archivo físico: " + e.getMessage());
             // No lanzamos excepción para no frenar el flujo si el archivo ya no estaba
         }
+    }
+
+
+    public static void copyFile(String sourcePathStr, String targetPathStr) throws IOException {
+        Path sourcePath = Paths.get(sourcePathStr);
+        Path targetPath = Paths.get(targetPathStr);
+
+        if (targetPath.getParent() != null && !Files.exists(targetPath.getParent())) {
+            Files.createDirectories(targetPath.getParent());
+        }
+
+        // StandardCopyOption.REPLACE_EXISTING sobrescribe el archivo si ya existe en destino
+        Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
 

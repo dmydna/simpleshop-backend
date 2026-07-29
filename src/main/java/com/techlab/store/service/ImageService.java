@@ -6,13 +6,28 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 
+import net.coobird.thumbnailator.Thumbnails;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class ImageService {
 
     // FIXME: no funciona con background blanco (#fff)
+
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
+    private final Path rootLocation = Paths.get("/app/uploads/");
+
 
     @Autowired
     private FontService fontService;
@@ -141,5 +156,28 @@ public class ImageService {
         // Si es un carácter directo, devolverlo tal cual
         return icon;
     }
+
+
+
+    public String generateAndSaveThumbnail(MultipartFile originalFile) throws IOException {
+        // Generar un nombre único para evitar colisiones
+        String filename = UUID.randomUUID().toString() + "_thumb.jpg";
+        File destinationFile = this.rootLocation.resolve(filename).toFile();
+
+        // Generar el thumbnail (Ejemplo: max 200x200 px con 80% de calidad)
+        Thumbnails.of(originalFile.getInputStream())
+                .size(200, 200)
+                .outputQuality(0.80)
+                .outputFormat("jpg")
+                .toFile(destinationFile);
+
+        // Retornas el nombre o la URL relativa para guardar en la BD
+        return baseUrl + "/media/thumbnails/" + filename;
+    }
+
+
+
+
+
 
 }
