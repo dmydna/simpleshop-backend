@@ -4,6 +4,7 @@ import com.techlab.store.dto.ClientDTO;
 import com.techlab.store.dto.ClientFullDTO;
 import com.techlab.store.dto.RegisterRequest;
 import com.techlab.store.entity.Client;
+import com.techlab.store.entity.Order;
 
 import java.util.List;
 
@@ -29,8 +30,8 @@ public interface ClientMapper {
     @Mapping(source = "user.email", target = "email")
     ClientFullDTO toFullDto(Client entity);
 
-    @Mapping(target = "client_id", ignore = true)
-    OrderSummary mapOrder(com.techlab.store.entity.Order order);
+    @Mapping(target = "clientId", ignore = true)
+    OrderSummary mapOrder(Order order);
 
     List<ClientDTO> toDtoList(List<Client> clients);
 

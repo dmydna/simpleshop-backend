@@ -11,6 +11,5 @@ public record ClientFullDTO (
     String firstName,
     String lastName,
     String address,
-    String phone,
-    List<OrderSummary> orders
+    String phone
 ){}

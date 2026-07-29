@@ -10,9 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.techlab.store.dto.ProfileDTO;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.User;
-import com.techlab.store.mapper.ClientMapper;
 import com.techlab.store.mapper.ProfileMapper;
-import com.techlab.store.mapper.UserMapper;
 import com.techlab.store.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -25,12 +23,8 @@ public class ProfileService {
 
     private final ProfileMapper profileMapper;
     private final UserService userService;
-    private final OrderService orderService;
     private final ClientService clientService;
     private final FileStorageService fileStorageService;
-    private final ClientMapper clientMapper;
-    private final UserMapper userMapper;
-    private final AuthService authService;
     private final UserRepository userRepository;
 
     public ProfileDTO getMyProfile(Authentication authentication) {
