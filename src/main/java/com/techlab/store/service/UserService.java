@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.techlab.store.dto.RegisterRequest;
 import com.techlab.store.dto.BanRequest;
+import com.techlab.store.dto.UserResponse;
 import com.techlab.store.entity.User;
 import com.techlab.store.enums.Role;
 import com.techlab.store.enums.UserStatus;
@@ -25,6 +26,8 @@ import com.techlab.store.repository.UserRepository;
 import com.techlab.store.specification.UserSpecifications;
 import com.techlab.store.utils.StringUtils;
 import com.techlab.store.exceptions.CustomExceptions.*;
+
+
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +43,6 @@ public class UserService {
     private final FileStorageService fileStorageService;
     private final UserMapper userMapper;
     private final ProfileMapper profileMapper;
-
 
 
     public User create(User user, MultipartFile file){

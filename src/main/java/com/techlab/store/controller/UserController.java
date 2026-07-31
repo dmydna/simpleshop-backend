@@ -21,11 +21,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.Authentication;
 import com.techlab.store.dto.BanRequest;
 import com.techlab.store.dto.ProfileDTO;
 import com.techlab.store.enums.UserStatus;
-
 import com.techlab.store.dto.UserDTO;
+import com.techlab.store.dto.UserResponse;
 import com.techlab.store.entity.User;
 import com.techlab.store.mapper.ProfileMapper;
 import com.techlab.store.mapper.UserMapper;
@@ -53,6 +54,15 @@ public class UserController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(userService.create(userMapper.toEntity(user), file));
+    }
+
+
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getMe(Authentication authentication) {
+        User user = userService.findByUsername(authentication.getName());
+        UserResponse response = new UserResponse( user.getUsername(), user.getRole().name());
+        return ResponseEntity.ok(response);
     }
 
 

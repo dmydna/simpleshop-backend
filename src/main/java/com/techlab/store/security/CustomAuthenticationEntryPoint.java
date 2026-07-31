@@ -1,22 +1,28 @@
 package com.techlab.store.security;
 
+import java.io.IOException;
+import io.jsonwebtoken.ExpiredJwtException;
+
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
 
+
+@Slf4j
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response,
-            AuthenticationException authException) throws IOException {
+    public void commence(
+        HttpServletRequest request, 
+        HttpServletResponse response,
+        AuthenticationException authException
+    ) throws IOException {
 
-        System.out.println(">>> CustomAuthenticationEntryPoint llamado con mensaje: " + authException.getMessage());
-
+        log.info("CustomAuthenticationEntryPoint llamado con mensaje: " + authException.getMessage());
 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");

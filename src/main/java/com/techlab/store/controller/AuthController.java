@@ -1,5 +1,11 @@
 package com.techlab.store.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -8,7 +14,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.techlab.store.entity.User;
+import com.techlab.store.security.CookieUtils;
 import com.techlab.store.service.AuthService;
+
+import jakarta.servlet.http.HttpServletResponse;
+
 import com.techlab.store.dto.AuthResponse;
 import com.techlab.store.dto.LoginRequest;
 import com.techlab.store.dto.RegisterRequest;
@@ -22,12 +32,17 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final AuthService authService;
+    @Autowired
+    private CookieUtils cookieUtils;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletResponse response) {
         try {
-            AuthResponse response = authService.login(request) ;
-            return ResponseEntity.ok(response);
+            AuthResponse authResponse = authService.login(request);
+            String token = authResponse.accessToken();
+            ResponseCookie cookie = cookieUtils.createAccessTokenCookie(token, 3600);
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+            return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -49,6 +64,14 @@ public class AuthController {
             authService.changePassword(tokenHeader.substring(7), request);
             return ResponseEntity.ok("Contraseña actualizada correctamente");
    } 
+
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        ResponseCookie cleanCookie = cookieUtils.createCleanCookie();
+        response.addHeader(HttpHeaders.SET_COOKIE, cleanCookie.toString());
+        return ResponseEntity.ok().build();
+    }
 
 
 }

@@ -38,22 +38,22 @@ public class AuthService {
     @Transactional
     public AuthResponse login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password())
+                new UsernamePasswordAuthenticationToken(
+                    loginRequest.username(), 
+                    loginRequest.password()
+                )
         );
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String token = jwtService.generateToken(userDetails);
-
-        String role = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .findFirst()
-                .orElse("CLIENT");
+        String token = jwtService.generateToken(authentication);
+        String username = jwtService.extractUsername(token);
+        // Extraemos el primer rol de la lista (o uno por defecto si viene vacía)
+        String role = jwtService.extractRoles(token).stream().findFirst().orElse("CLIENT");
 
         // 5. Devolver el objeto estructurado
         return new AuthResponse(
                 token,
                 "Bearer",
-                userDetails.getUsername(),
+                username,
                 role
         );
     }

@@ -1,17 +1,28 @@
 package com.techlab.store.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
+
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+
+import com.techlab.store.dto.LoginRequest;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+
 
 import java.security.Key;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -20,8 +31,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor 
 public class JwtTokenProvider {
     // Esta es tu "firma". En producción debe ser secreta y larga.
+
+    private final UserDetailsService userDetailsService;
     private static final String SECRET_KEY = "tu_clave_secreta_super_larga_y_segura_para_el_backend_de_techlab";
 
     // Añade este método o modifica el existente
@@ -41,6 +55,27 @@ public class JwtTokenProvider {
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
+
+    public String generateToken(Authentication authentication) {
+        Map<String, Object> extraClaims = new HashMap<>();
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
+        // Agregamos los roles al token
+        extraClaims.put("roles", userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList()));
+
+        return Jwts.builder()
+                .setClaims(extraClaims) // <--- Aquí metemos los roles
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+
 
     private Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(Base64.getEncoder().encodeToString(SECRET_KEY.getBytes()));
@@ -76,8 +111,34 @@ public class JwtTokenProvider {
     }
 
 
+    public Authentication getAuthentication(String token) {
+        // 1. Extraer el username del token
+        String username = extractUsername(token);
+
+        // 2. Cargar los detalles del usuario directamente desde la BD
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+        // 3. Crear el objeto de autenticación con el UserDetails completo
+        return new UsernamePasswordAuthenticationToken(
+                userDetails, 
+                null, 
+                userDetails.getAuthorities()
+        );
+    }
+
+
     private boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
+
+    public boolean validateToken(String token) {        
+        String username = extractUsername(token);
+        // 2. Cargar los detalles del usuario directamente desde la BD
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+
+    }
+
+
 
 }
