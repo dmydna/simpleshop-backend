@@ -24,6 +24,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> ,JpaSpecific
 
     List<Order> findByClientId(Long clientId);
 
+    @Query("SELECT o FROM Order o WHERE o.client.id = :id AND o.status = :status")
+    List<Order> findByClientIdAndStatus(Long id, OrderStatus Status);
+
     @Query("SELECT o FROM Order o " +
             "JOIN FETCH o.client c " +
             "JOIN FETCH o.items od " +
