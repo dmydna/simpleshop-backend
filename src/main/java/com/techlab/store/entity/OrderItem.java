@@ -1,10 +1,12 @@
 package com.techlab.store.entity;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -24,8 +26,12 @@ import lombok.ToString;
 @ToString
 @Table(name = "ORDER_ITEMS")
 public class OrderItem {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id 
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "hash", nullable = false, unique = true, updatable = false)
+    private String hash;
 
     // Data (snapshot)
     private int quantity;
@@ -34,7 +40,6 @@ public class OrderItem {
     private Integer discountPercentageAtPurchase;
 
     // Relations
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     @JsonIgnoreProperties("items")
@@ -47,4 +52,10 @@ public class OrderItem {
     @JsonIgnore
     @OneToOne(mappedBy = "orderItem")
     private Review review;
+
+    // Meta
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
+    
 }

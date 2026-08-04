@@ -1,6 +1,5 @@
 package com.techlab.store.entity;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +34,12 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "hash", nullable = false, unique = true, updatable = false)
+    private String hash;
+
+    // Status
+    @Enumerated(EnumType.STRING)
+    private UserStatus status = UserStatus.ACTIVE;
 
     // Data
     @Column(unique = true, nullable = false)
@@ -46,17 +51,7 @@ public class User {
     private String image;
     @Enumerated(EnumType.STRING)
     private Role role;
-
-    // Status
-    @Enumerated(EnumType.STRING)
-    private UserStatus status = UserStatus.ACTIVE;
-
-    // Meta
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
-    private LocalDateTime bannedAt;
-    private LocalDateTime banExpiresAt;
+    @Column(length = 140)
     private String banReason;
 
     // Relations
@@ -72,7 +67,11 @@ public class User {
     @JsonManagedReference
     private List<Review> reviews = new ArrayList<>();
     
+    // Meta
+    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
+    private LocalDateTime bannedAt;
+    private LocalDateTime banExpiresAt;
 
-    // NOTA:
-    // Status.BANNED y banExpiresAt = Null entonces es el baneo es permanente.
 }

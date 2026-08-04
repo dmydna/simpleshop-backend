@@ -35,33 +35,33 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "hash", nullable = false, unique = true, updatable = false)
+    private String hash;
+
+    // Status
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
+    
+    // Data
+    public BigDecimal totalAmount;
+    @Column(name = "operation_number", nullable = false, unique = true)
+    private String operationNumber;
+
+    // Relations
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("order")
+    private List<OrderItem> items = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "clientId")
     @JsonIgnoreProperties("orders")
     private Client client;
 
-    @Column(name = "operation_number", nullable = false, unique = true)
-    private String operationNumber;
-
-    @Column(name = "transaction_hash", nullable = false, unique = true, updatable = false)
-    private String transactionHash;
-
-    // Status
-    @Enumerated(EnumType.STRING)
-    private OrderStatus status;
-
-    // Relaciones
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties("order")
-    private List<OrderItem> items = new ArrayList<>();
-
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "order_id")
     private List<OrderItem> failedItems = new ArrayList<>();
 
-    public BigDecimal totalAmount;
-    
+    // Meta
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;

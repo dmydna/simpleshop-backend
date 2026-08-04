@@ -1,6 +1,4 @@
 package com.techlab.store.entity;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,16 +23,15 @@ import lombok.Setter;
 public class Client {
     @Id
     private Long id;
+    private String hash;
 
+    // Data
     private String firstName;
     private String lastName;
     private String address;
     private String phone;
 
-    private LocalDateTime updatedAt;
-    private LocalDateTime createdAt;
-    private LocalDateTime deletedAt;
-
+    // Relations
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("client")
     private List<Order> orders = new ArrayList<>();
@@ -43,4 +40,9 @@ public class Client {
     @MapsId// <-- mismo Id que User
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
+
+    // Meta
+    private LocalDateTime updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime deletedAt;
 }

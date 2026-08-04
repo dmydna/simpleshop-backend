@@ -1,7 +1,6 @@
 package com.techlab.store.entity;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +35,12 @@ public class Listing {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(unique = true, nullable = false, updatable = false)
+    private String hash;
+
+    // Status
+    @Enumerated(EnumType.STRING)
+    private ListingStatus status = ListingStatus.ACTIVE;
 
     // Data
     private String title;
@@ -53,19 +58,6 @@ public class Listing {
     @ElementCollection
     private List<String> images = new ArrayList<>();
     private String thumbnail;
-    @Column(unique = true, nullable = false, updatable = false)
-    private String hash;
-
-    // Status
-    @Enumerated(EnumType.STRING)
-    private ListingStatus status = ListingStatus.ACTIVE;
-
-
-
-    // Meta
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
-    private LocalDateTime createdAt = LocalDateTime.now();
 
     // Relations
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
@@ -76,5 +68,10 @@ public class Listing {
     @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     List<Favorite> favorites = new ArrayList<>();
+
+    // Meta
+    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
 }

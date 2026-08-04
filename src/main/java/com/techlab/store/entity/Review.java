@@ -29,23 +29,19 @@ public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "hash", nullable = false, unique = true, updatable = false)
+    private String hash;
+
+    // Status
+    @Enumerated(EnumType.STRING)
+    private ReviewStatus status = ReviewStatus.PENDING;
 
     // Data
     private Double rating;
     @Column(length = 1000)
     private String comment;
 
-    // Status
-    @Enumerated(EnumType.STRING)
-    private ReviewStatus status = ReviewStatus.PENDING;
-
-    // Meta
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
-    private LocalDateTime createdAt = LocalDateTime.now();
-
     // Relations
-
     @ManyToOne
     @JoinColumn(name = "user_id")
     @JsonBackReference
@@ -61,4 +57,10 @@ public class Review {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_item_id", unique = true)
     private OrderItem orderItem;
+
+    // Meta
+    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
+
 }

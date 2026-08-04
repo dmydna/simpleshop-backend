@@ -1,30 +1,25 @@
 package com.techlab.store.entity;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.enums.Status;
 import com.techlab.store.model.ProductDimensions;
 import com.techlab.store.model.ProductMeta;
 
-import jakarta.persistence.EnumType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -41,6 +36,12 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "hash", nullable = false, unique = true, updatable = false)
+    private String hash;
+
+    // Status
+    @Enumerated(EnumType.STRING)
+    Status status = Status.ACTIVE;
 
     // Data
     private String name;
@@ -57,15 +58,6 @@ public class Product {
     private List<String> tags;
     private String category;
 
-    // status
-    @Enumerated(EnumType.STRING)
-    Status status = Status.ACTIVE;
-
-    // Meta
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
-    private LocalDateTime createdAt = LocalDateTime.now();
-
     // Relations
     @OneToMany(mappedBy = "product")
     @JsonIgnore
@@ -74,5 +66,10 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Review> reviews = new ArrayList<>();
+
+    // Meta
+    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
 }

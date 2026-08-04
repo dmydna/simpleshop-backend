@@ -41,7 +41,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> ,JpaSpecific
             "WHERE o.id = :orderId")
     Optional<Order> findOneWithDetailsAndClientById(@Param("orderId") Long orderId);
 
-    @Query("SELECT o FROM Order o WHERE o.transactionHash = :hash AND o.client.id = :userId")  
+    @Query("SELECT o FROM Order o WHERE o.hash = :hash AND o.client.id = :userId")  
     Optional<Order> findByUserIdAandHash(@Param("cliendId") Long userId, @Param("hash") String hash);
 
     @Query("SELECT o FROM Order o " +

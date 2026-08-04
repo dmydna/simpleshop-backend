@@ -37,6 +37,8 @@ public class InventoryService {
             return false;
         }
 
+        listing.setStock(listing.getStock() - quantity);
+
         if(listing.getStock() == 0){
             listing.setAvailabilityStatus("Out of Stock");
             listing.setStatus(ListingStatus.INACTIVE);
@@ -50,7 +52,6 @@ public class InventoryService {
             listing.setAvailabilityStatus("In Stock");
         }
 
-        listing.setStock(listing.getStock() - quantity);
         listingRepository.save(listing);
 
         return true;
