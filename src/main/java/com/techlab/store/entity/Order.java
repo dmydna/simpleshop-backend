@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.techlab.store.enums.OrderStatus;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -39,6 +40,12 @@ public class Order {
     @JoinColumn(name = "clientId")
     @JsonIgnoreProperties("orders")
     private Client client;
+
+    @Column(name = "operation_number", nullable = false, unique = true)
+    private String operationNumber;
+
+    @Column(name = "transaction_hash", nullable = false, unique = true, updatable = false)
+    private String transactionHash;
 
     // Status
     @Enumerated(EnumType.STRING)

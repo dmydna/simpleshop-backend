@@ -8,6 +8,8 @@ import com.techlab.store.enums.OrderStatus;
 
 public record OrderComplete(
     Long id,
+    String transactionHash,
+    String operationNumber,
     Meta meta,
     OrderStatus status,
     List<OrderItemDto> items,

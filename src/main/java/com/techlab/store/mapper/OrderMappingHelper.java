@@ -16,6 +16,7 @@ import com.techlab.store.enums.OrderStatus;
 import com.techlab.store.service.ListingService;
 import com.techlab.store.service.ReviewService;
 import com.techlab.store.utils.EnumUtils;
+import com.techlab.store.utils.HashUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,8 @@ public class OrderMappingHelper {
     public void orderAfterMapping(CreateOrderDTO dto, @MappingTarget Order order) {
         order.setStatus(OrderStatus.PENDING);
         order.setCreatedAt(java.time.LocalDateTime.now());
+        order.setTransactionHash(HashUtil.generateShortHash());
+        order.setOperationNumber(HashUtil.generateOperationNumber());
         for(OrderItem item : order.getItems()){
         	item.setOrder(order);
         }

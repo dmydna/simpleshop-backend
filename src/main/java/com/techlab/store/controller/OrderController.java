@@ -101,6 +101,15 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/me/{hash}")
+    public ResponseEntity<OrderComplete> getByHash(@PathVariable String hash) {
+        User user = authService.getUser();
+        Order order = orderService.getByHash(hash, user.getId());
+        OrderComplete response = orderMapper.toFullDto(order);
+        return ResponseEntity.ok(response);
+    }
+
+
     @PutMapping("/{id}/cancel")
     public ResponseEntity<?> cancelById(@PathVariable Long id) {
         boolean success = this.orderService.cancelOrderById(id);
