@@ -25,7 +25,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> ,JpaSpecific
     List<Order> findByClientId(Long clientId);
 
     @Query("SELECT o FROM Order o WHERE o.client.id = :id AND o.status = :status")
-    List<Order> findByClientIdAndStatus(Long id, OrderStatus Status);
+    List<Order> findByClientIdAndStatus(@Param("id") Long id, @Param("status") OrderStatus status);
 
     @Query("SELECT o FROM Order o " +
             "JOIN FETCH o.client c " +
@@ -40,6 +40,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> ,JpaSpecific
             "JOIN FETCH od.listing p " +
             "WHERE o.id = :orderId")
     Optional<Order> findOneWithDetailsAndClientById(@Param("orderId") Long orderId);
+
+    @Query("SELECT o FROM Order o WHERE o.transactionHash = :hash AND o.client.id = :userId")  
+    Optional<Order> findByUserIdAandHash(@Param("cliendId") Long userId, @Param("hash") String hash);
 
     @Query("SELECT o FROM Order o " +
             "JOIN FETCH o.client c " +

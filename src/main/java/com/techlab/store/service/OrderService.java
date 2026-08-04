@@ -316,6 +316,15 @@ public class OrderService {
     }*/
 
 
+
+    public Order getByHash(String hash, Long userId){
+        Order order = this.orderRepository.findByUserIdAandHash(userId, hash)
+            .orElseThrow(() -> new RuntimeException("Pedido no encontrado con hash: " + hash));
+        
+        return order;
+    }
+
+
     public boolean cancelOrderById(Long orderId) {
         Order order = getById(orderId);
 
