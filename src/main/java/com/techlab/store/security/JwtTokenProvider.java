@@ -13,6 +13,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+import static com.techlab.store.security.SecurityConstants.*;
+
 
 import com.techlab.store.dto.LoginRequest;
 
@@ -46,15 +48,18 @@ public class JwtTokenProvider {
         extraClaims.put("roles", userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList()));
-
+        long now = System.currentTimeMillis();
         return Jwts.builder()
                 .setClaims(extraClaims) // <--- Aquí metemos los roles
                 .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + JWT_EXPIRATION_IN_MS))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
+
+
+
 
     public String generateToken(Authentication authentication) {
         Map<String, Object> extraClaims = new HashMap<>();
@@ -66,11 +71,12 @@ public class JwtTokenProvider {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList()));
 
+        long now = System.currentTimeMillis();
         return Jwts.builder()
                 .setClaims(extraClaims) // <--- Aquí metemos los roles
                 .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + JWT_EXPIRATION_IN_MS))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -139,6 +145,10 @@ public class JwtTokenProvider {
 
     }
 
+
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
 
 
 }

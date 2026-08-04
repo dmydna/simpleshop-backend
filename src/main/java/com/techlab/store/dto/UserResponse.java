@@ -1,8 +1,11 @@
 package com.techlab.store.dto;
 
-import com.techlab.store.enums.Role;
+import java.time.Instant;
+
+
 
 public record UserResponse(
         String username,
-        String role
+        String role,
+        Instant expiredAt
 ) {}

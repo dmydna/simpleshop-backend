@@ -14,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -90,10 +92,9 @@ public class ListingController {
     @GetMapping("/hash/{hash}")
     public ResponseEntity<Map<String, Object>> getByHash(
         @RequestParam(required = false, defaultValue = "false") Boolean fallow,
-        @PathVariable String hash,
-        @RequestHeader(value = "Authorization", required = false) String authHeader
+        @PathVariable String hash
     ){
-        boolean isAdmin = authService.isAdmin(authHeader); 
+        boolean isAdmin = authService.isAuthUserAdmin(); 
         Listing entity = listingService.getByHash(hash);
         ListingStatus status = entity.getStatus();
         if(!isAdmin && 
@@ -124,13 +125,12 @@ public class ListingController {
         @RequestParam(required = false) ListingStatus status,
         @RequestParam(required = false) String availability,
         @RequestParam(required = false, defaultValue = "false") Boolean includeTags,
-        @RequestHeader(value = "Authorization", required = false) String authHeader,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         
-        boolean isAdmin = authService.isAdmin(authHeader); 
+        boolean isAdmin = authService.isAuthUserAdmin(); 
         ListingStatus filterStatus = isAdmin ? status : ListingStatus.ACTIVE;
-       Page<Listing> filtered = listingService
+        Page<Listing> filtered = listingService
              .filter(title, category, tags, minPrice, maxPrice, filterStatus, availability, pageable);
         
         if(includeTags){

@@ -77,9 +77,8 @@ public class ProductController {
             @RequestParam(required = false, defaultValue = "") List<String> tags,
             @RequestParam(required = false, defaultValue = "") String category,
             @RequestParam(required = false, defaultValue = "") Status status,
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        boolean isAdmin = authService.isAdmin(authHeader); 
+        boolean isAdmin = authService.isAdmin(); 
         Status filterStatus = isAdmin ? status : Status.ACTIVE;
         Page<Product> filtered = productService.filter(name, sku, tags, category, filterStatus, pageable);
 

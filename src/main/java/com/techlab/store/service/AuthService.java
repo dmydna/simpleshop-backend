@@ -99,6 +99,19 @@ public class AuthService {
         return isRole("ADMIN");
     }
 
+    public boolean isAuthUserAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication == null || !authentication.isAuthenticated() 
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return false;
+        }
+
+        return authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
+    }
+
+
     public boolean isAdmin(String authHeader) {
         log.info("🔔 Extrayendo Role de TOKEN...");
         if(authHeader == null) return false ;
@@ -130,5 +143,12 @@ public class AuthService {
         }
         return savedUsers;
     }
+
+    public void changePasswordByUsername(String username, PasswordChangeRequest request) {
+        // TODO Auto-generated method stub
+        userService.changePassword(username, request.oldPassword(), request.newPassword());
+    }
+
+
 
 }

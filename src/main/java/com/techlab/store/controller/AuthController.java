@@ -7,11 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import static com.techlab.store.security.SecurityConstants.*;
 
 import com.techlab.store.entity.User;
 import com.techlab.store.security.CookieUtils;
@@ -37,33 +39,30 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletResponse response) {
-        try {
-            AuthResponse authResponse = authService.login(request);
-            String token = authResponse.accessToken();
-            ResponseCookie cookie = cookieUtils.createAccessTokenCookie(token, 3600);
-            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        AuthResponse authResponse = authService.login(request);
+        String token = authResponse.accessToken();
+        ResponseCookie cookie = cookieUtils.createAccessTokenCookie(token, COOKIE_EXPIRATION_IN_MS);
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        try {
-            User newUser = authService.register(request);
-            return ResponseEntity.ok("Usuario registrado exitosamente con ID: " + newUser.getId());
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        User newUser = authService.register(request);
+        return ResponseEntity.ok("Usuario registrado exitosamente con ID: " + newUser.getId());
     }
 
+
     @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(@RequestHeader("Authorization") String tokenHeader, @RequestBody PasswordChangeRequest request) {
-            // Extrae el token del header (ej: "Bearer <token>")
-            authService.changePassword(tokenHeader.substring(7), request);
-            return ResponseEntity.ok("Contraseña actualizada correctamente");
-   } 
+    public ResponseEntity<?> changePassword(
+            Authentication authentication, 
+            @RequestBody PasswordChangeRequest request) {
+    
+        String username = authentication.getName(); 
+        authService.changePasswordByUsername(username, request);
+    
+        return ResponseEntity.ok("Contraseña actualizada correctamente");
+    }
 
 
     @PostMapping("/logout")
@@ -72,6 +71,5 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, cleanCookie.toString());
         return ResponseEntity.ok().build();
     }
-
 
 }

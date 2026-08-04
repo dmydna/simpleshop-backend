@@ -1,5 +1,7 @@
 package com.techlab.store.controller;
 
+import java.util.Date;
+import java.time.Instant;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+
 import com.techlab.store.dto.BanRequest;
 import com.techlab.store.dto.ProfileDTO;
 import com.techlab.store.enums.UserStatus;
@@ -35,36 +39,40 @@ import com.techlab.store.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-
 @Slf4j
-@RequiredArgsConstructor 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    
+
     private final UserService userService;
     private final UserMapper userMapper;
-    private final ProfileMapper profileMapper; 
+    private final ProfileMapper profileMapper;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<User> create(
-        @RequestPart("user") UserDTO user,
-        @RequestPart(value = "file", required = false) MultipartFile file
-    ) {
+            @RequestPart("user") UserDTO user,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(userService.create(userMapper.toEntity(user), file));
     }
 
-
-
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getMe(Authentication authentication) {
-        User user = userService.findByUsername(authentication.getName());
-        UserResponse response = new UserResponse( user.getUsername(), user.getRole().name());
-        return ResponseEntity.ok(response);
-    }
+        String username = authentication.getName();
+        String role = authentication.getAuthorities().stream()
+                .findFirst()
+                .map(GrantedAuthority::getAuthority)
+                .orElse("CLIENT");
 
+        Instant expiresAt = null;
+        if (authentication.getDetails() instanceof Date exp) {
+            expiresAt = exp.toInstant();
+        }
+
+        return ResponseEntity.ok(new UserResponse(username, role, expiresAt));
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getById(@PathVariable Long id) {
@@ -73,21 +81,17 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-
     @GetMapping
     public ResponseEntity<Page<UserDTO>> getAll(
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String clientname,
-            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
-    ) {
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<UserDTO> response = userService
-           .filter(username, email, clientname, pageable)
-           .map(user-> userMapper.toDto(user));
+                .filter(username, email, clientname, pageable)
+                .map(user -> userMapper.toDto(user));
         return ResponseEntity.ok(response);
     }
-
-
 
     @PatchMapping("/{id}/unban-user")
     public ResponseEntity<?> unbanUser(@PathVariable Long id) {
@@ -95,12 +99,10 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-
     @PatchMapping("/{id}/ban-user")
     public ResponseEntity<?> banUser(
-        @PathVariable Long id, 
-        @RequestBody BanRequest request
-    ){
+            @PathVariable Long id,
+            @RequestBody BanRequest request) {
         userService.banUser(id, request);
         return ResponseEntity.ok().build();
     }
@@ -108,38 +110,35 @@ public class UserController {
     @PostMapping(value = "/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> upload(
             @PathVariable Long id,
-            @RequestParam("file") MultipartFile file
-    ) {
+            @RequestParam("file") MultipartFile file) {
         String url = userService.uploadImage(id, file);
         return ResponseEntity.ok(url);
 
     }
 
     @GetMapping("/{id}/profile")
-    public ResponseEntity<ProfileDTO> getProfileById(@PathVariable Long id){
+    public ResponseEntity<ProfileDTO> getProfileById(@PathVariable Long id) {
         User user = userService.getById(id);
         return ResponseEntity.ok(profileMapper.toDto(user, user.getClient()));
     }
 
     @PutMapping("/{id}/update")
     public ResponseEntity<UserDTO> updateById(
-        @PathVariable Long id, 
-        @RequestBody UserDTO dataToEdit
-    ){
+            @PathVariable Long id,
+            @RequestBody UserDTO dataToEdit) {
         User user = userService
-            .updateById(id, userMapper.toEntity(dataToEdit));
+                .updateById(id, userMapper.toEntity(dataToEdit));
         return ResponseEntity.ok(userMapper.toDto(user));
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PatchMapping("/{id}/status")
-    public ResponseEntity<UserDTO> updateStatus( 
-        @PathVariable Long id, 
-        @RequestParam UserStatus status) {
+    public ResponseEntity<UserDTO> updateStatus(
+            @PathVariable Long id,
+            @RequestParam UserStatus status) {
         User user = userService.updateStatusById(id, status);
         UserDTO response = userMapper.toDto(user);
         return ResponseEntity.ok(response);
     }
-
 
 }
