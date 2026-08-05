@@ -20,7 +20,7 @@ import lombok.Setter;
 @Entity
 @Getter @Setter
 @Table(name = "CLIENTS")
-public class Client {
+public class Client extends AuditableEntity{
     @Id
     private Long id;
     private String hash;
@@ -40,9 +40,5 @@ public class Client {
     @MapsId// <-- mismo Id que User
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
-
-    // Meta
-    private LocalDateTime updatedAt;
-    private LocalDateTime createdAt;
-    private LocalDateTime deletedAt;
+    
 }

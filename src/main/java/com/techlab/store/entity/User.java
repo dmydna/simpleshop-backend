@@ -29,11 +29,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @Table(name = "USERS")
-public class User {
+public class User extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     @Column(name = "hash", nullable = false, unique = true, updatable = false)
     private String hash;
 
@@ -68,9 +65,6 @@ public class User {
     private List<Review> reviews = new ArrayList<>();
     
     // Meta
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
     private LocalDateTime bannedAt;
     private LocalDateTime banExpiresAt;
 

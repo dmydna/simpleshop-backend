@@ -24,11 +24,8 @@ import java.time.LocalDateTime;
 @Getter @Setter
 @ToString
 @Table(name = "REVIEWS")
-public class Review {
+public class Review extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     @Column(name = "hash", nullable = false, unique = true, updatable = false)
     private String hash;
 
@@ -57,10 +54,5 @@ public class Review {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_item_id", unique = true)
     private OrderItem orderItem;
-
-    // Meta
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
 
 }

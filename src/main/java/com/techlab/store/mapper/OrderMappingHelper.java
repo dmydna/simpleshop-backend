@@ -33,7 +33,6 @@ public class OrderMappingHelper {
     public void orderAfterMapping(CreateOrderDTO dto, @MappingTarget Order order) {
         order.setStatus(OrderStatus.PENDING);
         order.setCreatedAt(java.time.LocalDateTime.now());
-        order.setTransactionHash(HashUtil.generateShortHash());
         order.setOperationNumber(HashUtil.generateOperationNumber());
         for(OrderItem item : order.getItems()){
         	item.setOrder(order);

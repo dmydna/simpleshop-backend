@@ -18,11 +18,8 @@ import jakarta.persistence.Table;
 @Getter
 @Setter
 @Table(name = "FAVORITES")
-public class Favorite {
+public class Favorite extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     @Column(unique = true, nullable = false, updatable = false)
     private String hash;
 
@@ -36,11 +33,5 @@ public class Favorite {
     @JoinColumn(name = "listing_id")
     @JsonBackReference
     private Listing listing; // opcional
-
-    // Meta
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
 
 }

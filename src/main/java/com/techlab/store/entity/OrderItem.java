@@ -25,11 +25,8 @@ import lombok.ToString;
 @Setter
 @ToString
 @Table(name = "ORDER_ITEMS")
-public class OrderItem {
+public class OrderItem extends BaseEntity {
 
-    @Id 
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     @Column(name = "hash", nullable = false, unique = true, updatable = false)
     private String hash;
 
@@ -52,10 +49,5 @@ public class OrderItem {
     @JsonIgnore
     @OneToOne(mappedBy = "orderItem")
     private Review review;
-
-    // Meta
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
     
 }

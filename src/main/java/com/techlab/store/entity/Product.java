@@ -31,11 +31,8 @@ import lombok.ToString;
 @Setter
 @ToString
 @Table(name = "PRODUCTS")
-public class Product {
+public class Product extends BaseEntity{
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     @Column(name = "hash", nullable = false, unique = true, updatable = false)
     private String hash;
 
@@ -66,10 +63,5 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Review> reviews = new ArrayList<>();
-
-    // Meta
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
-    private LocalDateTime createdAt = LocalDateTime.now();
 
 }

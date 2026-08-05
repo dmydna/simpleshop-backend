@@ -30,11 +30,8 @@ import lombok.ToString;
 @Getter @Setter
 @ToString
 @Table(name = "ORDERS")
-public class Order {
+public class Order extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     @Column(name = "hash", nullable = false, unique = true, updatable = false)
     private String hash;
 
@@ -60,10 +57,5 @@ public class Order {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "order_id")
     private List<OrderItem> failedItems = new ArrayList<>();
-
-    // Meta
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
 
 }

@@ -30,11 +30,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @Table(name = "LISTINGS")
-public class Listing {
+public class Listing extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     @Column(unique = true, nullable = false, updatable = false)
     private String hash;
 
@@ -68,10 +65,5 @@ public class Listing {
     @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     List<Favorite> favorites = new ArrayList<>();
-
-    // Meta
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
-    private LocalDateTime createdAt = LocalDateTime.now();
 
 }

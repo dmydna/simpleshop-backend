@@ -6,8 +6,6 @@ import org.mapstruct.AfterMapping;
 import org.mapstruct.Context;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import com.techlab.store.dto.CreateListingDTO;
@@ -43,7 +41,7 @@ public class ListingMappingHelper {
          log.info("🔔 Creando listing draft...");
          listing.setAvailabilityStatus("Pending");
          listing.setProduct(null);
-         listing.setHash(HashUtil.generateShortHash());
+//         listing.setHash(HashUtil.generateShortHash());
          return;
        }
          Product existingProduct =  productRepository
@@ -53,7 +51,7 @@ public class ListingMappingHelper {
          listing.getProduct().setStatus(Status.ACTIVE);
          listing.setStatus(ListingStatus.ACTIVE);
          listing.setAvailabilityStatus("In Stock");
-         listing.setHash(HashUtil.generateShortHash());
+//         listing.setHash(HashUtil.generateShortHash());
     }
 
 
