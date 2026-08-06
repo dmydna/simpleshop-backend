@@ -325,6 +325,30 @@ public class OrderService {
     }
 
 
+    public boolean cancelLastUserOrder(Long userId){
+        Order order = orderRepository.findFirstByClientIdOrderByCreatedAtDesc(userId)
+        .orElse(null);
+        if(order != null) {
+            if (!order.getStatus().equals(OrderStatus.CANCELLED)) { return false; }
+            if (!order.getStatus().equals(OrderStatus.COMPLETED)) { return false; }
+            inventoryService.deleteOrderAndRestoreStock(order.getId());
+            return true;
+        }
+        return false;
+    }
+
+
+    public boolean cancelUserOrderById(Long orderId, Long userId) {
+        Order order = getById(orderId);
+
+        if (!order.getStatus().equals(OrderStatus.PENDING)) { return false; }
+        if (!order.getClient().getId().equals(userId)) {return false;}
+        
+        inventoryService.deleteOrderAndRestoreStock(order.getId());
+        return true;
+    }
+    
+
     public boolean cancelOrderById(Long orderId) {
         Order order = getById(orderId);
 

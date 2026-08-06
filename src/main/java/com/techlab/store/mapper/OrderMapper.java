@@ -11,6 +11,7 @@ import com.techlab.store.dto.CreateOrderDTO;
 import com.techlab.store.dto.OrderComplete;
 import com.techlab.store.dto.OrderItemDto;
 import com.techlab.store.dto.OrderSummary;
+import com.techlab.store.entity.Client;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderItem;
 
@@ -65,7 +66,7 @@ public interface OrderMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
-    Order toEntity(CreateOrderDTO dto);
+    Order toEntity(CreateOrderDTO dto, Client client);
 
     // Al llamarse igual que el tipo de la lista, MapStruct lo asocia automáticamente
     @Mapping(target = "order", ignore = true)

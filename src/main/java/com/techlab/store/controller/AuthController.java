@@ -1,5 +1,7 @@
 package com.techlab.store.controller;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,6 +10,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -24,6 +28,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.techlab.store.dto.AuthResponse;
 import com.techlab.store.dto.LoginRequest;
 import com.techlab.store.dto.RegisterRequest;
+import com.techlab.store.dto.UserResponse;
 import com.techlab.store.dto.PasswordChangeRequest;
 
 import lombok.RequiredArgsConstructor;
@@ -45,6 +50,24 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         return ResponseEntity.ok().build();
     }
+
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getMe(Authentication authentication) {
+        String username = authentication.getName();
+        String role = authentication.getAuthorities().stream()
+                .findFirst()
+                .map(GrantedAuthority::getAuthority)
+                .orElse("CLIENT");
+
+        Instant expiresAt = null;
+        if (authentication.getDetails() instanceof Date exp) {
+            expiresAt = exp.toInstant();
+        }
+
+        return ResponseEntity.ok(new UserResponse(username, role, expiresAt));
+    }
+
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {

@@ -4,6 +4,7 @@ import com.techlab.store.enums.OrderStatus;
 public record OrderSummary(
     Long id,
     Long clientId,
+    String hash,
     OrderStatus status,
     Integer totalAmount,
     Integer totalQuantity,

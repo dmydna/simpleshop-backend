@@ -2,6 +2,8 @@ package com.techlab.store.controller;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.security.access.AccessDeniedException;
+
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +19,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.techlab.store.enums.OrderStatus;
 import com.techlab.store.dto.ClientDTO;
@@ -64,8 +69,7 @@ public class OrderController {
             client = profileService.getMyClient(authentication);
         } 
         System.out.println("creteate order dto: " + dto);
-        Order entity = orderMapper.toEntity(dto);
-        entity.setClient(client); // Importante establecer relacion client/order
+        Order entity = orderMapper.toEntity(dto, client);
         Order savedOrder = orderService.createOrder(entity);
         return ResponseEntity.ok(new OrderResponse(
                 savedOrder.getId(),
@@ -80,20 +84,69 @@ public class OrderController {
         @RequestParam(required = false) OrderStatus status,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Page<Order> filtered;
-        User user = authService.getUser();
-        if (authService.isAdmin()) {
-            // Si admin no envia una id se usa la propia.
-            long id = userId != null ? userId : user.getId();
-            log.info("🔔 ADMIN obtiene ordenes de id...",id);
-            filtered = orderService.filter(user.getId(), status, pageable);
-        }else{
-            filtered = orderService.filter(user.getId(), status, pageable);
+        if (!authService.isAdmin()) {
+            throw new AccessDeniedException("Acceso restringido: no tienes permisos para esta acción");
         }
+        Page<Order> filtered = orderService.filter(userId, status, pageable);
         return ResponseEntity.ok(filtered.map(order -> orderMapper.toSummaryDto(order)));
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<Page<OrderSummary>> getOrders(
+        @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        User user = authService.getUser();
+        Page<Order> filtered = orderService.filter(user.getId(), OrderStatus.PAID, pageable);
+        return ResponseEntity.ok(filtered.map(order -> orderMapper.toSummaryDto(order)));
+    }
 
+    @PostMapping("/me")
+    public ResponseEntity<?> createOrder(
+            Authentication authentication,
+            @RequestBody CreateOrderDTO dto
+            ) {
+        Client client = profileService.getMyClient(authentication);
+        log.info("creteate order dto: " + dto);
+        Order entity = orderMapper.toEntity(dto, client);
+        Order savedOrder = orderService.createOrder(entity);
+        return ResponseEntity.ok(new OrderResponse(
+                savedOrder.getId(),
+                orderMapper.toItemDtoList(savedOrder.getFailedItems())
+        ));
+    }
+
+
+    @GetMapping("/me/{id}")
+    public ResponseEntity<OrderComplete> getByHash(@PathVariable Long id) {
+        User user = authService.getUser();
+        Order order = orderService.getById(id);
+        if(!order.getClient().getId().equals(user.getId())){
+            throw new AccessDeniedException("Usuario no autorizado para acceder a este recurso");
+        }
+        OrderComplete response = orderMapper.toFullDto(order);
+        return ResponseEntity.ok(response);
+    }
+
+
+    @PutMapping("/me/cancel")
+    public ResponseEntity<?> cancelMe(
+        @RequestParam(required = false) Long orderId
+    ) {
+        User user = authService.getUser();
+        boolean success;
+        if(orderId == null){
+            success = orderService.cancelLastUserOrder(user.getId());
+        }else{
+            success = this.orderService.cancelOrderById(orderId);
+        }
+
+        if (success) return ResponseEntity.ok().build(); // 200 OK 
+        return ResponseEntity.badRequest().build();
+    }
+
+
+
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<OrderComplete> getOrderById(@PathVariable Long id) {
         Order order = orderService.getById(id);
@@ -101,15 +154,8 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/me/{hash}")
-    public ResponseEntity<OrderComplete> getByHash(@PathVariable String hash) {
-        User user = authService.getUser();
-        Order order = orderService.getByHash(hash, user.getId());
-        OrderComplete response = orderMapper.toFullDto(order);
-        return ResponseEntity.ok(response);
-    }
 
-
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/{id}/cancel")
     public ResponseEntity<?> cancelById(@PathVariable Long id) {
         boolean success = this.orderService.cancelOrderById(id);
@@ -117,6 +163,9 @@ public class OrderController {
         return ResponseEntity.badRequest().build();
     }
 
+
+
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/{id}/status")
     public OrderComplete updateStatus(
             @PathVariable Long id,

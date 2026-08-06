@@ -1,29 +1,28 @@
 package com.techlab.store.controller;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.techlab.store.dto.UserDTO;
-import com.techlab.store.entity.Order;
+import com.techlab.store.dto.OrderItemDto;
+import com.techlab.store.dto.PaymentConfirmRequest;
 import com.techlab.store.entity.OrderItem;
 import com.techlab.store.entity.User;
 import com.techlab.store.enums.OrderStatus;
 import com.techlab.store.enums.Role;
 import com.techlab.store.mapper.OrderMapper;
-import com.techlab.store.repository.OrderItemRepository;
 import com.techlab.store.service.BuyService;
-import com.techlab.store.dto.OrderItemDto;
-import com.techlab.store.dto.PaymentConfirmRequest;
 import com.techlab.store.service.ProfileService;
-import com.techlab.store.specification.OrderSpecifications;
-import org.springframework.data.domain.Sort;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -58,7 +57,7 @@ public class BuyController {
     }
 
 
-    @GetMapping("/history")
+    @GetMapping("/me/purchases")
     public ResponseEntity<Page<OrderItemDto>> getOrderItems(
         Authentication authentication,
         @RequestParam(required = false) Long userId, // userId = clientId

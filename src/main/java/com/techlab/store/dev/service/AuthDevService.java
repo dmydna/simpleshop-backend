@@ -1,30 +1,17 @@
 package com.techlab.store.dev.service;
 
-import com.techlab.store.dto.AuthResponse;
-import com.techlab.store.dto.LoginRequest;
-import com.techlab.store.entity.User;
-import com.techlab.store.dto.RegisterRequest;
-import com.techlab.store.entity.User;
+import java.util.ArrayList;
+import java.util.List;
 
-import lombok.RequiredArgsConstructor;
-
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.techlab.store.security.JwtTokenProvider;
+import com.techlab.store.dto.RegisterRequest;
+import com.techlab.store.entity.User;
 import com.techlab.store.service.ClientService;
 import com.techlab.store.service.UserService;
+
+import lombok.RequiredArgsConstructor;
 
 
 // TODO: eliminar AuthDevService.java
@@ -32,8 +19,6 @@ import com.techlab.store.service.UserService;
 @RequiredArgsConstructor
 public class AuthDevService {
 
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtService;
     private final UserService userService;
     private final ClientService clientService;
 

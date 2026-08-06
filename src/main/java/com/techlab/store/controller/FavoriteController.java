@@ -17,11 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.techlab.store.dto.ListingSummary;
-import com.techlab.store.mapper.ListingMapper;
-import com.techlab.store.dto.FavoriteDTO;
 import com.techlab.store.entity.Favorite;
-import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.User;
+import com.techlab.store.mapper.ListingMapper;
 import com.techlab.store.service.AuthService;
 import com.techlab.store.service.FavoriteService;
 

@@ -34,6 +34,7 @@ import com.techlab.store.dto.UserResponse;
 import com.techlab.store.entity.User;
 import com.techlab.store.mapper.ProfileMapper;
 import com.techlab.store.mapper.UserMapper;
+import com.techlab.store.service.ProfileService;
 import com.techlab.store.service.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/users")
 public class UserController {
 
+    private final ProfileService profileService;
     private final UserService userService;
     private final UserMapper userMapper;
     private final ProfileMapper profileMapper;
@@ -58,28 +60,36 @@ public class UserController {
                 .body(userService.create(userMapper.toEntity(user), file));
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<UserResponse> getMe(Authentication authentication) {
-        String username = authentication.getName();
-        String role = authentication.getAuthorities().stream()
-                .findFirst()
-                .map(GrantedAuthority::getAuthority)
-                .orElse("CLIENT");
-
-        Instant expiresAt = null;
-        if (authentication.getDetails() instanceof Date exp) {
-            expiresAt = exp.toInstant();
-        }
-
-        return ResponseEntity.ok(new UserResponse(username, role, expiresAt));
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getById(@PathVariable Long id) {
         User user = userService.getById(id);
         UserDTO response = userMapper.toDto(user);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<ProfileDTO> getProfile(Authentication authentication) {
+        return ResponseEntity.ok(profileService.getMyProfile(authentication));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<ProfileDTO> updateProfile(
+            Authentication authentication,
+            @RequestBody ProfileDTO dataToEdit
+    ) {
+        return ResponseEntity.ok(profileService
+                .updateMyProfile(authentication, dataToEdit));
+    }
+
+    @PutMapping(value = "me/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadMyProfileImage(
+            Authentication authentication,
+            @RequestParam("file") MultipartFile file
+    ) {
+
+        return ResponseEntity.ok(profileService.updateProfileImage(authentication, file));
+    }
+
 
     @GetMapping
     public ResponseEntity<Page<UserDTO>> getAll(
