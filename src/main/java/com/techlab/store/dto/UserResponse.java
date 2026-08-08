@@ -7,5 +7,5 @@ import java.time.Instant;
 public record UserResponse(
         String username,
         String role,
-        Instant expiredAt
+        Long expiredAt
 ) {}

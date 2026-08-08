@@ -1,6 +1,7 @@
 package com.techlab.store.security;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -50,7 +51,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     = (UsernamePasswordAuthenticationToken) jwtService.getAuthentication(token);
 
                     Date expiration = jwtService.extractExpiration(token);
-                    auth.setDetails(expiration);
+                    Long expirationMillis = expiration.getTime();
+
+                    auth.setDetails(expirationMillis);
 
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }

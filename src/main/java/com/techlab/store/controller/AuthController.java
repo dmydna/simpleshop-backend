@@ -60,19 +60,24 @@ public class AuthController {
                 .map(GrantedAuthority::getAuthority)
                 .orElse("CLIENT");
 
-        Instant expiresAt = null;
-        if (authentication.getDetails() instanceof Date exp) {
-            expiresAt = exp.toInstant();
-        }
 
-        return ResponseEntity.ok(new UserResponse(username, role, expiresAt));
+        Long  expiresAtMillis = null;
+        if (authentication.getDetails() instanceof Long millis) {
+             expiresAtMillis = millis;
+        }
+        // Instant expiresAt = null;
+        // if (authentication.getDetails() instanceof Date date) {
+        //    expiresAt = date.getTime();
+        // }
+
+        return ResponseEntity.ok(new UserResponse(username, role, expiresAtMillis));
     }
 
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        User newUser = authService.register(request);
-        return ResponseEntity.ok("Usuario registrado exitosamente con ID: " + newUser.getId());
+        authService.register(request);
+        return ResponseEntity.ok().build();
     }
 
 
