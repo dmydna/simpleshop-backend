@@ -20,9 +20,6 @@ import jakarta.persistence.Table;
 @Table(name = "FAVORITES")
 public class Favorite extends BaseEntity {
 
-    @Column(unique = true, nullable = false, updatable = false)
-    private String hash;
-
     // Relations
     @ManyToOne
     @JoinColumn(name = "user_id")

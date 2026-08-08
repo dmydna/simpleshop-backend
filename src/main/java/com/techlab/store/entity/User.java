@@ -30,10 +30,7 @@ import lombok.Setter;
 @Setter
 @Table(name = "USERS")
 public class User extends BaseEntity {
-
-    @Column(name = "hash", nullable = false, unique = true, updatable = false)
-    private String hash;
-
+    
     // Status
     @Enumerated(EnumType.STRING)
     private UserStatus status = UserStatus.ACTIVE;

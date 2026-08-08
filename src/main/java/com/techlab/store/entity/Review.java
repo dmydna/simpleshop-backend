@@ -26,9 +26,6 @@ import java.time.LocalDateTime;
 @Table(name = "REVIEWS")
 public class Review extends BaseEntity {
 
-    @Column(name = "hash", nullable = false, unique = true, updatable = false)
-    private String hash;
-
     // Status
     @Enumerated(EnumType.STRING)
     private ReviewStatus status = ReviewStatus.PENDING;

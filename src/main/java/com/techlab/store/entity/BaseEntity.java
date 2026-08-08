@@ -1,10 +1,7 @@
 package com.techlab.store.entity;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.Column;
@@ -16,7 +13,6 @@ import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 @Getter

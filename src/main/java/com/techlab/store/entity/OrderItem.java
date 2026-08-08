@@ -27,9 +27,6 @@ import lombok.ToString;
 @Table(name = "ORDER_ITEMS")
 public class OrderItem extends BaseEntity {
 
-    @Column(name = "hash", nullable = false, unique = true, updatable = false)
-    private String hash;
-
     // Data (snapshot)
     private int quantity;
     private String thumbnail;

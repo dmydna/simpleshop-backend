@@ -32,9 +32,6 @@ import lombok.Setter;
 @Table(name = "LISTINGS")
 public class Listing extends BaseEntity {
 
-    @Column(unique = true, nullable = false, updatable = false)
-    private String hash;
-
     // Status
     @Enumerated(EnumType.STRING)
     private ListingStatus status = ListingStatus.ACTIVE;

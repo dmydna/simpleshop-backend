@@ -32,9 +32,6 @@ import lombok.ToString;
 @Table(name = "ORDERS")
 public class Order extends BaseEntity {
 
-    @Column(name = "hash", nullable = false, unique = true, updatable = false)
-    private String hash;
-
     // Status
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
