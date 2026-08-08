@@ -1,6 +1,7 @@
 package com.techlab.store.controller;
 
 import java.util.Date;
+import java.util.Map;
 import java.time.Instant;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +41,11 @@ import com.techlab.store.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+// NOTA:
+// - La division en dos entidades User/Client (Profile) es de uso interno (backend)
+//   para frontend es indistinto y se devuelve como un unica entidad final (Usuario).
+// - Usar UserService, ProfileService cuando corresponda.
+
 @Slf4j
 @RequiredArgsConstructor
 @RestController
@@ -51,46 +57,67 @@ public class UserController {
     private final UserMapper userMapper;
     private final ProfileMapper profileMapper;
 
+    // CREATE USER
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<User> create(
+    public ResponseEntity<ProfileDTO> create(
             @RequestPart("user") UserDTO user,
             @RequestPart(value = "file", required = false) MultipartFile file) {
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(userService.create(userMapper.toEntity(user), file));
+        User createdUser = userService.create(userMapper.toEntity(user), file);
+        ProfileDTO response = profileMapper.toDto(createdUser, createdUser.getClient());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    // GET USER
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getById(@PathVariable Long id) {
+    public ResponseEntity<ProfileDTO> getById(@PathVariable Long id) {
         User user = userService.getById(id);
+        return ResponseEntity.ok(profileMapper.toDto(user, user.getClient()));
+    }
+
+    // UNBAN-USER
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PatchMapping("/{id}/unban-user")
+    public ResponseEntity<?> unbanUser(@PathVariable Long id) {
+        userService.unbanUser(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // BAN-USER
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PatchMapping("/{id}/ban-user")
+    public ResponseEntity<?> banUser(
+            @PathVariable Long id,
+            @RequestBody BanRequest request) {
+        userService.banUser(id, request);
+        return ResponseEntity.ok().build();
+    }
+
+    // UPLOAD IMAGE
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PostMapping(value = "/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> upload(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        String url = userService.uploadImage(id, file);
+        return ResponseEntity.ok(url);
+
+    }
+
+    // UPDATE STATUS
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<UserDTO> updateStatus(
+            @PathVariable Long id,
+            @RequestBody  Map<String, UserStatus> request) {
+        User user = userService.updateStatusById(id, request.get("status"));
         UserDTO response = userMapper.toDto(user);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<ProfileDTO> getProfile(Authentication authentication) {
-        return ResponseEntity.ok(profileService.getMyProfile(authentication));
-    }
 
-    @PutMapping("/me")
-    public ResponseEntity<ProfileDTO> updateProfile(
-            Authentication authentication,
-            @RequestBody ProfileDTO dataToEdit
-    ) {
-        return ResponseEntity.ok(profileService
-                .updateMyProfile(authentication, dataToEdit));
-    }
-
-    @PutMapping(value = "me/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> uploadMyProfileImage(
-            Authentication authentication,
-            @RequestParam("file") MultipartFile file
-    ) {
-
-        return ResponseEntity.ok(profileService.updateProfileImage(authentication, file));
-    }
-
-
+    // GET-ALL
     @GetMapping
     public ResponseEntity<Page<UserDTO>> getAll(
             @RequestParam(required = false) String username,
@@ -103,52 +130,40 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/{id}/unban-user")
-    public ResponseEntity<?> unbanUser(@PathVariable Long id) {
-        userService.unbanUser(id);
-        return ResponseEntity.ok().build();
+    /* --------------------------------------------------------- */
+
+    // PROFILE (GET:ME)
+    @GetMapping("/me")
+    public ResponseEntity<ProfileDTO> getProfile(Authentication authentication) {
+        return ResponseEntity.ok(profileService.getMyProfile(authentication));
     }
 
-    @PatchMapping("/{id}/ban-user")
-    public ResponseEntity<?> banUser(
-            @PathVariable Long id,
-            @RequestBody BanRequest request) {
-        userService.banUser(id, request);
-        return ResponseEntity.ok().build();
+    // PROFILE (UPDATE:ME)
+    @PutMapping("/me")
+    public ResponseEntity<ProfileDTO> updateProfile(
+            Authentication authentication,
+            @RequestBody ProfileDTO dataToEdit) {
+        return ResponseEntity.ok(profileService
+                .updateMyProfile(authentication, dataToEdit));
     }
 
-    @PostMapping(value = "/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> upload(
-            @PathVariable Long id,
+    // PROFILE (UPLOAD-IMAGE:ME)
+    @PutMapping(value = "me/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadMyProfileImage(
+            Authentication authentication,
             @RequestParam("file") MultipartFile file) {
-        String url = userService.uploadImage(id, file);
-        return ResponseEntity.ok(url);
 
+        return ResponseEntity.ok(profileService.updateProfileImage(authentication, file));
     }
 
-    @GetMapping("/{id}/profile")
-    public ResponseEntity<ProfileDTO> getProfileById(@PathVariable Long id) {
-        User user = userService.getById(id);
-        return ResponseEntity.ok(profileMapper.toDto(user, user.getClient()));
-    }
-
-    @PutMapping("/{id}/update")
-    public ResponseEntity<UserDTO> updateById(
-            @PathVariable Long id,
-            @RequestBody UserDTO dataToEdit) {
-        User user = userService
-                .updateById(id, userMapper.toEntity(dataToEdit));
-        return ResponseEntity.ok(userMapper.toDto(user));
-    }
-
+    // PROFILE (UPDATE)
     @PreAuthorize("hasAuthority('ADMIN')")
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<UserDTO> updateStatus(
-            @PathVariable Long id,
-            @RequestParam UserStatus status) {
-        User user = userService.updateStatusById(id, status);
-        UserDTO response = userMapper.toDto(user);
-        return ResponseEntity.ok(response);
+    @PutMapping("/{id}")
+    public ResponseEntity<ProfileDTO> update(
+            @PathVariable Long id, @RequestBody ProfileDTO dataToEdit) {
+        return ResponseEntity.ok(profileService
+                .updateProfile(id, dataToEdit));
     }
+
 
 }

@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/profile/favorites")
+@RequestMapping("/api/favorites")
 public class FavoriteController {
 
     private final FavoriteService favoriteService;
@@ -37,8 +37,8 @@ public class FavoriteController {
     @PostMapping("/{listingId}")
     public ResponseEntity<?> create(@PathVariable Long listingId) {
         User user = authService.getUser();
-        return ResponseEntity
-                .ok(favoriteService.create(listingId, user.getId()));
+        Favorite response = favoriteService.create(listingId, user.getId());
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{listingId}")
@@ -46,7 +46,8 @@ public class FavoriteController {
         User user = authService.getUser();
         boolean isAdmin = authService.isAdmin();
         favoriteService.delete(listingId, user.getId(), isAdmin);
-        return ResponseEntity.ok().build();
+        Map<String,String> response = Map.of("message", "Favorito eliminado correctamente");
+        return ResponseEntity.ok(response);
     }
 
 
@@ -54,8 +55,8 @@ public class FavoriteController {
     public ResponseEntity<Favorite> getByListingId(@PathVariable Long listingId) {
         User user = authService.getUser();
         boolean isAdmin = authService.isAdmin();
-        return ResponseEntity.ok
-           (favoriteService.getByListingId(listingId, user.getId(), isAdmin));
+        Favorite response = favoriteService.getByListingId(listingId, user.getId(), isAdmin);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{listingId}/check")
@@ -74,9 +75,7 @@ public class FavoriteController {
             @RequestParam(required = false) Long id,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         User user = authService.getUser();
-        Long filterUserId = authService.isAdmin() 
-          ? (userId != null ? userId : user.getId()) : user.getId();
-        Page<Favorite> filtered = favoriteService.filter(filterUserId, id, pageable);
+        Page<Favorite> filtered = favoriteService.filter(user.getId(), id, pageable);
 
         return ResponseEntity.ok(filtered
             .map(favorite -> listingMapper.toSummaryDto(favorite.getListing())));
