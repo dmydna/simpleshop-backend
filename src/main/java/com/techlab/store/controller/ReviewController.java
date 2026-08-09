@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -51,7 +52,8 @@ public class ReviewController {
     public ResponseEntity<?> deleteById(@PathVariable Long id) {
         User user = authService.getUser();
         reviewService.deleteById(id, user.getUsername());
-        return ResponseEntity.ok().build();
+        Map<String,String> response = Map.of("message", "Review eliminada correctamente");
+        return ResponseEntity.ok(response);
     }
 
 
@@ -66,7 +68,7 @@ public class ReviewController {
 
         Review review = reviewService.getById(id);
         if(review.getUser().getId() != user.getId() && !isAdmin){
-            throw new RuntimeException("No tiene permisos para actualizar Review") ;
+            throw new RuntimeException("No tiene permisos para actualizar esta Review") ;
         }
 
 
@@ -75,8 +77,9 @@ public class ReviewController {
         entity.setComment(data.comment());
         entity.setRating(data.rating());
 
-        reviewService.updateReviewById(id, entity);
-        return ResponseEntity.ok(Map.of("message", "Review actualizada correctamente"));
+        Review updated = reviewService.updateReviewById(id, entity);
+        ReviewDTO response = reviewMapper.toDto(updated);
+        return ResponseEntity.ok(response);
     }
 
 
@@ -85,7 +88,7 @@ public class ReviewController {
         Review entity = reviewService.getById(id);
         User user = authService.getUser();
         if(entity.getUser().getId() != user.getId()){
-            throw new RuntimeException("No tiene permisos para leer esta Review") ; 
+            throw new AccessDeniedException("Usuario no autorizado para acceder a este recurso");   
         }
         ReviewDTO response = reviewMapper.toDto(entity);
         return ResponseEntity.ok(response);
@@ -135,10 +138,11 @@ public class ReviewController {
         Review entity = reviewService.getById(id);
         User user = authService.getUser();
         if(entity.getUser().getId() != user.getId()){
-            throw new RuntimeException("No tiene permisos para leer esta Review") ; 
+            throw new AccessDeniedException("Usuario no autorizado para acceder a este recurso");
         }
         reviewService.updateSatusById(id, ReviewStatus.DELETED);
-        return ResponseEntity.ok().build();
+        Map<String,String> response = Map.of("message", "Review eliminado correctamente");
+        return ResponseEntity.ok(response);
     }
 
 }

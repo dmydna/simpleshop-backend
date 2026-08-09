@@ -18,7 +18,9 @@ import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderItem;
 import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.enums.OrderStatus;
+import com.techlab.store.repository.OrderItemRepository;
 import com.techlab.store.repository.OrderRepository;
+import com.techlab.store.specification.OrderItemSpecifications;
 import com.techlab.store.specification.OrderSpecifications;
 
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class OrderService {
     // CHECKME: mueve logica DTO a Controller y dejar solo entities.
     // TODO elimnar metodos legacy  o no utilizados.
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
     private final InventoryService inventoryService;
     private final ListingService listingService;
     private final PriceService priceService;
@@ -182,6 +185,21 @@ public class OrderService {
         return orderRepository.findAll(spec, pageable);
     }
 
+
+    // Filtrar historial de compras.
+    public Page<OrderItem> filterOrderItems(
+            Long userId,
+            OrderStatus status,
+            Pageable pageable
+    ) {
+        
+        Specification<OrderItem> spec = Specification.allOf(
+            OrderItemSpecifications.hasClientId(userId),
+            OrderItemSpecifications.hasStatus(status)
+        );
+
+        return orderItemRepository.findAll(spec, pageable);
+    }
 
 
     @Transactional(readOnly = true)

@@ -1,10 +1,10 @@
 package com.techlab.store.controller;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,16 +13,15 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -99,7 +98,7 @@ public class ListingController {
         ListingStatus status = entity.getStatus();
         if(!isAdmin && 
           (status.equals(ListingStatus.INACTIVE) || status.equals(ListingStatus.DRAFT) )){
-            throw new RuntimeException("El recurso no disponible para cliente");
+            throw new AccessDeniedException("Usuario no autorizado para acceder a este recurso");
         }
          Map<String, Object> response = new HashMap<>();
         
@@ -202,8 +201,8 @@ public class ListingController {
     ) {
         listingService.removeImageFromListing(id, imageUrl);
 
-        Map<String,String> responseMSG = Map.of("message", "Imagen eliminada correctamente");
-        return ResponseEntity.ok(responseMSG);
+        Map<String,String> response = Map.of("message", "Imagen eliminada correctamente");
+        return ResponseEntity.ok(response);
     }
 
 
@@ -212,8 +211,8 @@ public class ListingController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<ListingDTO> updateStatus( 
         @PathVariable Long id, 
-        @RequestParam ListingStatus status) {
-        Listing listing = listingService.updateStatusById(id, status);
+        @RequestBody  Map<String, ListingStatus> request) {
+        Listing listing = listingService.updateStatusById(id, request.get("status"));
         ListingDTO response = listingMapper.toDto(listing);
         return ResponseEntity.ok(response);
     }

@@ -38,6 +38,7 @@ public interface OrderMapper {
     OrderSummary toSummaryDto(Order order);
 
 
+
     @Mapping(target = "orderId", source = "order.id")
     @Mapping(target = "listingId", source = "listing.id")
     @Mapping(target = "productId", source = "listing.product.id")
@@ -60,7 +61,7 @@ public interface OrderMapper {
 
     // Al compilar, MapStruct buscará un método que convierta OrderItemDto -> OrderItem
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "client", ignore = true)
+    @Mapping(target = "client", source = "client")
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "failedItems", ignore = true)
     @Mapping(target = "createdAt", ignore = true)

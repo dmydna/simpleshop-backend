@@ -1,15 +1,14 @@
 package com.techlab.store.controller;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import org.springframework.security.access.AccessDeniedException;
-
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,11 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-
-import org.springframework.security.access.prepost.PreAuthorize;
-
-import com.techlab.store.enums.OrderStatus;
-import com.techlab.store.dto.ClientDTO;
 import com.techlab.store.dto.CreateOrderDTO;
 import com.techlab.store.dto.OrderComplete;
 import com.techlab.store.dto.OrderItemDto;
@@ -34,19 +28,21 @@ import com.techlab.store.entity.Client;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderItem;
 import com.techlab.store.entity.User;
+import com.techlab.store.enums.OrderStatus;
+import com.techlab.store.enums.Role;
 import com.techlab.store.mapper.OrderMapper;
 import com.techlab.store.service.AuthService;
 import com.techlab.store.service.ClientService;
 import com.techlab.store.service.OrderService;
 import com.techlab.store.service.ProfileService;
-import lombok.extern.slf4j.Slf4j;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/orders")// Endpoint base
+@RequestMapping("/api/orders") // Endpoint base
 public class OrderController {
 
     private final OrderService orderService;
@@ -58,32 +54,34 @@ public class OrderController {
     // CHECKME: cambio input a CreateOrderDTO
     @PostMapping
     public ResponseEntity<?> createOrder(
-            Authentication authentication,
-            @RequestParam(required = false) Long clientId,
-            @RequestBody CreateOrderDTO dto
-            ) {
-        Client client;
-        if(authService.isAdmin() && clientId != null){
-            client = clientService.getById(clientId);
-        }else{
-            client = profileService.getMyClient(authentication);
-        } 
-        System.out.println("creteate order dto: " + dto);
+            @PathVariable Long clientId,
+            @RequestBody CreateOrderDTO dto) {
+        Client client = clientService.getById(clientId);
         Order entity = orderMapper.toEntity(dto, client);
         Order savedOrder = orderService.createOrder(entity);
         return ResponseEntity.ok(new OrderResponse(
                 savedOrder.getId(),
-                orderMapper.toItemDtoList(savedOrder.getFailedItems())
-        ));
+                orderMapper.toItemDtoList(savedOrder.getFailedItems())));
+    }
+
+
+    @PostMapping("/me")
+    public ResponseEntity<?> createMyOrder(@RequestBody CreateOrderDTO dto) {
+        User user = authService.getUser();
+        Order entity = orderMapper.toEntity(dto, user.getClient());
+        entity.setClient(user.getClient());
+        Order savedOrder = orderService.createOrder(entity);
+        return ResponseEntity.ok(new OrderResponse(
+                savedOrder.getId(),
+                orderMapper.toItemDtoList(savedOrder.getFailedItems())));
     }
 
 
     @GetMapping
     public ResponseEntity<Page<OrderSummary>> getAll(
-        @RequestParam(required = false) Long userId, // userId = clientId
-        @RequestParam(required = false) OrderStatus status,
-        @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
-    ) {
+            @RequestParam(required = false) Long userId, // userId = clientId
+            @RequestParam(required = false) OrderStatus status,
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         if (!authService.isAdmin()) {
             throw new AccessDeniedException("Acceso restringido: no tienes permisos para esta acción");
         }
@@ -93,26 +91,10 @@ public class OrderController {
 
     @GetMapping("/me")
     public ResponseEntity<Page<OrderSummary>> getOrders(
-        @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
-    ) {
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         User user = authService.getUser();
         Page<Order> filtered = orderService.filter(user.getId(), OrderStatus.PAID, pageable);
         return ResponseEntity.ok(filtered.map(order -> orderMapper.toSummaryDto(order)));
-    }
-
-    @PostMapping("/me")
-    public ResponseEntity<?> createOrder(
-            Authentication authentication,
-            @RequestBody CreateOrderDTO dto
-            ) {
-        Client client = profileService.getMyClient(authentication);
-        log.info("creteate order dto: " + dto);
-        Order entity = orderMapper.toEntity(dto, client);
-        Order savedOrder = orderService.createOrder(entity);
-        return ResponseEntity.ok(new OrderResponse(
-                savedOrder.getId(),
-                orderMapper.toItemDtoList(savedOrder.getFailedItems())
-        ));
     }
 
 
@@ -120,31 +102,28 @@ public class OrderController {
     public ResponseEntity<OrderComplete> getByHash(@PathVariable Long id) {
         User user = authService.getUser();
         Order order = orderService.getById(id);
-        if(!order.getClient().getId().equals(user.getId())){
+        if (!order.getClient().getId().equals(user.getId())) {
             throw new AccessDeniedException("Usuario no autorizado para acceder a este recurso");
         }
         OrderComplete response = orderMapper.toFullDto(order);
         return ResponseEntity.ok(response);
     }
 
-
     @PutMapping("/me/cancel")
     public ResponseEntity<?> cancelMe(
-        @RequestParam(required = false) Long orderId
-    ) {
+            @RequestParam(required = false) Long orderId) {
         User user = authService.getUser();
         boolean success;
-        if(orderId == null){
+        if (orderId == null) {
             success = orderService.cancelLastUserOrder(user.getId());
-        }else{
+        } else {
             success = this.orderService.cancelOrderById(orderId);
         }
 
-        if (success) return ResponseEntity.ok().build(); // 200 OK 
+        if (success)
+            return ResponseEntity.ok().build(); // 200 OK
         return ResponseEntity.badRequest().build();
     }
-
-
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/{id}")
@@ -154,23 +133,42 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
-
     @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/{id}/cancel")
     public ResponseEntity<?> cancelById(@PathVariable Long id) {
         boolean success = this.orderService.cancelOrderById(id);
-        if (success) return ResponseEntity.ok().build(); // 200 OK 
+        if (success)
+            return ResponseEntity.ok().build(); // 200 OK
         return ResponseEntity.badRequest().build();
     }
-
-
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/{id}/status")
     public OrderComplete updateStatus(
             @PathVariable Long id,
-            @RequestParam OrderStatus newStatus) {
-        Order entity = orderService.updateStatus(id, newStatus);
+            @RequestBody  Map<String, OrderStatus> request) {
+        Order entity = orderService.updateStatus(id, request.get("status"));
         return orderMapper.toFullDto(entity);
+    }
+
+
+    @GetMapping("/me/history")
+    public ResponseEntity<Page<OrderItemDto>> getOrderItems(
+        Authentication authentication,
+        @RequestParam(required = false) Long userId, // userId = clientId
+        @RequestParam(required = false, defaultValue = "PAID") OrderStatus status,
+        @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        Page<OrderItem> filtered;
+        User user = authService.getUser();
+        if (user.getRole().equals(Role.ADMIN) ) {
+            // Si admin no envia una id se usa la propia.
+            long id = userId != null ? userId : user.getId();
+            log.info("🔔 ADMIN obtiene compras de userId: {}...",id);
+            filtered = orderService.filterOrderItems(user.getId(), status, pageable);
+        }else{
+            filtered = orderService.filterOrderItems(user.getId(), OrderStatus.PAID, pageable);
+        }
+        return ResponseEntity.ok(filtered.map(item -> orderMapper.toItemDto(item)));
     }
 }
