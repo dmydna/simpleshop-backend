@@ -30,6 +30,9 @@ public class Client extends AuditableEntity{
     private String lastName;
     private String address;
     private String phone;
+    private String city;
+    private String state;
+    private Integer zipCode;
 
     // Relations
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)

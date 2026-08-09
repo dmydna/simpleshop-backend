@@ -7,10 +7,13 @@ public record ProfileDTO(
         String username,
         String image,
         String role,
-        UserMeta meta,
         String email,
         String firstName,
         String lastName,
         String address,
-        String phone
+        String city,
+        String state,
+        Integer zipCode,
+        String phone,
+        UserMeta meta
 ) { }
