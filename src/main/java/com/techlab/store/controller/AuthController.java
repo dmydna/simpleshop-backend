@@ -1,9 +1,6 @@
 package com.techlab.store.controller;
 
-import java.time.Instant;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import static com.techlab.store.security.SecurityConstants.COOKIE_EXPIRATION_IN_MS;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -14,23 +11,19 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import static com.techlab.store.security.SecurityConstants.*;
 
-import com.techlab.store.entity.User;
+import com.techlab.store.dto.AuthResponse;
+import com.techlab.store.dto.EmailChangeRequest;
+import com.techlab.store.dto.LoginRequest;
+import com.techlab.store.dto.PasswordChangeRequest;
+import com.techlab.store.dto.RegisterRequest;
+import com.techlab.store.dto.UserResponse;
 import com.techlab.store.security.CookieUtils;
 import com.techlab.store.service.AuthService;
 
 import jakarta.servlet.http.HttpServletResponse;
-
-import com.techlab.store.dto.AuthResponse;
-import com.techlab.store.dto.LoginRequest;
-import com.techlab.store.dto.RegisterRequest;
-import com.techlab.store.dto.UserResponse;
-import com.techlab.store.dto.PasswordChangeRequest;
-
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -89,8 +82,21 @@ public class AuthController {
         String username = authentication.getName(); 
         authService.changePasswordByUsername(username, request);
     
-        return ResponseEntity.ok("Contraseña actualizada correctamente");
+        return ResponseEntity.ok().build();
     }
+
+
+    @PostMapping("/change-email")
+    public ResponseEntity<?> changeEmail(
+            Authentication authentication, 
+            @RequestBody EmailChangeRequest request) {
+    
+        String username = authentication.getName(); 
+        authService.changeUserEmail(username, request);
+    
+        return ResponseEntity.ok().build();
+    }
+
 
 
     @PostMapping("/logout")

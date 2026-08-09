@@ -14,11 +14,13 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.techlab.store.dto.AuthResponse;
+import com.techlab.store.dto.EmailChangeRequest;
 import com.techlab.store.dto.LoginRequest;
 import com.techlab.store.dto.PasswordChangeRequest;
 import com.techlab.store.dto.RegisterRequest;
 import com.techlab.store.entity.User;
 import com.techlab.store.security.JwtTokenProvider;
+import com.techlab.store.utils.StringUtils;
 
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +41,7 @@ public class AuthService {
     public AuthResponse login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                    loginRequest.username(), 
+                    usermailToUsername(loginRequest.username()), 
                     loginRequest.password()
                 )
         );
@@ -90,9 +92,9 @@ public class AuthService {
             return false;
         }
         // Normalizamos el rol: si nos pasan "ADMIN", lo convertimos en "ROLE_ADMIN"
-        String roleWithPrefix = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+        // String roleWithPrefix = role.startsWith("ROLE_") ? role : "ROLE_" + role;
         return auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(roleWithPrefix));
+                .anyMatch(a -> a.getAuthority().equals(role));
     }
 
     public boolean isAdmin() {
@@ -149,6 +151,20 @@ public class AuthService {
         userService.changePassword(username, request.oldPassword(), request.newPassword());
     }
 
+
+    // Obtiene username si es mail o devuelve username
+    public String usermailToUsername(String userOrEmail){
+        String username = userOrEmail;
+        if(StringUtils.isEmail(userOrEmail) ){
+            username = userService
+                .findUsernameByEmail(userOrEmail);
+        }
+        return username;
+    }
+
+    public void changeUserEmail(String username, EmailChangeRequest request){
+        userService.changeEmail(username, request.password(), request.newEmail());
+    }   
 
 
 }

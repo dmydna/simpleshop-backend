@@ -15,6 +15,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User>
@@ -22,11 +24,18 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Page<User> findByUsernameContainingIgnoreCase(String username, Pageable pageable);
     Page<User>  findByEmailContainingIgnoreCase(String email, Pageable pageable);
     Page<User> findAll(Pageable pageable);
+
     Optional<User> findByEmail(String email);
+
+    @Query("SELECT u.username FROM User u WHERE u.email = :email")
+    Optional<String> findUsernameByEmail(@Param("email") String email);
 
     List<User> findByUsernameIn(Set<String> usernames);
 
     Optional<User> findByUsername(String name);
+
+    boolean existsByEmail(String email);
+
     boolean existsByUsername(String username);
 
     @EntityGraph(attributePaths = {"client"}) // opcional

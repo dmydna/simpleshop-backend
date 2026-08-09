@@ -52,6 +52,12 @@ public class UserService {
     }
 
 
+    public String findUsernameByEmail(String email){
+        String user = userRepository.findUsernameByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Username no encontrado"));
+        return user; 
+    }
+
     public User create(RegisterRequest request){
         if (userRepository.existsByUsername(request.username())) {
             throw new RuntimeException("El nombre de usuario ya está en uso");
@@ -193,6 +199,24 @@ public class UserService {
 
         user.setStatus(status);
         return user;
+    }
+
+
+    public void changeEmail(String username, String password, String newEmail) {
+        // 1. Buscar usuario (Datos)
+        User user = findByUsername(username);
+        // 2. Validar contraseña antigua (Negocio/Seguridad)
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new BadCredentialsException("Contraseña es incorrecta");
+        }
+        if (userRepository.existsByEmail(newEmail)){
+            throw new RuntimeException("el email " + newEmail + " no esta disponible");
+        }
+
+        user.setEmail(newEmail);
+
+        log.info("✅ El mail del usuario con id {} fue actualizada con exito...", user.getId());
+        userRepository.save(user);
     }
 
 
