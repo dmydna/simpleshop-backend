@@ -36,6 +36,7 @@ import com.techlab.store.entity.Listing;
 import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.mapper.ListingMapper;
 import com.techlab.store.service.AuthService;
+import com.techlab.store.service.HashidService;
 import com.techlab.store.service.ListingService;
 
 import lombok.RequiredArgsConstructor;
@@ -58,6 +59,8 @@ public class ListingController {
     private final ListingService listingService;
     private final ListingMapper listingMapper;
     private final AuthService authService;
+    private final HashidService hashidService;
+
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -67,7 +70,7 @@ public class ListingController {
     @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ListingDTO> create(
-        @RequestPart("listing") CreateListingDTO dto,
+        @RequestPart("data") CreateListingDTO dto,
         @RequestPart(value = "files", required = false) MultipartFile[] files
     ) {
         Listing entity = listingMapper.toEntity(dto);
@@ -78,23 +81,24 @@ public class ListingController {
 
     // GET
     @PreAuthorize("hasAuthority('ADMIN')")
-    @GetMapping("/{id}")
-    public ResponseEntity<ListingDTO> getById(@PathVariable Long id){
+    @GetMapping("/{hash}")
+    public ResponseEntity<ListingDTO> getById(@PathVariable String hash){
+        Long id = hashidService.decode(hash);
         Listing entity = listingService.getById(id);
         ListingDTO response = listingMapper.toDto(entity);
         return ResponseEntity.ok(response);
     }
 
     // GET
-    // NOTA: probablemente la busqueda por hash deberia ser 
-    // solo publico y por id para admin
-    @GetMapping("/hash/{hash}")
+    @GetMapping("/public/{hash}")
     public ResponseEntity<Map<String, Object>> getByHash(
         @RequestParam(required = false, defaultValue = "false") Boolean fallow,
+        @RequestParam(required = false, defaultValue = "4") Integer limitReviews,
         @PathVariable String hash
     ){
+        Long id = hashidService.decode(hash);
         boolean isAdmin = authService.isAuthUserAdmin(); 
-        Listing entity = listingService.getByHash(hash);
+        Listing entity = listingService.getPublicListingById(id, limitReviews);
         ListingStatus status = entity.getStatus();
         if(!isAdmin && 
           (status.equals(ListingStatus.INACTIVE) || status.equals(ListingStatus.DRAFT) )){
@@ -108,10 +112,11 @@ public class ListingController {
         }else {
             log.info("🔔 GET normal listing...");
             response.put("listing", listingMapper.toDto(entity));
-            if(fallow) listingService.IncVisits(hash);
+            if(fallow) listingService.IncVisits(id);
         }
          return ResponseEntity.ok(response);
     }
+
 
     // GET ALL
     @GetMapping
@@ -122,7 +127,7 @@ public class ListingController {
         @RequestParam(required = false) BigDecimal minPrice,
         @RequestParam(required = false) BigDecimal maxPrice,
         @RequestParam(required = false) ListingStatus status,
-        @RequestParam(required = false) String availability,
+        @RequestParam(required = false) String availabilityStatus,
         @RequestParam(required = false, defaultValue = "false") Boolean includeTags,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
@@ -130,7 +135,7 @@ public class ListingController {
         boolean isAdmin = authService.isAuthUserAdmin(); 
         ListingStatus filterStatus = isAdmin ? status : ListingStatus.ACTIVE;
         Page<Listing> filtered = listingService
-             .filter(title, category, tags, minPrice, maxPrice, filterStatus, availability, pageable);
+             .filter(title, category, tags, minPrice, maxPrice, filterStatus, availabilityStatus, pageable);
         
         if(includeTags){
             return ResponseEntity
@@ -143,12 +148,13 @@ public class ListingController {
 
     // UPDATE
     @PreAuthorize("hasAuthority('ADMIN')")
-    @PutMapping(value="/{id}", consumes = {"multipart/form-data"})
+    @PutMapping(value="/{hash}", consumes = {"multipart/form-data"})
     public ResponseEntity<ListingSummary> updateById(
-        @PathVariable Long id,
+        @PathVariable String hash,
         @RequestPart("data") UpdateListingDTO dataToEdit, // Cambiado de @RequestBody
         @RequestPart(value = "files", required = false) MultipartFile[] files) {
 
+        Long id = hashidService.decode(hash);
         log.info("🔔 { path: api/listings/{}, method: PUT, sku {}, stock {} }", id, dataToEdit.sku(), dataToEdit.stock());
 
         Listing entity = listingMapper.toEntity(dataToEdit);
@@ -160,8 +166,10 @@ public class ListingController {
 
     // DELETE
     @PreAuthorize("hasAuthority('ADMIN')")
-    @DeleteMapping("/{id}")
-    public  ResponseEntity<?>  deleteById(@PathVariable Long id){
+    @DeleteMapping("/{hash}")
+    public  ResponseEntity<?>  deleteById(@PathVariable String hash){
+
+        Long id = hashidService.decode(hash);
         listingService.deleteById(id);
 
         Map<String,String> responseMSG = Map.of("message", "Listing eliminado correctamente");
@@ -171,22 +179,24 @@ public class ListingController {
 
     // UPLOAD IMAGE
     @PreAuthorize("hasAuthority('ADMIN')")
-    @PostMapping("/{id}/upload-single")
+    @PostMapping("/{hash}/upload-single")
     public ResponseEntity<?> uploadSingle(
-        @PathVariable Long id, 
+        @PathVariable String hash, 
         @RequestParam("file") MultipartFile file) 
     {
+        Long id = hashidService.decode(hash);
         String url = listingService.addSingleImage(id, file);
         return ResponseEntity.ok(url);
     }
 
     // UPLOAD IMAGES
     @PreAuthorize("hasAuthority('ADMIN')")
-    @PostMapping("/{id}/upload-multiple")
+    @PostMapping("/{hash}/upload-multiple")
     public ResponseEntity<?> uploadMultiple(
-        @PathVariable Long id, 
+        @PathVariable String hash, 
         @RequestParam("files") MultipartFile[] files) 
     {
+        Long id = hashidService.decode(hash);
         List<String> urls = listingService.addMultiImages(id, files);
         return ResponseEntity.ok(urls);
     }
@@ -194,11 +204,12 @@ public class ListingController {
 
     // DELETE IMAGE
     @PreAuthorize("hasAuthority('ADMIN')")
-    @DeleteMapping("/{id}/images")
+    @DeleteMapping("/{hash}/images")
     public ResponseEntity<?> deleteImage(
-        @PathVariable Long id,
+        @PathVariable String hash,
         @RequestParam String imageUrl // El front envía la URL completa de la imagen a borrar
     ) {
+        Long id = hashidService.decode(hash);
         listingService.removeImageFromListing(id, imageUrl);
 
         Map<String,String> response = Map.of("message", "Imagen eliminada correctamente");
@@ -208,10 +219,11 @@ public class ListingController {
 
     // UPDATE STATUS
     @PreAuthorize("hasAuthority('ADMIN')")
-    @PatchMapping("/{id}/status")
+    @PatchMapping("/{hash}/status")
     public ResponseEntity<ListingDTO> updateStatus( 
-        @PathVariable Long id, 
+        @PathVariable String hash, 
         @RequestBody  Map<String, ListingStatus> request) {
+        Long id = hashidService.decode(hash);
         Listing listing = listingService.updateStatusById(id, request.get("status"));
         ListingDTO response = listingMapper.toDto(listing);
         return ResponseEntity.ok(response);

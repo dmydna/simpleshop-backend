@@ -14,36 +14,37 @@ import com.techlab.store.dto.OrderSummary;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.Order;
 import com.techlab.store.entity.OrderItem;
+import com.techlab.store.service.HashidService;
 
 
 @Mapper(
     componentModel = "spring", 
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, 
-    uses = {OrderMappingHelper.class})
+    uses = {OrderMappingHelper.class, HashidService.class})
 public interface OrderMapper {
 
     // --- ENTITY -> DTO ---
+    @Mapping(source = "id", target = "id", qualifiedByName = "encodeId") 
     @Mapping(target = "meta.createdAt", source = "createdAt")
     @Mapping(target = "meta.updatedAt", source = "updatedAt")
     @Mapping(target = "meta.deletedAt", source = "deletedAt")
-    @Mapping(target = "totalQuantity", source = "items", 
-    qualifiedByName = "calculateTotalQuantity")
+    @Mapping(target = "totalQuantity", source = "items", qualifiedByName = "calculateTotalQuantity")
     OrderComplete toFullDto(Order entity);
 
+    @Mapping(source = "id", target = "id", qualifiedByName = "encodeId") 
     @Mapping(target = "meta.createdAt", source = "createdAt")
     @Mapping(target = "meta.updatedAt", source = "updatedAt")
     @Mapping(target = "meta.deletedAt", source = "deletedAt")
-    @Mapping(target = "totalQuantity",  source = "items", 
-    qualifiedByName = "calculateTotalQuantity")
+    @Mapping(target = "totalQuantity",  source = "items", qualifiedByName = "calculateTotalQuantity")
     OrderSummary toSummaryDto(Order order);
 
 
 
-    @Mapping(target = "orderId", source = "order.id")
-    @Mapping(target = "listingId", source = "listing.id")
-    @Mapping(target = "productId", source = "listing.product.id")
+    @Mapping(target = "orderId", source = "order.id", qualifiedByName = "encodeId")
+    @Mapping(target = "listingId", source = "listing.id", qualifiedByName = "encodeId")
+    @Mapping(target = "productId", source = "listing.product.id", qualifiedByName = "encodeId")
+    @Mapping(target = "reviewId", source = "review.id", qualifiedByName = "encodeId")
     @Mapping(target = "discountPercentageAtPurchase", source="discountPercentageAtPurchase")
-    @Mapping(target = "reviewId", source = "review.id")
     @Mapping(target = "rating", source = "review.rating")
     @Mapping(target = "name", source = "listing.product.name")
     @Mapping(target = "thumbnail", source = "listing.thumbnail")
@@ -71,7 +72,7 @@ public interface OrderMapper {
 
     // Al llamarse igual que el tipo de la lista, MapStruct lo asocia automáticamente
     @Mapping(target = "order", ignore = true)
-    @Mapping(target = "listing.id", source = "listingId")
+    @Mapping(target = "listing.id", source = "listingId", qualifiedByName = "decodeId")
     @Mapping(target = "priceAtPurchase", source = "priceAtPurchase")
     @Mapping(target = "quantity", source = "quantity")
     OrderItem toOrderItem(OrderItemDto dto);

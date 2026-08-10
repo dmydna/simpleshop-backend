@@ -21,6 +21,7 @@ import com.techlab.store.enums.OrderStatus;
 import com.techlab.store.enums.Role;
 import com.techlab.store.mapper.OrderMapper;
 import com.techlab.store.service.BuyService;
+import com.techlab.store.service.HashidService;
 import com.techlab.store.service.ProfileService;
 
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class BuyController {
     private final BuyService buyService;
     private final ProfileService profileService;
     private final OrderMapper orderMapper; 
+    private final HashidService hashidService;
 
 
     @PostMapping
@@ -48,7 +50,7 @@ public class BuyController {
         User user = profileService.getMyUser(authentication);
         boolean success = buyService
             .confirmPayment(
-                request.orderId(), 
+                hashidService.decode(request.orderId()), 
                 request.paymentToken(), 
                 user.getEmail()
             );

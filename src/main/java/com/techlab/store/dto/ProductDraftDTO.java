@@ -6,7 +6,7 @@ import java.util.List;
 
 
 public record ProductDraftDTO(
-    Long id,
+    String id,
     String name,
     String sku,
     String brand,

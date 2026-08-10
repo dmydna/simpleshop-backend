@@ -25,9 +25,9 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
 
     Page<Listing> findAllByDeletedAtIsNull(Pageable pageable);
 
-    // Filtra no eliminados.
-    @Query("SELECT l FROM Listing l WHERE l.hash = :hash AND l.deletedAt IS NULL")
-    Optional<Listing> findActiveByHash(@Param("hash") String hash);
+    // FIXME: metodo deprecado
+    @Query("SELECT l FROM Listing l WHERE l.id = :hash AND l.deletedAt IS NULL")
+    Optional<Listing> findActiveByHash(@Param("hash") Long hash);
 
     @Query("SELECT l FROM Listing l WHERE l.id = :id AND l.status = 'DRAFT' ")
     Optional<Listing> findDraftById(@Param("id") Long id);

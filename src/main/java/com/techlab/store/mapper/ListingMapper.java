@@ -18,15 +18,17 @@ import com.techlab.store.dto.UpdateListingDTO;
 import com.techlab.store.entity.Listing;
 import com.techlab.store.entity.Product;
 import com.techlab.store.entity.Review;
+import com.techlab.store.service.HashidService;
 
 
 
 @Mapper(
     componentModel = "spring", 
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, 
-    uses = { ListingMappingHelper.class } )     
+    uses = { ListingMappingHelper.class, HashidService.class } )     
 public interface ListingMapper {
 
+    @Mapping(source = "id", target = "id", qualifiedByName = "encodeId")  
     @Mapping(target = "sku", expression = "java(listing.getProduct() != null ? listing.getProduct().getSku() : null)")
     @Mapping(source = "product.tags", target = "tags")
     @Mapping(source = "product.rating", target = "rating")
@@ -37,10 +39,12 @@ public interface ListingMapper {
     @Mapping(source = "status", target = "meta.status", qualifiedByName = "statusToString")
     ListingDraftDTO toDraftDto(Listing listing);
 
+ 
+    @Mapping(source = "id", target = "id", qualifiedByName = "encodeId")  
     @Mapping(source = "product.dimensions.width",  target = "dimensions.width") 
     @Mapping(source = "product.dimensions.height", target = "dimensions.height") 
     @Mapping(source = "product.dimensions.depth",  target = "dimensions.depth") 
-    @Mapping(source = "product.id", target = "productId")
+    @Mapping(source = "product.id", target = "productId", qualifiedByName = "encodeId")
     @Mapping(source = "product.name", target = "productName")
     @Mapping(source = "product.brand", target = "brand")
     @Mapping(source = "product.sku", target = "sku")
@@ -57,6 +61,7 @@ public interface ListingMapper {
     ListingDTO toDto(Listing listing);
 
 
+    @Mapping(source = "id", target = "id", qualifiedByName = "encodeId")  
     @Mapping(source = "createdAt", target = "meta.createdAt")
     @Mapping(source = "updatedAt", target = "meta.updatedAt")
     @Mapping(source = "deletedAt", target = "meta.deletedAt")
@@ -65,6 +70,7 @@ public interface ListingMapper {
     @Mapping(source = "product.tags", target = "tags")
     ListingSummary toSummaryDto(Listing listing);
 
+    @Mapping(source = "id", target = "id", qualifiedByName = "encodeId") 
     @Mapping(source = "product.tags", target = "tags")
     @Mapping(source = "createdAt", target = "meta.createdAt")
     @Mapping(source = "updatedAt", target = "meta.updatedAt")
@@ -74,6 +80,8 @@ public interface ListingMapper {
     ListingSummary toSummaryFull(Listing listing);
 
 
+
+    @Mapping(source = "id", target = "id", qualifiedByName = "encodeId") 
     @Mapping(source = "user.username", target = "username")
     @Mapping(source = "user.image", target = "userPic")
     @Mapping(source = "product.id", target = "productId")
@@ -83,6 +91,7 @@ public interface ListingMapper {
     ReviewDTO ReviewToDto(Review entity);
 
     @InheritInverseConfiguration(name = "toDto") 
+    @Mapping(source = "id", target = "id", qualifiedByName = "decodeId")  
     @Mapping(source = "meta.status", target = "status", qualifiedByName = "stringToStatus")
     @Mapping(source = "dto", target = "product")
     @Mapping(target = "visits", ignore = true)
@@ -133,7 +142,6 @@ public interface ListingMapper {
     @Mapping(target = "minimumOrderQuantity", ignore = true)
     @Mapping(target = "images", ignore = true)
     @Mapping(target = "thumbnail", ignore = true)
-    @Mapping(target = "hash", ignore = true)
     @Mapping(target = "stock", ignore = true)    
     ListingDTO productToDto(Product product);
 
@@ -177,7 +185,6 @@ public interface ListingMapper {
     @Mapping(target = "stock", ignore = true)
     @Mapping(target = "visits", ignore = true)
     @Mapping(target = "availabilityStatus", ignore = true)
-    @Mapping(target = "hash", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -188,7 +195,6 @@ public interface ListingMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "visits", ignore = true)
     @Mapping(target = "availabilityStatus", ignore = true)
-    @Mapping(target = "hash", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "createdAt", ignore = true)

@@ -3,7 +3,7 @@ import java.util.List;
 
 
 public record ClientFullDTO (
-    Long id,
+    String id,
     // user
     String username,
     String email,

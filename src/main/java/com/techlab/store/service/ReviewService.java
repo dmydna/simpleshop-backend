@@ -41,6 +41,7 @@ public class ReviewService {
     private final ListingRepository listingRepository;
     private final ReviewMapper reviewMapper;
     private final UserRepository userRepository;
+    private final HashidService hashidService;
 
 
     @Transactional
@@ -133,8 +134,8 @@ public class ReviewService {
            log.warn("Review request (id: {}) vencio porque Listing no fue encontrado.", review.getId());
        }
        return new ReviewRequest(
-            review.getId(),
-            listing != null ? listing.getHash() : null,
+            hashidService.encode(review.getId()),
+            listing != null ? hashidService.encode(listing.getId()) : null,
             listing != null ? listing.getTitle() : null,
             listing != null ? listing.getPrice() : null,
             listing != null ? listing.getThumbnail() : null

@@ -3,7 +3,7 @@ package com.techlab.store.dto;
 
 public record ClientDTO(
     // client
-    Long id,
+    String id,
     String firstName,
     String lastName,
     String address,

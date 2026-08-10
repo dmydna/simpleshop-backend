@@ -44,7 +44,7 @@ public class PriceService {
         BigDecimal finalPrice = basePrice.subtract(discountAmount).setScale(2, RoundingMode.HALF_UP);
 
         return new DiscountResult(basePrice, discountPercent, discountAmount, finalPrice);
-    }
+    }																																																																																																																																																																																																																																																																		
 
     public BigDecimal getFinalPrice(Listing listing){
         if(listing == null){

@@ -4,11 +4,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record OrderItemDto (
-    Long id,
-    Long orderId,
-    Long listingId,
-    Long productId,
-    Long reviewId,
+    String id,
+    String orderId,
+    String listingId,
+    String productId,
+    String reviewId,
     Double rating,
     String thumbnail,
     String name,

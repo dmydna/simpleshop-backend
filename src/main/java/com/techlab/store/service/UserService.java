@@ -2,33 +2,29 @@ package com.techlab.store.service;
 
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-
-import com.techlab.store.dto.RegisterRequest;
 import com.techlab.store.dto.BanRequest;
-import com.techlab.store.dto.UserResponse;
+import com.techlab.store.dto.RegisterRequest;
+import com.techlab.store.dto.UserSummary;
 import com.techlab.store.entity.User;
 import com.techlab.store.enums.Role;
 import com.techlab.store.enums.UserStatus;
-
+import com.techlab.store.exceptions.CustomExceptions.UserHasDeletedException;
 import com.techlab.store.exceptions.CustomExceptions.UserNotFoundException;
-import com.techlab.store.mapper.ProfileMapper;
 import com.techlab.store.mapper.UserMapper;
 import com.techlab.store.repository.UserRepository;
 import com.techlab.store.specification.UserSpecifications;
-import com.techlab.store.utils.StringUtils;
-import com.techlab.store.exceptions.CustomExceptions.*;
-
-
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,11 +35,8 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
-    private final StringUtils stringUtils;
     private final FileStorageService fileStorageService;
     private final UserMapper userMapper;
-    private final ProfileMapper profileMapper;
-
 
     public User create(User user, MultipartFile file){
         log.info("User ingresado: {}", user);
@@ -94,14 +87,23 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User banUser(Long id, BanRequest request){
+    public User banUser(Long id, BanRequest request) {
         User user = getById(id);
+        
+        LocalDateTime currenTime = LocalDateTime.now();
+
         user.setStatus(UserStatus.BANNED);
-        if(request.banExpiresAt().isBefore(LocalDateTime.now())){
-            throw new RuntimeException("La fecha de banneo debe ser posterior a la actual");
-        }
-        user.setBanExpiresAt(request.banExpiresAt());
+        user.setBannedAt(currenTime);
         user.setBanReason(request.banReason());
+        
+        if (Boolean.TRUE.equals(request.isPermanent()) || 
+            Integer.valueOf(-1).equals(request.banDays())) 
+        {
+            user.setBanExpiresAt(null); // Ban Permanente
+        } else {
+            user.setBanExpiresAt(currenTime.plusDays(request.banDays()));
+        }
+        
         return userRepository.save(user);
     }
 
@@ -233,6 +235,12 @@ public class UserService {
 
         log.info("✅ La contrasena del usuario con id {} fue actualizada con exito...", user.getId());
         userRepository.save(user);
+    }
+
+
+    public UserSummary getMeSummary(Authentication authentication) {
+        User user = findByUsername(authentication.getName());
+        return userMapper.toUserSummary(user);
     }
 
 

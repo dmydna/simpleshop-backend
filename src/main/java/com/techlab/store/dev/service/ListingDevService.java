@@ -170,7 +170,6 @@ public class ListingDevService{
             // --- Construir Listing ---
             Listing listing = listingMapper.toEntity(addDomianUrl(dto));
             listing.setProduct(product);
-            listing.setHash(HashUtil.generateShortHash());
             listing.setCreatedAt(LocalDateTime.now());
             listing.setStatus(ListingStatus.ACTIVE);
 
@@ -274,7 +273,6 @@ public class ListingDevService{
             dto.minimumOrderQuantity(),
             images,
             thumbnail,
-            dto.hash(),
             // product
             dto.productId(),
             dto.productName(),

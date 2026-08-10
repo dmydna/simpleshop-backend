@@ -25,6 +25,7 @@ import com.techlab.store.entity.Review;
 import com.techlab.store.entity.User;
 import com.techlab.store.mapper.ReviewMapper;
 import com.techlab.store.service.AuthService;
+import com.techlab.store.service.HashidService;
 import com.techlab.store.service.ReviewService;
 
 import lombok.RequiredArgsConstructor;
@@ -37,19 +38,25 @@ public class ReviewController {
     private final AuthService authService;
     private final ReviewService reviewService;
     private final ReviewMapper reviewMapper;
+    private final HashidService hashidService;
+
     // Crear reseña asociada a un producto
     @PostMapping
     public ResponseEntity<ReviewDTO> create(@RequestBody ReviewDTO review) {
+        Long productId = hashidService.decode(review.productId());
+        Long userId = authService.getUser().getId();
+        Long listingId = hashidService.decode( review.listingId() );
         Review entity = reviewService
-            .create(review.productId(), authService.getUser().getId(), review.listingId());
+            .create( productId, userId, listingId );
         ReviewDTO response = reviewMapper.toDto(entity);
         return ResponseEntity.ok(response);
     }
 
 
     // Borrar reseña por su ID propio
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteById(@PathVariable Long id) {
+    @DeleteMapping("/{hash}")
+    public ResponseEntity<?> deleteById(@PathVariable String hash) {
+        Long id = hashidService.decode(hash);
         User user = authService.getUser();
         reviewService.deleteById(id, user.getUsername());
         Map<String,String> response = Map.of("message", "Review eliminada correctamente");
@@ -58,11 +65,12 @@ public class ReviewController {
 
 
 
-    @PutMapping("/{id}")
+    @PutMapping("/{hash}")
     public ResponseEntity<?> updateReview(
-        @PathVariable Long id, 
+        @PathVariable String hash, 
         @RequestBody UpdateReview data
     ) {
+        Long id = hashidService.decode(hash);
         User user = authService.getUser();
         boolean isAdmin = authService.isAdmin();
 
@@ -70,7 +78,6 @@ public class ReviewController {
         if(review.getUser().getId() != user.getId() && !isAdmin){
             throw new RuntimeException("No tiene permisos para actualizar esta Review") ;
         }
-
 
         Review entity = new Review();
         entity.setStatus(data.status());
@@ -83,8 +90,9 @@ public class ReviewController {
     }
 
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ReviewDTO> getById(@PathVariable Long id){
+    @GetMapping("/{hash}")
+    public ResponseEntity<ReviewDTO> getById(@PathVariable String hash){
+        Long id = hashidService.decode(hash);
         Review entity = reviewService.getById(id);
         User user = authService.getUser();
         if(entity.getUser().getId() != user.getId()){
@@ -118,23 +126,25 @@ public class ReviewController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/requests/{id}")
-    public ResponseEntity<ReviewRequest> getReviewRequest(@PathVariable Long id){
+    @GetMapping("/requests/{hash}")
+    public ResponseEntity<ReviewRequest> getReviewRequest(@PathVariable String hash){
+        Long id = hashidService.decode(hash);
         Review entity = reviewService.getById(id);
         User user = authService.getUser();
         if(entity.getUser().getId() != user.getId()){
             throw new RuntimeException("No tiene permisos para leer esta Review") ; 
         }
         ReviewRequest request = reviewService.getReviewRequest(id);
-        if(request.hash() == null){
+        if(request.id() == null){
            throw new RuntimeException("Review Request (id: "+ request.id() + ") vencido o invalido") ;  
         }
         return ResponseEntity.ok(request);
     }
 
 
-    @DeleteMapping("/requests/{id}")
-    public ResponseEntity<?> deleteReviewRequest(@PathVariable Long id){
+    @DeleteMapping("/requests/{hash}")
+    public ResponseEntity<?> deleteReviewRequest(@PathVariable String hash){
+        Long id = hashidService.decode(hash);
         Review entity = reviewService.getById(id);
         User user = authService.getUser();
         if(entity.getUser().getId() != user.getId()){

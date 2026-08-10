@@ -1,14 +1,20 @@
 package com.techlab.store.service;
 
-
 import lombok.RequiredArgsConstructor;
+
+import com.techlab.store.dto.FieldStats;
 import com.techlab.store.entity.Listing;
+import com.techlab.store.repository.ListingQueries;
+
 import org.springframework.stereotype.Service;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 
 @Service
 @RequiredArgsConstructor
@@ -18,187 +24,72 @@ public class StatisticsService {
 
     // 1. Top Sales (Top N Listing)
     public List<Listing> getTopSales(int limit) {
-        String sql = """
-            SELECT l.*
-            FROM listings l
-            JOIN order_items oi ON l.id = oi.listing_id
-            WHERE l.status = 'ACTIVE'
-            GROUP BY l.id
-            ORDER BY SUM(oi.quantity) DESC
-            LIMIT ?
-            """;
-
-        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Listing.class), limit);
+        return jdbcTemplate.query(
+            ListingQueries.GET_TOP_SALES_SQL, 
+            new BeanPropertyRowMapper<>(ListingQueries.LISTING_CLASS), 
+            limit
+        );
     }
-
 
     // 1. Top Rated (Top N Listing)
     public List<Listing> getTopRated(int limit) {
-        String sql = """
-            SELECT l.*
-            FROM listings l
-            JOIN products p ON l.product_id = p.id
-            WHERE l.status = 'ACTIVE'
-            ORDER BY p.rating DESC
-            LIMIT ?
-            """;
-    
         // Usamos BeanPropertyRowMapper para mapear automáticamente a la entidad Listing
-        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Listing.class), limit);
+        return jdbcTemplate.query(
+            ListingQueries.GET_TOP_RATED_SQL, 
+            new BeanPropertyRowMapper<>(ListingQueries.LISTING_CLASS), 
+            limit
+        );
     }
-
 
     // 1. Top ON-Sale (Top N Listing)
     public List<Listing> getTopOnsale(int limit) {
-        String sql = """
-            SELECT l.*
-            FROM listings l
-            WHERE l.status = 'ACTIVE'
-            ORDER BY l.discount_percentage DESC
-            LIMIT ?
-            """;
-    
-        // Usamos BeanPropertyRowMapper para mapear automáticamente a la entidad Listing
-        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Listing.class), limit);
+        return jdbcTemplate.query(
+            ListingQueries.GET_TOP_ONSALES_SQL, 
+            new BeanPropertyRowMapper<>(ListingQueries.LISTING_CLASS), 
+            limit
+        );
     }
-
-
 
     // 1. Top Visits (Top N Listing)
     public List<Listing> getTopVisit(int limit) {
-        String sql = """
-            SELECT l.*
-            FROM listings l
-            WHERE l.status = 'ACTIVE'
-            ORDER BY l.visits DESC
-            LIMIT ?
-            """;
-    
-        // Usamos BeanPropertyRowMapper para mapear automáticamente a la entidad Listing
-        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Listing.class), limit);
-    }
-
-
-    // 1. Top Tags (Top N)
-    public List<Map<String, Object>> getPopularTags(int limit) {
-        String sql = """
-            SELECT tags, COUNT(*) as count 
-            FROM product_tags 
-            GROUP BY tags 
-            ORDER BY count 
-            DESC LIMIT ?
-            """;
-
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            Map<String, Object> row = new HashMap<>();
-            row.put("name", rs.getString("tags"));
-            row.put("count", rs.getLong("count"));
-            return row;
-        }, limit);
-    }
-
-
-    // 1. Top Listing Status (Top N)
-    public List<Map<String, Object>> getTopListingStatus(int limit) {
-        String sql = """
-            SELECT status, COUNT(*) as count 
-            FROM listings
-            GROUP BY status
-            ORDER BY count 
-            DESC LIMIT ?
-            """;
-
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            Map<String, Object> row = new HashMap<>();
-            row.put("name", rs.getString("status"));
-            row.put("count", rs.getLong("count"));
-            return row;
-        }, limit);
-    }
-
-    // 1. Top User Status (Top N)
-    public List<Map<String, Object>> getTopUserStatus(int limit) {
-        String sql = """
-            SELECT status, COUNT(*) as count 
-            FROM users
-            GROUP BY status
-            ORDER BY count 
-            DESC LIMIT ?
-            """;
-
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            Map<String, Object> row = new HashMap<>();
-            row.put("name", rs.getString("status"));
-            row.put("count", rs.getLong("count"));
-            return row;
-        }, limit);
-    }
-
-
-    // 
-    // 1. Top Product Status (Top N)
-    public List<Map<String, Object>> getTopAvailabilityStatus(int limit) {
-        String sql = """
-            SELECT availability_status, COUNT(*) as count 
-            FROM listings
-            GROUP BY availability_status
-            ORDER BY count 
-            DESC LIMIT ?
-            """;
-
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            Map<String, Object> row = new HashMap<>();
-            row.put("name", rs.getString("availability_status"));
-            row.put("count", rs.getLong("count"));
-            return row;
-        }, limit);
-    }
-
-
-    // 1. Top Product Status (Top N)
-    public List<Map<String, Object>> getTopProductStatus(int limit) {
-        String sql = """
-            SELECT status, COUNT(*) as count 
-            FROM products
-            GROUP BY status
-            ORDER BY count 
-            DESC LIMIT ?
-            """;
-
-        return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            Map<String, Object> row = new HashMap<>();
-            row.put("name", rs.getString("status"));
-            row.put("count", rs.getLong("count"));
-            return row;
-        }, limit);
+        return jdbcTemplate.query(
+            ListingQueries.GET_TOP_VISITS_SQL, 
+            new BeanPropertyRowMapper<>(ListingQueries.LISTING_CLASS)
+            , limit
+        );
     }
 
 
 
-    // 2. Categorías Populares (Asumiendo que tienes una tabla 'categories' o
-    // columna en 'listings')
-    public List<Map<String, Object>> getPopularCategories(int limit) {
-        // Ejemplo si la categoría está en la tabla 'listings'
-        String sql = """
-            SELECT category, COUNT(*) as count 
-            FROM products 
-            GROUP BY category 
-            ORDER BY count 
-            DESC LIMIT ?
-            """;
+    public List<FieldStats> getStatsByField(
+            String tableName,
+            String nameField,
+            int limit) {
+
+        if (!tableName.matches("^[a-zA-Z0-9_]+$")
+                || !nameField.matches("^[a-zA-Z0-9_]+$")) {
+            throw new IllegalArgumentException("Nombre de tabla o campo inválido");
+        }
+
+        String sql = String.format(
+                "SELECT %s, COUNT(*) as count " +
+                        "FROM %s " +
+                        "GROUP BY %s " +
+                        "ORDER BY count " +
+                        "DESC LIMIT ?",
+                nameField, tableName, nameField);
 
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
-            Map<String, Object> row = new HashMap<>();
-            row.put("name", rs.getString("category"));
-            row.put("count", rs.getLong("count"));
-            return row;
+            return new FieldStats(
+                    rs.getString(nameField),
+                    rs.getLong("count"));
         }, limit);
     }
 
     // 3. Estadísticas Generales (Ej: Total listings, total ventas, etc.)
     public Map<String, Object> getGeneralStats() {
         String sql = "SELECT " +
-                // GENERAL
+        // GENERAL
                 "  COALESCE((SELECT SUM(total_amount) FROM orders WHERE status = 'PAID'), 0) as total_sales," +
                 "  COALESCE((SELECT COUNT(*) FROM listings WHERE status != 'DELETED'), 0) as total_listings, " +
                 "  COALESCE((SELECT SUM(price) FROM listings WHERE status = 'ACTIVE'), 0) as total_listing_value, " +
@@ -211,7 +102,7 @@ public class StatisticsService {
                 "  COALESCE((SELECT COUNT(*) FROM products WHERE status = 'DRAFT'), 0) as total_products_draft, " +
                 "  COALESCE((SELECT COUNT(*) FROM products WHERE status = 'ACTIVE'), 0) as total_products_active, " +
                 // REVIEWS
-                "  COALESCE((SELECT COUNT(*) FROM reviews), 0) as total_reviews, " + 
+                "  COALESCE((SELECT COUNT(*) FROM reviews), 0) as total_reviews, " +
                 "  COALESCE((SELECT COUNT(*) FROM reviews WHERE status = 'ACTIVE'), 0) as total_reviews_active, " +
                 "  COALESCE((SELECT COUNT(*) FROM reviews WHERE status = 'PENDING'), 0) as total_reviews_pending, " +
                 // USERS
@@ -222,36 +113,36 @@ public class StatisticsService {
         return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
             Map<String, Object> stats = new HashMap<>();
 
-            stats.put("totalListings",     rs.getLong("total_listings"));
+            stats.put("totalListings", rs.getLong("total_listings"));
             stats.put("totalListingValue", rs.getBigDecimal("total_listing_value"));
-            stats.put("totalSales",        rs.getBigDecimal("total_sales"));
- 
+            stats.put("totalSales", rs.getBigDecimal("total_sales"));
+
             // stats.user
             Map<String, Object> users = new HashMap<>();
-            users.put("active", rs.getLong("total_user_active")); 
+            users.put("active", rs.getLong("total_user_active"));
             users.put("banned", rs.getLong("total_user_banned"));
-            users.put("total",  rs.getLong("total_users"));
+            users.put("total", rs.getLong("total_users"));
             stats.put("users", users);
 
             // stats.reviews
             Map<String, Object> reviews = new HashMap<>();
-            reviews.put("total",   rs.getLong("total_reviews")); 
-            reviews.put("active",  rs.getLong("total_reviews_active"));
+            reviews.put("total", rs.getLong("total_reviews"));
+            reviews.put("active", rs.getLong("total_reviews_active"));
             reviews.put("pending", rs.getLong("total_reviews_pending"));
             stats.put("reviews", reviews);
 
             // statas.orders
             Map<String, Object> orders = new HashMap<>();
-            orders.put("paid",    rs.getLong("total_orders_paid")); 
-            orders.put("pending", rs.getLong("total_orders_pending")); 
-            orders.put("total",   rs.getLong("total_orders")); 
+            orders.put("paid", rs.getLong("total_orders_paid"));
+            orders.put("pending", rs.getLong("total_orders_pending"));
+            orders.put("total", rs.getLong("total_orders"));
             stats.put("orders", orders);
 
             // statas.products
             Map<String, Object> products = new HashMap<>();
-            products.put("draft",  rs.getLong("total_products_draft")); 
+            products.put("draft", rs.getLong("total_products_draft"));
             products.put("active", rs.getLong("total_products_active"));
-            products.put("total",  rs.getLong("total_products")); 
+            products.put("total", rs.getLong("total_products"));
             stats.put("products", products);
 
             return stats;

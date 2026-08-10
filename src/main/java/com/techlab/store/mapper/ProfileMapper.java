@@ -7,14 +7,15 @@ import org.mapstruct.MappingTarget;
 import com.techlab.store.dto.ProfileDTO;
 import com.techlab.store.entity.Client;
 import com.techlab.store.entity.User;
+import com.techlab.store.service.HashidService;
 
 
 
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {HashidService.class})
 public interface ProfileMapper {
 
-    @Mapping(source = "user.id", target = "id")
+    @Mapping(source = "user.id", target = "id", qualifiedByName = "encodeId")
     @Mapping(source = "user.username", target = "username")
     @Mapping(source = "user.email", target = "email")
     @Mapping(source = "client.firstName", target = "firstName")

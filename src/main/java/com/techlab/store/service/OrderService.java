@@ -335,7 +335,7 @@ public class OrderService {
 
 
 
-    public Order getByHash(String hash, Long userId){
+    public Order getByHash(Long hash, Long userId){
         Order order = this.orderRepository.findByUserIdAandHash(userId, hash)
             .orElseThrow(() -> new RuntimeException("Pedido no encontrado con hash: " + hash));
         
@@ -356,7 +356,7 @@ public class OrderService {
     }
 
 
-    public boolean cancelUserOrderById(Long orderId, Long userId) {
+    public boolean cancelUserOrderById(Long userId, Long orderId) {
         Order order = getById(orderId);
 
         if (!order.getStatus().equals(OrderStatus.PENDING)) { return false; }

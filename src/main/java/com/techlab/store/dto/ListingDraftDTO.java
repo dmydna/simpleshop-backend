@@ -5,7 +5,7 @@ import java.util.List;
 
 public record ListingDraftDTO (
     // Listing
-    Long id,
+    String id,
     String title,
     String description,
     BigDecimal price,

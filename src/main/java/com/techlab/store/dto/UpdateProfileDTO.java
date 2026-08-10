@@ -6,5 +6,8 @@ public record UpdateProfileDTO(
         String firstName,
         String lastName,
         String address,
-        String phone
+        String phone,
+        Integer zipCode,
+        String state,
+        String city
 ) { }

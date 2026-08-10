@@ -15,13 +15,16 @@ import com.techlab.store.dto.UpdateProductDTO;
 import com.techlab.store.entity.Product;
 import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.enums.Status;
+import com.techlab.store.service.HashidService;
 import com.techlab.store.utils.EnumUtils;
 
 
 
 
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", 
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, 
+    uses = {HashidService.class})
 public interface ProductMapper {
 
     // DTO → Entity
@@ -65,6 +68,7 @@ public interface ProductMapper {
 
 
     // Entity → DTO
+    @Mapping(source = "id", target = "id", qualifiedByName = "encodeId")
     @Mapping(source = "dimensions.width",  target = "dimensions.width") 
     @Mapping(source = "dimensions.height", target = "dimensions.height") 
     @Mapping(source = "dimensions.depth",  target = "dimensions.depth") 

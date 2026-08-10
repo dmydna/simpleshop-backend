@@ -1,13 +1,12 @@
 package com.techlab.store.dto;
 
-import com.techlab.store.model.ProductDimensions;
-import com.techlab.store.enums.ListingStatus;
-import com.techlab.store.dto.Meta;
 import java.util.List;
+
+import com.techlab.store.model.ProductDimensions;
 
 
 public record ProductDTO(
-    Long id,
+    String id,
     String name,
     String sku,
     String brand,

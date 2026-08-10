@@ -2,13 +2,11 @@ package com.techlab.store.dto;
 
 import java.math.BigDecimal;
 import java.util.List;
-
-import com.techlab.store.enums.ListingStatus;
 import com.techlab.store.model.ProductDimensions;
 
 public record ListingDTO (
     // Listing
-    Long id,
+    String id,
     String title,
     String description,
     BigDecimal price,
@@ -23,9 +21,8 @@ public record ListingDTO (
     Integer minimumOrderQuantity,
     List<String> images,
     String thumbnail,
-    String hash,
     // product
-    Long productId,
+    String productId,
     String productName,
     String sku,
     String brand,

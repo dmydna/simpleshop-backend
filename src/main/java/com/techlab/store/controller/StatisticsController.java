@@ -1,25 +1,23 @@
 package com.techlab.store.controller;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.techlab.store.dto.ListingDTO;
+import com.techlab.store.dto.FieldStats;
 import com.techlab.store.dto.ListingSummary;
-import com.techlab.store.entity.Listing;
+import com.techlab.store.enums.ListingFieldStats;
+import com.techlab.store.enums.ProductFieldStats;
+import com.techlab.store.enums.UserFieldStats;
 import com.techlab.store.mapper.ListingMapper;
 import com.techlab.store.service.StatisticsService;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,44 +32,42 @@ public class StatisticsController {
     private final ListingMapper listingMapper;
 
 
+    @GetMapping("/listings/{field}")
+    public ResponseEntity< List<FieldStats> > getListingFieldStats(
+        @PathVariable ListingFieldStats field,
+        @RequestParam(defaultValue="8", required = false) int limit)
+    {
+        String finalTable = field.equals(ListingFieldStats.tags) ? 
+        "product_tags" : "listings";
 
-    @GetMapping("/top/tags")
-    public ResponseEntity< List<Map<String, Object>> > getPopularTags(
-        @RequestParam(defaultValue="0", required = false) int limit){
-        return ResponseEntity.ok(statisticsService.getPopularTags(limit));
+        List<FieldStats> response = statisticsService
+            .getStatsByField(finalTable, field.name(), limit);
+        return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/users/{field}")
+    public ResponseEntity< List<FieldStats> > getUserFieldStats(
+        @PathVariable UserFieldStats field,
+        @RequestParam(defaultValue="8", required = false) int limit){
 
-    @GetMapping("/top/categories")
-    public ResponseEntity< List<Map<String, Object>> > getPopularCategories(
-        @RequestParam(defaultValue="0", required = false) int limit){
-        return ResponseEntity.ok(statisticsService.getPopularCategories(limit));
+        List<FieldStats> response = statisticsService
+            .getStatsByField("users", field.name(), limit);
+
+        return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/products/{field}")
+    public ResponseEntity< List<FieldStats> > getProductFieldStats(
+        @PathVariable ProductFieldStats field,
+        @RequestParam(defaultValue="8", required = false) int limit){
 
-    @GetMapping("/top/listing-status")
-    public ResponseEntity< List<Map<String, Object>> > getTopListingStatus(
-        @RequestParam(defaultValue="0", required = false) int limit){
-        return ResponseEntity.ok(statisticsService.getTopListingStatus(limit));
-    }
+       String finalTable = field.equals(ProductFieldStats.tags) ? 
+        "product_tags" : "products";
 
-    @GetMapping("/top/availability-status")
-    public ResponseEntity< List<Map<String, Object>> > getTopAvailabilityStatus(
-        @RequestParam(defaultValue="0", required = false) int limit){
-        return ResponseEntity.ok(statisticsService.getTopAvailabilityStatus(limit));
-    }
+        List<FieldStats> response = statisticsService
+            .getStatsByField(finalTable, field.name(), limit);
 
-
-    @GetMapping("/top/user-status")
-    public ResponseEntity< List<Map<String, Object>> > getTopUserStatus(
-        @RequestParam(defaultValue="0", required = false) int limit){
-        return ResponseEntity.ok(statisticsService.getTopUserStatus(limit));
-    }
-
-    @GetMapping("/top/product-status")
-    public ResponseEntity< List<Map<String, Object>> > getTopProductStatus(
-        @RequestParam(defaultValue="0", required = false) int limit){
-        return ResponseEntity.ok(statisticsService.getTopProductStatus(limit));
+        return ResponseEntity.ok(response);
     }
 
 

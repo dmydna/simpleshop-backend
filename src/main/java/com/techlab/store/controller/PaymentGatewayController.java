@@ -9,23 +9,24 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.techlab.store.dto.PaymentRequest;
 import com.techlab.store.dto.TokenRequest;
+import com.techlab.store.service.HashidService;
 import com.techlab.store.service.PaymentGatewayService;
+
+import lombok.RequiredArgsConstructor;
 
 
 //NOTA: Este controller simula una pasarela de pago externa
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/toy-gateway")
 public class PaymentGatewayController {
 
     private final PaymentGatewayService paymentGatewayService;
-
-    public PaymentGatewayController(PaymentGatewayService paymentGatewayService) {
-        this.paymentGatewayService = paymentGatewayService;
-    }
+    private final HashidService hashidService;
 
     @PostMapping("/initiate")
     public ResponseEntity<String> initiatePayment(@RequestBody PaymentRequest request) {
-        String token = paymentGatewayService.generateToken(request.orderId(), request.userEmail());
+        String token = paymentGatewayService.generateToken(hashidService.decode(request.orderId()), request.userEmail());
         return ResponseEntity.ok(token);
     }
 

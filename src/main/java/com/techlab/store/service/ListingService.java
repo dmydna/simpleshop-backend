@@ -88,9 +88,10 @@ public class ListingService {
     }
 
 
+    // FIXME: metodo deprecado
     // -- Visits Counter
     @Transactional
-    public void IncVisits(String hash){
+    public void IncVisits(Long hash){
         Listing listing = this.listingRepository.findActiveByHash(hash)
             .orElseThrow(() -> new ListingNotFoundException());
 
@@ -99,9 +100,37 @@ public class ListingService {
     }
 
 
+    // -- (EX) GET BY HASH
+    public Listing getPublicListingById(Long id, Integer limit){
+
+        Listing listing = this.listingRepository.findActiveById(id)
+                .orElseThrow(() -> new ListingNotFoundException());
+        if (listing.getDeletedAt() != null) {
+            throw new ListingHasDeletedException();
+        }
+
+        Integer defaultLimit = 4;
+        Integer maxLimit = 8;
+        
+        Integer setLimit = defaultLimit;
+
+        if( limit != null){
+            if(limit > maxLimit){
+                setLimit = maxLimit;     
+            }else{
+                setLimit = limit;
+            }
+        }
+
+        listing = limitReviews(listing, setLimit);
+        return listing;
+    }
+
+
 
     // -- GET BY HASH
-    public Listing getByHash(String hash){
+    // FIXME: metodo deprecado
+    public Listing getByHash(Long hash){
         Listing listing = this.listingRepository.findActiveByHash(hash)
                 .orElseThrow(() -> new ListingNotFoundException());
         if (listing.getDeletedAt() != null) {
@@ -210,7 +239,6 @@ public class ListingService {
         listing.setProduct(existingProduct);
         listing.getProduct().setStatus(Status.ACTIVE);
         listing.setStatus(ListingStatus.ACTIVE);
-        listing.setHash(HashUtil.generateShortHash());
         listing.setAvailabilityStatus("In Stock");
     }
 

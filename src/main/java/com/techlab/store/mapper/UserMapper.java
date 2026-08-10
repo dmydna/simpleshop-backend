@@ -2,16 +2,24 @@ package com.techlab.store.mapper;
 
 
 import com.techlab.store.dto.UserDTO;
+import com.techlab.store.dto.UserSummary;
 import com.techlab.store.entity.User;
+import com.techlab.store.service.HashidService;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", 
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    uses = {HashidService.class}
+)
 public interface UserMapper {
 
 
+
+    @Mapping(source = "id", target = "id", qualifiedByName = "encodeId")
     @Mapping(target = "meta.createdAt", source = "createdAt")
     @Mapping(target = "meta.updatedAt", source = "updatedAt")
     @Mapping(target = "meta.deletedAt", source = "deletedAt")
@@ -44,8 +52,5 @@ public interface UserMapper {
     @Mapping(target = "favorites", ignore = true)
     public User updateFromEntity(User dataToEdit, @MappingTarget User user);
 
-
-
-
-    
+    UserSummary toUserSummary(User user);    
 }

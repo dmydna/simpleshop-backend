@@ -22,6 +22,7 @@ import com.techlab.store.entity.User;
 import com.techlab.store.mapper.ListingMapper;
 import com.techlab.store.service.AuthService;
 import com.techlab.store.service.FavoriteService;
+import com.techlab.store.service.HashidService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,16 +34,19 @@ public class FavoriteController {
     private final FavoriteService favoriteService;
     private final AuthService authService;
     private final ListingMapper listingMapper;
+    private final HashidService hashidService;
 
-    @PostMapping("/{listingId}")
-    public ResponseEntity<?> create(@PathVariable Long listingId) {
+    @PostMapping("/{listingHash}")
+    public ResponseEntity<?> create(@PathVariable String listingHash) {
+        Long listingId = hashidService.decode(listingHash);
         User user = authService.getUser();
         Favorite response = favoriteService.create(listingId, user.getId());
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{listingId}")
-    public ResponseEntity<?> delete(@PathVariable Long listingId) {
+    @DeleteMapping("/{listingHash}")
+    public ResponseEntity<?> delete(@PathVariable String listingHash) {
+        Long listingId = hashidService.decode(listingHash);
         User user = authService.getUser();
         boolean isAdmin = authService.isAdmin();
         favoriteService.delete(listingId, user.getId(), isAdmin);
@@ -51,16 +55,18 @@ public class FavoriteController {
     }
 
 
-    @GetMapping("/{listingId}")
-    public ResponseEntity<Favorite> getByListingId(@PathVariable Long listingId) {
+    @GetMapping("/{listingHash}")
+    public ResponseEntity<Favorite> getByListingId(@PathVariable String listingHash) {
+        Long listingId = hashidService.decode(listingHash);
         User user = authService.getUser();
         boolean isAdmin = authService.isAdmin();
         Favorite response = favoriteService.getByListingId(listingId, user.getId(), isAdmin);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{listingId}/check")
-    public ResponseEntity<Map<String, Boolean>> isFavoriteListing(@PathVariable Long listingId) {
+    @GetMapping("/{listingHash}/check")
+    public ResponseEntity<Map<String, Boolean>> isFavoriteListing(@PathVariable String listingHash) {
+        Long listingId = hashidService.decode(listingHash);
         User user = authService.getUser();
         boolean isAdmin = authService.isAdmin();
         Map<String, Boolean> response = new HashMap<>();

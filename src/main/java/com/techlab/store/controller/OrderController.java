@@ -33,6 +33,7 @@ import com.techlab.store.enums.Role;
 import com.techlab.store.mapper.OrderMapper;
 import com.techlab.store.service.AuthService;
 import com.techlab.store.service.ClientService;
+import com.techlab.store.service.HashidService;
 import com.techlab.store.service.OrderService;
 import com.techlab.store.service.ProfileService;
 
@@ -50,17 +51,19 @@ public class OrderController {
     private final AuthService authService;
     private final OrderMapper orderMapper;
     private final ClientService clientService;
+    private final HashidService hashidService;
 
     // CHECKME: cambio input a CreateOrderDTO
-    @PostMapping
+    @PostMapping("/{hash}")
     public ResponseEntity<?> createOrder(
-            @PathVariable Long clientId,
+            @PathVariable String hash,
             @RequestBody CreateOrderDTO dto) {
-        Client client = clientService.getById(clientId);
+        Long userId = hashidService.decode(hash);
+        Client client = clientService.getById(userId);
         Order entity = orderMapper.toEntity(dto, client);
         Order savedOrder = orderService.createOrder(entity);
         return ResponseEntity.ok(new OrderResponse(
-                savedOrder.getId(),
+                hashidService.encode(savedOrder.getId()),
                 orderMapper.toItemDtoList(savedOrder.getFailedItems())));
     }
 
@@ -72,7 +75,7 @@ public class OrderController {
         entity.setClient(user.getClient());
         Order savedOrder = orderService.createOrder(entity);
         return ResponseEntity.ok(new OrderResponse(
-                savedOrder.getId(),
+                hashidService.encode(savedOrder.getId()),
                 orderMapper.toItemDtoList(savedOrder.getFailedItems())));
     }
 
@@ -98,9 +101,10 @@ public class OrderController {
     }
 
 
-    @GetMapping("/me/{id}")
-    public ResponseEntity<OrderComplete> getByHash(@PathVariable Long id) {
+    @GetMapping("/me/{hash}")
+    public ResponseEntity<OrderComplete> getByHash(@PathVariable String hash) {
         User user = authService.getUser();
+        Long id = hashidService.decode(hash);
         Order order = orderService.getById(id);
         if (!order.getClient().getId().equals(user.getId())) {
             throw new AccessDeniedException("Usuario no autorizado para acceder a este recurso");
@@ -111,8 +115,9 @@ public class OrderController {
 
     @PutMapping("/me/cancel")
     public ResponseEntity<?> cancelMe(
-            @RequestParam(required = false) Long orderId) {
+            @RequestParam(required = false) String hash) {
         User user = authService.getUser();
+        Long orderId = hashidService.decode(hash);
         boolean success;
         if (orderId == null) {
             success = orderService.cancelLastUserOrder(user.getId());
@@ -125,28 +130,42 @@ public class OrderController {
         return ResponseEntity.badRequest().build();
     }
 
+    @PutMapping("/me/cancel/{hash}")
+    public ResponseEntity<?> cancelByHash(@PathVariable String hash) {
+        User user = authService.getUser();
+        Long orderId = hashidService.decode(hash);
+        boolean success = this.orderService.cancelUserOrderById(user.getId(),orderId);
+        
+        if (success) return ResponseEntity.ok().build(); // 200 OK
+        return ResponseEntity.badRequest().build();
+    }
+
+
     @PreAuthorize("hasAuthority('ADMIN')")
-    @GetMapping("/{id}")
-    public ResponseEntity<OrderComplete> getOrderById(@PathVariable Long id) {
-        Order order = orderService.getById(id);
+    @GetMapping("/{hash}")
+    public ResponseEntity<OrderComplete> getOrderById(@PathVariable String hash) {
+        Long orderId = hashidService.decode(hash);
+        Order order = orderService.getById(orderId);
         OrderComplete response = orderMapper.toFullDto(order);
         return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
-    @PutMapping("/{id}/cancel")
-    public ResponseEntity<?> cancelById(@PathVariable Long id) {
-        boolean success = this.orderService.cancelOrderById(id);
+    @PutMapping("/{hash}/cancel")
+    public ResponseEntity<?> cancelById(@PathVariable String hash) {
+        Long orderId = hashidService.decode(hash); 
+        boolean success = this.orderService.cancelOrderById(orderId);
         if (success)
             return ResponseEntity.ok().build(); // 200 OK
         return ResponseEntity.badRequest().build();
     }
 
     @PreAuthorize("hasAuthority('ADMIN')")
-    @PutMapping("/{id}/status")
+    @PutMapping("/{hash}/status")
     public OrderComplete updateStatus(
-            @PathVariable Long id,
+            @PathVariable String hash,
             @RequestBody  Map<String, OrderStatus> request) {
+        Long id = hashidService.decode(hash);
         Order entity = orderService.updateStatus(id, request.get("status"));
         return orderMapper.toFullDto(entity);
     }

@@ -8,6 +8,7 @@ public record CreateListingDTO (
     // Post 
     String       title,
     String       description,
+    Integer      stock,
     BigDecimal   price,
     Integer      discountPercentage,
     String       warrantyInformation,

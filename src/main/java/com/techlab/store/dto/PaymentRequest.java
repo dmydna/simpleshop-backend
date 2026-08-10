@@ -3,6 +3,6 @@ import lombok.*;
 
 
 public record PaymentRequest(
-    Long orderId,
+    String orderId,
     String userEmail
 ){}

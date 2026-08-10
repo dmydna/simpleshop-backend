@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 
 public record BuyRequest(
         @NotNull(message = "Order ID is required")
-        Long orderId,
+        String orderId,
         @NotNull(message = "Quantity is required")
         Integer quantity,
         @NotNull(message = "Total amount is required")

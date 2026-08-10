@@ -7,8 +7,7 @@ import com.techlab.store.enums.OrderStatus;
 
 
 public record OrderComplete(
-    Long id,
-    String hash,
+    String id,
     String operationNumber,
     Meta meta,
     OrderStatus status,

@@ -3,8 +3,8 @@ package com.techlab.store.dto;
 import java.math.BigDecimal;
 
 public record ReviewRequest(
-    Long id,
-    String hash,
+    String id,
+    String listingId,
     String title,
     BigDecimal price,
     String thumbnail

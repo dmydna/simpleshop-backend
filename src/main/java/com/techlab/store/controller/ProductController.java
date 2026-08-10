@@ -3,6 +3,7 @@ package com.techlab.store.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.hashids.Hashids;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -27,6 +28,7 @@ import com.techlab.store.entity.Product;
 import com.techlab.store.enums.Status;
 import com.techlab.store.mapper.ProductMapper;
 import com.techlab.store.service.AuthService;
+import com.techlab.store.service.HashidService;
 import com.techlab.store.service.ProductService;
 
 import lombok.RequiredArgsConstructor;
@@ -42,6 +44,7 @@ public class ProductController {
     private final ProductService productService;
     private final ProductMapper productMapper;
     private final AuthService authService;
+    private final HashidService hashidService;
 
     // CREATE
     @PostMapping
@@ -54,8 +57,9 @@ public class ProductController {
     }
 
     // GET BY ID
-    @GetMapping("/{id}")
-    public ResponseEntity<ProductDTO> getById(@PathVariable Long id) {
+    @GetMapping("/{hash}")
+    public ResponseEntity<ProductDTO> getById(@PathVariable String hash) {
+        Long id = hashidService.decode(hash);
         ProductDTO response = productMapper.toDto(this.productService.getById(id));
         return ResponseEntity.ok(response);
     }
@@ -86,8 +90,9 @@ public class ProductController {
     }
 
     // UPDATE
-    @PutMapping("/{id}")
-    public ResponseEntity<ProductDTO> updateById(@PathVariable Long id, @RequestBody UpdateProductDTO dataToEdit) {
+    @PutMapping("/{hash}")
+    public ResponseEntity<ProductDTO> updateById(@PathVariable String hash, @RequestBody UpdateProductDTO dataToEdit) {
+        Long id = hashidService.decode(hash);
         Product entity = productMapper.toEntity(dataToEdit);
         Product savedProduct = this.productService.updateById(id, entity);
         ProductDTO response = productMapper.toDto(savedProduct);
@@ -96,8 +101,9 @@ public class ProductController {
 
 
     // DELETE
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteById(@PathVariable Long id) {
+    @DeleteMapping("/{hash}")
+    public ResponseEntity<?> deleteById(@PathVariable String hash) {
+        Long id = hashidService.decode(hash);
         productService.deleteById(id);
         Map<String,String> response = Map.of("message", "Producto eliminado correctamente");
         return ResponseEntity.ok(response);
@@ -106,10 +112,11 @@ public class ProductController {
 
     // UPDATE STATUS
     @PreAuthorize("hasAuthority('ADMIN')")
-    @PatchMapping("/{id}/status")
+    @PatchMapping("/{hash}/status")
     public ResponseEntity<ProductDTO> updateStatus( 
-        @PathVariable Long id, 
+        @PathVariable String hash, 
         @RequestBody  Map<String, Status> request) {
+        Long id = hashidService.decode(hash);
         Product product = productService.updateStatusById(id, request.get("status"));
         ProductDTO response = productMapper.toDto(product);
         return ResponseEntity.ok(response);

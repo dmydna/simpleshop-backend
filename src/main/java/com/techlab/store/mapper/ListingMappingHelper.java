@@ -18,9 +18,8 @@ import com.techlab.store.enums.Status;
 import com.techlab.store.exceptions.CustomExceptions.ProductNotFoundException;
 import com.techlab.store.repository.ProductRepository;
 import com.techlab.store.service.PriceService;
+import com.techlab.store.service.InventoryService;
 import com.techlab.store.utils.EnumUtils;
-import com.techlab.store.utils.HashUtil;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ListingMappingHelper {
 
     private final ProductRepository productRepository;
+    private final InventoryService inventoryService;
     private final PriceService priceService;
 
     @AfterMapping
@@ -49,8 +49,9 @@ public class ListingMappingHelper {
                    .orElseThrow(() -> new ProductNotFoundException());
          listing.setProduct(existingProduct);
          listing.getProduct().setStatus(Status.ACTIVE);
-         listing.setStatus(ListingStatus.ACTIVE);
-         listing.setAvailabilityStatus("In Stock");
+         // listing.setStatus(ListingStatus.ACTIVE);
+         // listing.setAvailabilityStatus("In Stock");
+         inventoryService.updateInventoryStatus(listing);
 //         listing.setHash(HashUtil.generateShortHash());
     }
 

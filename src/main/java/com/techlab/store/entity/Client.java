@@ -23,7 +23,7 @@ import lombok.Setter;
 public class Client extends AuditableEntity{
     @Id
     private Long id;
-    private String hash;
+    // private String hash;
 
     // Data
     private String firstName;

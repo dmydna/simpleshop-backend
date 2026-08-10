@@ -7,10 +7,10 @@ import java.time.LocalDateTime;
 import java.time.LocalDate;
 
 public record FavoriteDTO (
-    Long id,
+    String id,
     LocalDateTime createdAt,
     // Listing Info. para frontend.
-    Long listingId,
+    String listingId,
     String image,
     String title,
     BigDecimal price
