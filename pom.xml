@@ -46,7 +46,12 @@
 			<artifactId>mysql-connector-j</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-		
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
 		<!-- Herramientas de Desarrollo y Productividad -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
