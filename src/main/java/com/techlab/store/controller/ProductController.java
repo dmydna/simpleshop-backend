@@ -2,6 +2,7 @@ package com.techlab.store.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 import org.hashids.Hashids;
 import org.springframework.data.domain.Page;
@@ -53,6 +54,16 @@ public class ProductController {
         Product entity = productMapper.toEntity(dto);
         Product saveProduct = productService.createProduct(entity);
         ProductDTO response = productMapper.toDto(saveProduct);
+        return ResponseEntity.ok(response);
+    }
+
+
+    @GetMapping("/{hash}/status")
+    public ResponseEntity< Map<String, String> > getStatus(@PathVariable String hash){
+        Long id = hashidService.decode(hash);
+        Product entity = productService.getById(id);
+        Map<String, String> response = new HashMap<>();
+        response.put("status", entity.getStatus().name());
         return ResponseEntity.ok(response);
     }
 

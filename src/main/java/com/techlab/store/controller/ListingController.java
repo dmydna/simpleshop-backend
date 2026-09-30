@@ -89,6 +89,16 @@ public class ListingController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{hash}/status")
+    public ResponseEntity< Map<String, String> > getStatus(@PathVariable String hash){
+        Long id = hashidService.decode(hash);
+        Listing entity = listingService.getById(id);
+        Map<String, String> response = new HashMap<>();
+        response.put("status", entity.getStatus().name());
+        return ResponseEntity.ok(response);
+    }
+
+
     // GET
     @GetMapping("/public/{hash}")
     public ResponseEntity<Map<String, Object>> getByHash(

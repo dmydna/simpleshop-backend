@@ -1,6 +1,7 @@
 package com.techlab.store.controller;
 
 import java.util.Map;
+import java.util.HashMap;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -118,6 +119,15 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+
+    @GetMapping("/{hash}/status")
+    public ResponseEntity< Map<String, String> > getStatus(@PathVariable String hash){
+        Long id = hashidService.decode(hash);
+        User entity = userService.getById(id);
+        Map<String, String> response = new HashMap<>();
+        response.put("status", entity.getStatus().name());
+        return ResponseEntity.ok(response);
+    }
 
     // GET-ALL
     @GetMapping
