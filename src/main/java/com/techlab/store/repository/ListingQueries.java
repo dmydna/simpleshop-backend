@@ -42,7 +42,6 @@ public class ListingQueries {
         LIMIT ?
         """;
 
-
     // Constante para el nombre de la clase de mapeo
     public static final Class<Listing> LISTING_CLASS = Listing.class;
 }

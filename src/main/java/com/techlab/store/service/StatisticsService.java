@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 
 import com.techlab.store.dto.FieldStats;
 import com.techlab.store.entity.Listing;
+import com.techlab.store.enums.ListingFieldStats;
+import com.techlab.store.enums.ProductFieldStats;
+import com.techlab.store.enums.UserFieldStats;
 import com.techlab.store.repository.ListingQueries;
 
 import org.springframework.stereotype.Service;
@@ -62,28 +65,41 @@ public class StatisticsService {
 
 
     public List<FieldStats> getStatsByField(
-            String tableName,
-            String nameField,
-            int limit) {
+            ListingFieldStats field, int limit) {
 
-        if (!tableName.matches("^[a-zA-Z0-9_]+$")
-                || !nameField.matches("^[a-zA-Z0-9_]+$")) {
-            throw new IllegalArgumentException("Nombre de tabla o campo inválido");
-        }
-
-        String sql = String.format(
-                "SELECT %s, COUNT(*) as count " +
-                        "FROM %s " +
-                        "GROUP BY %s " +
-                        "ORDER BY count " +
-                        "DESC LIMIT ?",
-                nameField, tableName, nameField);
+        String sql = field.getSql(limit);
 
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             return new FieldStats(
-                    rs.getString(nameField),
+                    rs.getString("field_value"),
                     rs.getLong("count"));
-        }, limit);
+        });
+    }
+
+
+    public List<FieldStats> getStatsByField(
+            UserFieldStats field, int limit) {
+
+        String sql = field.getSql(limit);
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            return new FieldStats(
+                    rs.getString("field_value"),
+                    rs.getLong("count"));
+        });
+    }
+
+
+    public List<FieldStats> getStatsByField(
+            ProductFieldStats field, int limit) {
+
+        String sql = field.getSql(limit);
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            return new FieldStats(
+                    rs.getString("field_value"),
+                    rs.getLong("count"));
+        });
     }
 
     // 3. Estadísticas Generales (Ej: Total listings, total ventas, etc.)

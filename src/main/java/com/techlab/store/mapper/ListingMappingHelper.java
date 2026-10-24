@@ -1,13 +1,16 @@
 package com.techlab.store.mapper;
 
+import java.util.List;
 import java.math.BigDecimal;
 
+
+import org.springframework.web.multipart.MultipartFile;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Context;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
-
+import java.time.LocalDateTime;
 import com.techlab.store.dto.CreateListingDTO;
 import com.techlab.store.dto.ReviewDTO;
 import com.techlab.store.entity.Listing;
@@ -54,7 +57,6 @@ public class ListingMappingHelper {
          inventoryService.updateInventoryStatus(listing);
 //         listing.setHash(HashUtil.generateShortHash());
     }
-
 
     @Named("statusToString")
     public String statusToString(ListingStatus status) {

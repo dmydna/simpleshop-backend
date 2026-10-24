@@ -8,7 +8,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
-
+import org.springframework.web.multipart.MultipartFile;
 import com.techlab.store.dto.CreateListingDTO;
 import com.techlab.store.dto.ListingDTO;
 import com.techlab.store.dto.ListingDraftDTO;
@@ -176,9 +176,11 @@ public interface ListingMapper {
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "images", ignore = true)
     @Mapping(target = "favorites", ignore = true)
+    @Mapping(target = "availabilityStatus", ignore = true)
     Listing updateFromEntity(
         Listing update, 
-        @MappingTarget Listing listing);
+        @MappingTarget Listing listing
+    );
 
     @InheritInverseConfiguration(name = "toDto") 
     @Mapping(target = "id", ignore = true)

@@ -45,6 +45,7 @@ public class ListingService {
 
     private final ListingRepository listingRepository;
     private final ProductRepository productRepository;
+    private final InventoryService inventoryService;
     private final FileStorageService fileStorageService;
     private final ListingMapper listingMapper;
     private final ImageService imageService;
@@ -193,39 +194,51 @@ public class ListingService {
 
 
     @Transactional
-    public Listing updateStatusById(Long id, ListingStatus newStatus) {
-    log.info("🔔 Actualizando status de listing con ID {} a {}", id, newStatus);
+    public Listing updateStatus(Listing listing, ListingStatus newStatus) {
 
-    Listing listing = getById(id);
-    ListingStatus currentStatus = listing.getStatus();
+        if(listing.getStatus().equals(ListingStatus.DELETED)){
+            throw new RuntimeException("Listing Eliminado");
+        }
 
-    // 1. Validar que no esté ya eliminado
-    if (currentStatus == ListingStatus.DELETED) {
-        throw new ListingHasDeletedException(id);
-    }
+        ListingStatus currentStatus = listing.getStatus();
 
-    // 2. Validar la transición permitida según la jerarquía
-    if (!EnumUtils.isStatusTransitionAllowed(currentStatus, newStatus)) {
-        log.warn("Transición no permitida de {} a {} para listing ID {}", 
-            currentStatus, newStatus, id);
-        return listing;
-    }
-
-    // 3. Ejecutar lógica específica antes del cambio de estado
-    if (newStatus == ListingStatus.DELETED) {
-        deleteById(id); // Soft delete
-    }
-
-    // 4. Lógica específica para publicar (DRAFT -> ACTIVE)
-    if (currentStatus == ListingStatus.DRAFT && newStatus == ListingStatus.ACTIVE) {
-        publishListing(listing);
-    }
-
-    // 5. Actualizar estado y fecha
-    listing.setStatus(newStatus);
-    listing.setUpdatedAt(LocalDateTime.now());
+        // 1. Validar que no esté ya eliminado
+        if (currentStatus == ListingStatus.DELETED) {
+            throw new ListingHasDeletedException(listing.getId());
+        }
     
-    return listing; 
+        // 2. Validar la transición permitida según la jerarquía
+        if (!EnumUtils.isStatusTransitionAllowed(currentStatus, newStatus)) {
+            log.warn("Transición no permitida de {} a {} para listing ID {}", 
+                currentStatus, newStatus, listing.getId());
+            return listing;
+        }
+    
+        // 3. Ejecutar lógica específica antes del cambio de estado
+        if (newStatus == ListingStatus.DELETED) {
+            deleteById(listing.getId()); // Soft delete
+        }
+    
+        // 4. Lógica específica para publicar (DRAFT -> ACTIVE)
+        if (currentStatus == ListingStatus.DRAFT && newStatus == ListingStatus.ACTIVE) {
+            publishListing(listing);
+        }
+    
+        // 5. Actualizar estado y fecha
+        listing.setStatus(newStatus);
+        listing.setUpdatedAt(LocalDateTime.now());
+        
+        listingRepository.save(listing);
+
+        return listing; 
+    }
+
+
+    @Transactional
+    public Listing updateStatusById(Long id, ListingStatus newStatus) {
+        log.info("🔔 Actualizando status de listing con ID {} a {}", id, newStatus);
+        Listing listing = getById(id);
+        return updateStatus(listing, newStatus);
     }
 
 
@@ -249,7 +262,7 @@ public class ListingService {
     @Transactional
     public Listing updateById(
         Long id, 
-        Listing dataToEdit, 
+        Listing update, 
         MultipartFile[] files, 
         String sku
     ) {
@@ -257,14 +270,18 @@ public class ListingService {
         log.info("🔔 actualizando listing con ID {}...", id);
 
         Listing listing = listingRepository.findById(id)
-            .orElseThrow(() -> new ListingNotFoundException(dataToEdit.getId()));
+            .orElseThrow(() -> new ListingNotFoundException(update.getId()));
         
         ListingStatus status = listing.getStatus();
 
         // Logica de status == DELETED
         if(status.equals(ListingStatus.DELETED)){
             // Si esta eliminado no puede actualizarse.
-            throw new ListingHasDeletedException(dataToEdit.getId());
+            throw new ListingHasDeletedException(update.getId());
+        }
+
+        if(update.getStock() < 0){  
+            throw new RuntimeException("Error al Actualizar a Stock (No admite Valor Negativo)");
         }
 
         // Logica de status == DRAFT
@@ -274,17 +291,41 @@ public class ListingService {
             if(sku != null) updateProductBySku(id, sku);
         }
 
-        // Actualizar status
-        if(dataToEdit.getStatus() != null){ 
-            updateStatusById(id, dataToEdit.getStatus());
+        // Mappear meta datos y otros (no mapeados por mapper)
+        if(!listing.getStatus().equals(update.getStatus())){
+            updateStatus(listing, update.getStatus());
         }
+        if(!listing.getImages().equals(update.getImages())){
+            updateImages(listing, update.getImages(), files);
+        }
+        
+        if(!listing.getStock().equals(update.getStock())){
+            log.info("actualizando stock de listing (ID {})...", listing.getId());
+            updateStock(listing, update.getStock());
+        }  
 
-        // Importante: esta funcion requiere listing.images sin modificar.
-        updateImages(id, dataToEdit.getImages(), files);
 
+        // Mapear datos actualizados
+        listingMapper.updateFromEntity(update, listing);
+
+ 
         listing.setUpdatedAt(LocalDateTime.now());
 
-        return listingMapper.updateFromEntity(dataToEdit, listing);
+
+        return listing;
+    }
+
+
+
+    @Transactional
+    public Listing updateStock(Listing listing, Integer stock){
+        log.info("actualizando stock de listing (ID {})...", listing.getId());
+        listing.setStock(stock);
+        log.info("actualizando stock {}...", listing.getStock());
+        inventoryService.updateInventoryStatus(listing);
+        listing.setUpdatedAt(LocalDateTime.now());
+        
+        return listingRepository.save(listing);
     }
 
 
@@ -306,15 +347,18 @@ public class ListingService {
     }
 
 
+    @Transactional
     public List<String> updateImages(
-            Long id, 
+            Listing listing, 
             List<String> updatedImages, 
             MultipartFile[] files
         ){
 
-        log.info("🔔 Actualizando imagenes de listing con ID {}...", id);
-        Listing listing = this.listingRepository.findActiveById(id)
-            .orElseThrow(() -> new ListingNotFoundException(id));
+        if(listing.getStatus().equals(ListingStatus.DELETED)){
+            throw new RuntimeException("Listing Eliminado");
+        }
+
+        log.info("🔔 Actualizando imagenes de listing con ID {}...", listing.getId());
         List<String> currentImages = listing.getImages();
         // Busco las imágenes que ya no están en el nuevo DTO
         List<String> deletedImages = 
@@ -325,11 +369,25 @@ public class ListingService {
 
         // Borrar las imagenes eliminadas
         deletedImages
-           .forEach(imageName -> removeImageFromListing(id, imageName));
+           .forEach(imageName -> removeImageFromListing(listing.getId(), imageName));
         // Subo las nuevas imagenes.
-        if (files != null && files.length > 0) {  addMultiImages(id, files); }
+        if (files != null && files.length > 0) {  addMultiImages(listing.getId(), files); }
 
         return listing.getImages();
+    }
+
+
+    public List<String> updateImagesById(
+            Long id, 
+            List<String> updatedImages, 
+            MultipartFile[] files
+        ){
+
+        log.info("🔔 Actualizando imagenes de listing con ID {}...", id);
+        Listing listing = this.listingRepository.findActiveById(id)
+            .orElseThrow(() -> new ListingNotFoundException(id));
+        
+        return updateImages(listing, updatedImages, files);
     }
 
 

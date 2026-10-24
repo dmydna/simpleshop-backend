@@ -35,13 +35,11 @@ public class StatisticsController {
     @GetMapping("/listings/{field}")
     public ResponseEntity< List<FieldStats> > getListingFieldStats(
         @PathVariable ListingFieldStats field,
-        @RequestParam(defaultValue="8", required = false) int limit)
-    {
-        String finalTable = field.equals(ListingFieldStats.tags) ? 
-        "product_tags" : "listings";
+        @RequestParam(defaultValue="8", required = false) int limit){
+        
+            List<FieldStats> response = statisticsService
+                .getStatsByField(field, limit);
 
-        List<FieldStats> response = statisticsService
-            .getStatsByField(finalTable, field.name(), limit);
         return ResponseEntity.ok(response);
     }
 
@@ -51,7 +49,7 @@ public class StatisticsController {
         @RequestParam(defaultValue="8", required = false) int limit){
 
         List<FieldStats> response = statisticsService
-            .getStatsByField("users", field.name(), limit);
+            .getStatsByField(field, limit);
 
         return ResponseEntity.ok(response);
     }
@@ -61,11 +59,9 @@ public class StatisticsController {
         @PathVariable ProductFieldStats field,
         @RequestParam(defaultValue="8", required = false) int limit){
 
-       String finalTable = field.equals(ProductFieldStats.tags) ? 
-        "product_tags" : "products";
 
         List<FieldStats> response = statisticsService
-            .getStatsByField(finalTable, field.name(), limit);
+            .getStatsByField(field, limit);
 
         return ResponseEntity.ok(response);
     }

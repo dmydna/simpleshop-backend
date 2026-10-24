@@ -49,18 +49,27 @@ public class InventoryService {
     @Transactional
     public void updateInventoryStatus(Listing listing){
         
+
         if(listing.getStock() == 0){
             listing.setAvailabilityStatus("Out of Stock");
             listing.setStatus(ListingStatus.INACTIVE);
+            listingRepository.save(listing);
+            return;
         }
 
         if(listing.getStock() < 10){
             listing.setAvailabilityStatus("Low Stock");
+            listingRepository.save(listing);
+            return;
         }
 
         if(listing.getStock() >= 10){
             listing.setAvailabilityStatus("In Stock");
+            listingRepository.save(listing);
+            return;
         }
+
+
 
    }
 
