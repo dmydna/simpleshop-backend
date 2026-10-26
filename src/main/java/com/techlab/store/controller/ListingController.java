@@ -110,8 +110,7 @@ public class ListingController {
         boolean isAdmin = authService.isAuthUserAdmin(); 
         Listing entity = listingService.getPublicListingById(id, limitReviews);
         ListingStatus status = entity.getStatus();
-        if(!isAdmin && 
-          (status.equals(ListingStatus.INACTIVE) || status.equals(ListingStatus.DRAFT) )){
+        if(!isAdmin && ( status.equals(ListingStatus.DRAFT) )){
             throw new AccessDeniedException("Usuario no autorizado para acceder a este recurso");
         }
          Map<String, Object> response = new HashMap<>();
